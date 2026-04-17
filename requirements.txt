@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+mediapipe-silicon
+websockets
+python-dotenv
+numpy

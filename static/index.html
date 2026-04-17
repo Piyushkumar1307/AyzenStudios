@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Avengers</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0f;
+    color: #f0f0f0;
+    font-family: 'Segoe UI', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    text-align: center;
+    padding: 24px 20px 12px;
+    background: #0a0a0f;
+    border-bottom: 1px solid #1e1e2e;
+    flex-shrink: 0;
+  }
+
+  header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    color: #c9a84c;
+    text-transform: uppercase;
+  }
+
+  header p {
+    font-size: 13px;
+    color: #666;
+    margin-top: 4px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .viewport {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .slides-wrapper {
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.6s cubic-bezier(0.77, 0, 0.175, 1);
+  }
+
+  .hero-slide {
+    min-height: calc(100vh - 130px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    flex-shrink: 0;
+  }
+
+  .hero-card {
+    max-width: 700px;
+    width: 100%;
+    background: #12121e;
+    border: 1px solid #2a2a3e;
+    border-radius: 20px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.3s, transform 0.2s;
+  }
+
+  .hero-card:hover { border-color: #c9a84c; transform: scale(1.01); }
+  .hero-card:active { transform: scale(0.99); }
+
+  .card-banner {
+    height: 6px;
+  }
+
+  .card-body {
+    padding: 32px 36px;
+    display: flex;
+    gap: 28px;
+    align-items: flex-start;
+  }
+
+  .hero-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.1);
+  }
+
+  .hero-info { flex: 1; }
+
+  .hero-name {
+    font-size: 26px;
+    font-weight: 700;
+    color: #f0f0f0;
+    letter-spacing: 1px;
+  }
+
+  .hero-alias {
+    font-size: 13px;
+    color: #888;
+    margin-top: 2px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .hero-bio {
+    font-size: 14px;
+    color: #aaa;
+    line-height: 1.7;
+    margin-top: 14px;
+  }
+
+  .powers-title {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #555;
+    margin-top: 20px;
+    margin-bottom: 10px;
+  }
+
+  .powers-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .power-tag {
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 16px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #1e1e2e;
+  }
+
+  .stat {
+    text-align: center;
+    flex: 1;
+  }
+
+  .stat-val {
+    font-size: 22px;
+    font-weight: 700;
+    color: #f0f0f0;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #555;
+    margin-top: 2px;
+  }
+
+  .detail-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease;
+    border-top: 0 solid #1e1e2e;
+  }
+
+  .detail-panel.open {
+    max-height: 300px;
+    border-top: 1px solid #1e1e2e;
+  }
+
+  .detail-inner {
+    padding: 24px 36px;
+  }
+
+  .detail-inner h4 {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #555;
+    margin-bottom: 12px;
+  }
+
+  .detail-inner p {
+    font-size: 13px;
+    color: #999;
+    line-height: 1.8;
+  }
+
+  .click-hint {
+    font-size: 12px;
+    color: #444;
+    text-align: right;
+    margin-top: 16px;
+    letter-spacing: 1px;
+  }
+
+  .nav-buttons {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 14px 20px;
+    background: #0a0a0f;
+    border-top: 1px solid #1e1e2e;
+  }
+
+  .nav-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1px solid #2a2a3e;
+    background: #12121e;
+    color: #c9a84c;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, border-color 0.2s, transform 0.1s;
+    user-select: none;
+  }
+
+  .nav-btn:hover { background: #1e1e2e; border-color: #c9a84c; }
+  .nav-btn:active { transform: scale(0.92); }
+  .nav-btn:disabled { opacity: 0.25; cursor: default; }
+
+  .nav-indicator {
+    font-size: 13px;
+    color: #555;
+    min-width: 80px;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+
+  .nav-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #2a2a3e;
+    transition: background 0.3s, transform 0.3s;
+  }
+
+  .dot.active {
+    background: #c9a84c;
+    transform: scale(1.4);
+  }
+
+  /* Gesture overlay UI */
+  #handCanvas { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; pointer-events:none; z-index: 9999; }
+  #cursor { position: fixed; width:18px; height:18px; border-radius:50%; background:#60a5fa; box-shadow:0 0 0 6px rgba(96,165,250,.15); transform: translate(-50%, -50%); pointer-events:none; opacity:0; z-index: 10000; }
+  /* HUD removed (kept gesture overlay only) */
+</style>
+</head>
+<body>
+
+<canvas id="handCanvas"></canvas>
+<div id="cursor"></div>
+
+<header>
+  <h1>The Avengers</h1>
+  <p>Click a hero to explore their powers</p>
+</header>
+
+<div class="viewport" id="viewport">
+  <div class="slides-wrapper" id="slides"></div>
+</div>
+
+<div class="nav-buttons">
+  <button class="nav-btn" id="btn-up" onclick="navigate(-1)" title="Previous">&#8593;</button>
+  <div>
+    <div class="nav-dots" id="dots"></div>
+  </div>
+  <button class="nav-btn" id="btn-down" onclick="navigate(1)" title="Next">&#8595;</button>
+</div>
+
+<script>
+// --- Gesture overlay (WebSocket -> cursor + skeleton + pinch click) ---
+const cursorEl = document.getElementById("cursor");
+const canvas = document.getElementById("handCanvas");
+const ctx = canvas.getContext("2d");
+
+const HAND_CONNECTIONS = [
+  [0,1],[1,2],[2,3],[3,4],
+  [0,5],[5,6],[6,7],[7,8],
+  [5,9],[9,10],[10,11],[11,12],
+  [9,13],[13,14],[14,15],[15,16],
+  [13,17],[17,18],[18,19],[19,20],
+  [0,17]
+];
+
+let pinchDown = false;
+let lastPos = { x: 0.5, y: 0.5 };
+
+function resizeCanvas() {
+  const vv = window.visualViewport;
+  const vw = vv?.width ?? window.innerWidth;
+  const vh = vv?.height ?? window.innerHeight;
+  const ox = vv?.offsetLeft ?? 0;
+  const oy = vv?.offsetTop ?? 0;
+  const dpr = window.devicePixelRatio || 1;
+
+  canvas.width = Math.floor(vw * dpr);
+  canvas.height = Math.floor(vh * dpr);
+  canvas.style.left = `${ox}px`;
+  canvas.style.top = `${oy}px`;
+  canvas.style.width = `${vw}px`;
+  canvas.style.height = `${vh}px`;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener("resize", resizeCanvas);
+window.visualViewport?.addEventListener("resize", resizeCanvas);
+window.visualViewport?.addEventListener("scroll", resizeCanvas);
+resizeCanvas();
+
+function drawHand(landmarks) {
+  const vv = window.visualViewport;
+  const vw = vv?.width ?? window.innerWidth;
+  const vh = vv?.height ?? window.innerHeight;
+  ctx.clearRect(0, 0, vw, vh);
+  if (!Array.isArray(landmarks) || landmarks.length !== 21) return;
+
+  const pts = landmarks.map(p => ({ x: p.x * vw, y: p.y * vh }));
+
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "rgba(96,165,250,0.95)";
+  ctx.beginPath();
+  for (const [a,b] of HAND_CONNECTIONS) {
+    ctx.moveTo(pts[a].x, pts[a].y);
+    ctx.lineTo(pts[b].x, pts[b].y);
+  }
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(231,234,240,0.95)";
+  for (const p of pts) {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function clickAtCursor() {
+  const c = cursorEl.getBoundingClientRect();
+  const cx = c.left + c.width / 2;
+  const cy = c.top + c.height / 2;
+  const isOverlayEl = (node) => node === cursorEl || node === canvas;
+
+  // Safari can be picky about elementFromPoint with overlays; use elementsFromPoint.
+  const stack = (document.elementsFromPoint ? document.elementsFromPoint(cx, cy) : []);
+  let target = null;
+
+  for (const el of stack) {
+    if (!el || isOverlayEl(el)) continue;
+    // Ignore the HUD if you re-enable it later
+    if (el.closest && el.closest("#hud")) continue;
+    target = el;
+    break;
+  }
+
+  if (!target) target = document.elementFromPoint(cx, cy);
+  if (!target || isOverlayEl(target)) return;
+
+  const clickable = target.closest ? target.closest("button, a, [role='button'], [onclick]") : null;
+  if (clickable && typeof clickable.click === "function") clickable.click();
+}
+
+function connectGestureWs() {
+  const wsUrl = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws/gesture`;
+  const ws = new WebSocket(wsUrl);
+
+  ws.onclose = () => { setTimeout(connectGestureWs, 500); };
+
+  ws.onmessage = (ev) => {
+    let data;
+    try { data = JSON.parse(ev.data); } catch { return; }
+
+    const vv = window.visualViewport;
+    const vw = vv?.width ?? window.innerWidth;
+    const vh = vv?.height ?? window.innerHeight;
+    const ox = vv?.offsetLeft ?? 0;
+    const oy = vv?.offsetTop ?? 0;
+
+    const nx = (data.cursor_x ?? lastPos.x);
+    const ny = (data.cursor_y ?? lastPos.y);
+    if (typeof nx === "number" && typeof ny === "number") lastPos = { x: nx, y: ny };
+
+    const x = ox + (lastPos.x * vw);
+    const y = oy + (lastPos.y * vh);
+    cursorEl.style.left = `${x}px`;
+    cursorEl.style.top = `${y}px`;
+    cursorEl.style.opacity = data.detected ? "1" : "0.35";
+
+    drawHand(data.detected ? data.landmarks : null);
+
+    const isPinch = data.detected && data.gesture === "pinch";
+    if (isPinch && !pinchDown) { pinchDown = true; clickAtCursor(); }
+    if (!isPinch) pinchDown = false;
+  };
+}
+connectGestureWs();
+
+// --- Your new Avengers slider UI ---
+const heroes = [
+  {
+    name: "Iron Man",
+    alias: "Tony Stark",
+    color: "#c0392b",
+    bg: "#1a0808",
+    avatar: "#c0392b",
+    initials: "TS",
+    bio: "Genius billionaire Tony Stark built a powered suit of armor to escape captivity — and never stopped improving it. His mind is as much a weapon as the suit itself.",
+    powers: ["Powered armor", "Energy repulsors", "Flight", "AI interface", "Genius-level intellect"],
+    tagColors: { bg: "#2a0808", text: "#e87070", border: "#5a1a1a" },
+    stats: { suits: "85+", iq: "270", speed: "Mach 5" },
+    statLabels: ["Suits built", "Est. IQ", "Top speed"],
+    detail: "The Iron Man armor has evolved from a crude escape suit to nano-tech that assembles from Tony's very bloodstream. The Mark L and beyond can form any weapon on demand. His EDITH network controls a satellite weapons system. In the Infinity War, he faced Thanos alone — and nearly won."
+  },
+  {
+    name: "Captain America",
+    alias: "Steve Rogers",
+    color: "#2471a3",
+    bg: "#060d1a",
+    avatar: "#2471a3",
+    initials: "SR",
+    bio: "A frail kid from Brooklyn became the world's first super soldier. Steve Rogers carries the weight of every era he's lived through — and still believes in people.",
+    powers: ["Super-soldier serum", "Vibranium shield", "Peak human strength", "Enhanced healing", "Master tactician"],
+    tagColors: { bg: "#060d1a", text: "#7fb3d3", border: "#1a3a5a" },
+    stats: { wars: "3", shield: "Vibranium", years: "100+" },
+    statLabels: ["Wars fought", "Shield material", "Age (cryo)"],
+    detail: "The super-soldier serum pushed every aspect of Steve's biology to peak human potential. His vibranium shield absorbs kinetic energy — it can be thrown to richochet off multiple targets and return like a boomerang. As a tactician, he has led every major Avengers operation and earned the trust of Thor himself."
+  },
+  {
+    name: "Thor",
+    alias: "Son of Odin",
+    color: "#7d3c98",
+    bg: "#0f0a1a",
+    avatar: "#7d3c98",
+    initials: "TH",
+    bio: "The Asgardian god of thunder is 1,500 years old and has fought wars across the nine realms. He's also really into coffee and Midgard pop culture.",
+    powers: ["God-level strength", "Mjolnir / Stormbreaker", "Lightning control", "Flight", "Near-immortality"],
+    tagColors: { bg: "#160a2a", text: "#b07fd4", border: "#4a1a7a" },
+    stats: { age: "1,500+", strength: "Class 100", axes: "1" },
+    statLabels: ["Years old", "Strength class", "Stormbreaker"],
+    detail: "Thor's true power isn't Mjolnir — it's the storm. The hammer merely focuses it. After losing Mjolnir, he discovered he was the god of thunder all along. Stormbreaker, forged in a dying star, is the only weapon in the universe powerful enough to kill Thanos — and nearly did."
+  },
+  {
+    name: "Black Widow",
+    alias: "Natasha Romanoff",
+    color: "#1e8449",
+    bg: "#060f08",
+    avatar: "#1e8449",
+    initials: "NR",
+    bio: "A product of the Soviet Red Room, Natasha Romanoff turned her lethal training against the people who created her. She's the most dangerous person in any room with no powers at all.",
+    powers: ["Master assassin", "Widow's Bite (electroshock)", "Expert martial artist", "Master spy", "Peak human agility"],
+    tagColors: { bg: "#060f08", text: "#6fcf97", border: "#1a4a2a" },
+    stats: { langs: "7", training: "Red Room", ops: "100+" },
+    statLabels: ["Languages", "Training program", "Black ops missions"],
+    detail: "The Red Room program erased her past and replaced it with perfect lethal instinct. Natasha mastered the Martial Arts of 16 styles. Her Widow's Bite gauntlets deliver 30,000 volts of electricity. She is the only Avenger who has successfully infiltrated HYDRA, A.I.M, and S.H.I.E.L.D simultaneously."
+  },
+  {
+    name: "Hulk",
+    alias: "Bruce Banner",
+    color: "#239b56",
+    bg: "#041a06",
+    avatar: "#239b56",
+    initials: "BB",
+    bio: "Gamma radiation accident turned brilliant scientist Bruce Banner into a creature of limitless rage. The angrier he gets, the stronger he becomes — with no upper limit ever recorded.",
+    powers: ["Unlimited strength (rage-scaled)", "Extreme durability", "Regenerative healing", "Gamma radiation", "Genius intellect (Banner)"],
+    tagColors: { bg: "#051a07", text: "#52be80", border: "#1a5a22" },
+    stats: { strength: "Unlimited", healing: "Instant", phds: "7" },
+    statLabels: ["Strength cap", "Healing factor", "Banner's PhDs"],
+    detail: "The Hulk's strength is literally boundless — he has never reached a recorded maximum. The madder he gets, the stronger he becomes. He has stopped a 150-billion-ton mountain from falling, held tectonic plates together, and survived nuclear blasts. Prof. Hulk merges Banner's mind with the Hulk's body — the best of both."
+  },
+  {
+    name: "Hawkeye",
+    alias: "Clint Barton",
+    color: "#7f8c8d",
+    bg: "#0d0f10",
+    avatar: "#7f8c8d",
+    initials: "CB",
+    bio: "No powers. No serum. Just a man with a bow who never misses. Clint Barton is proof that heart and skill can stand beside gods.",
+    powers: ["Perfect marksmanship", "Expert archer", "Trick arrows", "Master combatant", "Tactical genius"],
+    tagColors: { bg: "#111315", text: "#aab7b8", border: "#3a4040" },
+    stats: { accuracy: "100%", arrows: "32 types", range: "300m" },
+    statLabels: ["Mission accuracy", "Arrow types", "Effective range"],
+    detail: "Clint's trick arrow arsenal includes EMP arrows, explosive arrows, grapple arrows, Pym particle arrows (that shrink targets), and sonic arrows. He trained extensively under the Swordsman and later became Ronin. He has saved the world multiple times armed with nothing but a bow — and refuses to make it look easy."
+  },
+  {
+    name: "Doctor Strange",
+    alias: "Stephen Strange",
+    color: "#c0392b",
+    bg: "#1a0808",
+    avatar: "#8e44ad",
+    initials: "SS",
+    bio: "Arrogant surgeon, humbled by accident, reborn as Sorcerer Supreme. Strange commands the mystic arts to protect reality itself from threats beyond comprehension.",
+    powers: ["Sorcery Supreme", "Time manipulation (Time Stone)", "Dimensional travel", "Astral projection", "Mirror dimension"],
+    tagColors: { bg: "#1a0a2a", text: "#c39bd3", border: "#5a1a7a" },
+    stats: { dimensions: "Infinite", relics: "Eye of Agamotto", ops: "14M+" },
+    statLabels: ["Dimensions accessed", "Primary relic", "Futures viewed"],
+    detail: "Strange viewed 14,000,605 possible futures before Thanos's snap — and saw only one where the Avengers won. He orchestrated the entire endgame from that moment. The Cloak of Levitation is semi-sentient and chooses its wearer. The Eye of Agamotto can reverse, pause, or loop time itself."
+  },
+  {
+    name: "Spider-Man",
+    alias: "Peter Parker",
+    color: "#c0392b",
+    bg: "#1a0606",
+    avatar: "#e74c3c",
+    initials: "PP",
+    bio: "Radioactive spider bite gave a brilliant teenager proportional spider strength and the proportional responsibility that comes with it. Queens' finest.",
+    powers: ["Spider-Sense", "Wall-crawling", "Super strength & agility", "Web-shooters", "Genius inventor"],
+    tagColors: { bg: "#1a0606", text: "#ec7063", border: "#5a1010" },
+    stats: { age: "16", webs: "Web-fluid", iq: "Top 5% MIT" },
+    statLabels: ["Age (recruited)", "Signature weapon", "Academic rank"],
+    detail: "Peter's Spider-Sense is a precognitive danger awareness that fires faster than conscious thought — he can dodge bullets he can't see. He designed his own web-fluid formula (which baffled Stark Industries chemists) and built web-shooters from scratch. He has held a collapsing building, a crashing ferry, and a disintegrating bridge — simultaneously."
+  }
+];
+
+let current = 0;
+let open = null;
+const slideHeight = () => document.getElementById('viewport').offsetHeight;
+
+function buildSlides() {
+  const wrapper = document.getElementById('slides');
+  const dots = document.getElementById('dots');
+  wrapper.innerHTML = '';
+  dots.innerHTML = '';
+
+  heroes.forEach((h, i) => {
+    const slide = document.createElement('div');
+    slide.className = 'hero-slide';
+    slide.style.minHeight = slideHeight() + 'px';
+
+    const tagHTML = h.powers.map(p =>
+      `<span class="power-tag" style="background:${h.tagColors.bg};color:${h.tagColors.text};border:1px solid ${h.tagColors.border}">${p}</span>`
+    ).join('');
+
+    slide.innerHTML = `
+      <div class="hero-card" id="card-${i}" onclick="toggleDetail(${i})">
+        <div class="card-banner" style="background:${h.color}"></div>
+        <div class="card-body">
+          <div class="hero-avatar" style="background:${h.avatar}20;border-color:${h.color}40">
+            <span style="font-size:32px;font-weight:700;color:${h.color}">${h.initials}</span>
+          </div>
+          <div class="hero-info">
+            <div class="hero-name">${h.name}</div>
+            <div class="hero-alias">${h.alias}</div>
+            <div class="hero-bio">${h.bio}</div>
+            <div class="powers-title">Powers &amp; abilities</div>
+            <div class="powers-grid">${tagHTML}</div>
+            <div class="stats-row">
+              ${Object.values(h.stats).map((v,j) => `
+                <div class="stat">
+                  <div class="stat-val" style="color:${h.color}">${v}</div>
+                  <div class="stat-label">${h.statLabels[j]}</div>
+                </div>`).join('')}
+            </div>
+            <div class="click-hint">Click to reveal classified intel ▼</div>
+          </div>
+        </div>
+        <div class="detail-panel" id="detail-${i}">
+          <div class="detail-inner">
+            <h4>Classified intel</h4>
+            <p>${h.detail}</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    wrapper.appendChild(slide);
+
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dots.appendChild(dot);
+  });
+
+  updatePosition();
+}
+
+function toggleDetail(i) {
+  const panel = document.getElementById(`detail-${i}`);
+  const hint = document.getElementById(`card-${i}`).querySelector('.click-hint');
+  if (panel.classList.contains('open')) {
+    panel.classList.remove('open');
+    hint.textContent = 'Click to reveal classified intel ▼';
+  } else {
+    if (open !== null && open !== i) {
+      document.getElementById(`detail-${open}`).classList.remove('open');
+      document.getElementById(`card-${open}`).querySelector('.click-hint').textContent = 'Click to reveal classified intel ▼';
+    }
+    panel.classList.add('open');
+    hint.textContent = 'Click to hide ▲';
+    open = i;
+  }
+}
+
+function navigate(dir) {
+  const next = current + dir;
+  if (next < 0 || next >= heroes.length) return;
+  if (open !== null) {
+    document.getElementById(`detail-${open}`).classList.remove('open');
+    open = null;
+  }
+  current = next;
+  updatePosition();
+}
+
+function updatePosition() {
+  const h = slideHeight();
+  document.getElementById('slides').style.transform = `translateY(-${current * h}px)`;
+  document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === current));
+  document.getElementById('btn-up').disabled = current === 0;
+  document.getElementById('btn-down').disabled = current === heroes.length - 1;
+}
+
+buildSlides();
+
+window.addEventListener('resize', () => {
+  document.querySelectorAll('.hero-slide').forEach(s => s.style.minHeight = slideHeight() + 'px');
+  updatePosition();
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown') navigate(1);
+  if (e.key === 'ArrowUp') navigate(-1);
+});
+</script>
+</body>
+</html>
+
