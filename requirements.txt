@@ -1,7 +1,7 @@
 fastapi
 uvicorn[standard]
-# Use `mediapipe` on Linux (Render, etc.). For Apple Silicon-only local speedups, use mediapipe-silicon in a venv.
-mediapipe
+# Legacy mp.solutions.hands API; removed in mediapipe>=0.10.30 — pin below that range.
+mediapipe>=0.10.21,<0.10.30
 opencv-python-headless
 websockets
 python-dotenv

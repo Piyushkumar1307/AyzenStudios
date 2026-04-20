@@ -17,12 +17,24 @@ detector = GestureDetector()
 
 # --- Lifespan: start/stop camera with app ---
 # On cloud hosts (e.g. Render) there is no webcam; web UI uses browser hand tracking.
-# Set SKIP_SERVER_CAMERA=1 to skip opening the server camera.
+# - SKIP_SERVER_CAMERA=1: skip server camera (set in render.yaml).
+# - Render sets RENDER=true; we skip server camera unless FORCE_SERVER_CAMERA=1 (rare).
+def _skip_server_camera() -> bool:
+    if os.environ.get("FORCE_SERVER_CAMERA", "").lower() in ("1", "true", "yes"):
+        return False
+    sk = os.environ.get("SKIP_SERVER_CAMERA", "").strip().lower()
+    if sk in ("1", "true", "yes"):
+        return True
+    if sk in ("0", "false", "no"):
+        return False
+    return os.environ.get("RENDER", "").lower() == "true"
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    skip_cam = os.environ.get("SKIP_SERVER_CAMERA", "").lower() in ("1", "true", "yes")
+    skip_cam = _skip_server_camera()
     if skip_cam:
-        print("SKIP_SERVER_CAMERA=1: server-side camera disabled (browser uses local camera).")
+        print("Server-side camera skipped (browser / cloud: use SKIP_SERVER_CAMERA or RENDER).")
     else:
         detector.start()
     yield
