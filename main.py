@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 
 from gesture_detector import GestureDetector
 from models import HandState
@@ -15,11 +16,18 @@ from models import HandState
 detector = GestureDetector()
 
 # --- Lifespan: start/stop camera with app ---
+# On cloud hosts (e.g. Render) there is no webcam; web UI uses browser hand tracking.
+# Set SKIP_SERVER_CAMERA=1 to skip opening the server camera.
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    detector.start()
+    skip_cam = os.environ.get("SKIP_SERVER_CAMERA", "").lower() in ("1", "true", "yes")
+    if skip_cam:
+        print("SKIP_SERVER_CAMERA=1: server-side camera disabled (browser uses local camera).")
+    else:
+        detector.start()
     yield
-    detector.stop()
+    if not skip_cam:
+        detector.stop()
 
 app = FastAPI(
     title="Gesture Backend",
@@ -38,10 +46,26 @@ app.add_middleware(
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_HTML = os.path.join(BASE_DIR, "static", "index.html")
+GAME_HTML = os.path.join(BASE_DIR, "static", "game.html")
 
 @app.get("/")
 def index():
     return FileResponse(INDEX_HTML)
+
+@app.get("/index")
+def index_alt():
+    """Same page as `/` — some people expect `/index` in the URL bar."""
+    return FileResponse(INDEX_HTML)
+
+@app.get("/game")
+def game():
+    return FileResponse(GAME_HTML)
+
+app.mount(
+    "/static",
+    StaticFiles(directory=os.path.join(BASE_DIR, "static")),
+    name="static",
+)
 
 def _mjpeg_generator():
     boundary = b"frame"

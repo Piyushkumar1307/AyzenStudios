@@ -1,0 +1,14 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+# New → Blueprint → connect repo → Render reads this file.
+# Or create a Web Service manually (see steps in project README if added).
+
+services:
+  - type: web
+    name: hand-gesture-web
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SKIP_SERVER_CAMERA
+        value: "1"

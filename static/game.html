@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skeleton Catch</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #050510;
+    color: #e8e8f0;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  #gameCanvas {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+  }
+
+  #handCanvas {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  #cursor {
+    position: fixed;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #60a5fa;
+    box-shadow: 0 0 0 6px rgba(96, 165, 250, 0.15);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    opacity: 0;
+    z-index: 10000;
+  }
+
+  .hud {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    padding: 16px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    pointer-events: none;
+    z-index: 10001;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  }
+
+  .hud-block h2 {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #6b7280;
+    margin-bottom: 4px;
+  }
+
+  .hud-block .val {
+    font-size: 28px;
+    font-weight: 700;
+    color: #a5b4fc;
+  }
+
+  .miss-dots {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .miss-dots span {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #1e293b;
+    border: 2px solid #334155;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .miss-dots span.lost {
+    background: #dc2626;
+    border-color: #f87171;
+  }
+
+  #startOverlay, #gameOverOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10002;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(5, 5, 16, 0.82);
+    backdrop-filter: blur(6px);
+  }
+
+  #startOverlay { pointer-events: auto; }
+  #gameOverOverlay {
+    display: none;
+    pointer-events: auto;
+  }
+
+  #gameOverOverlay.visible { display: flex; }
+
+  .panel {
+    text-align: center;
+    max-width: 420px;
+    padding: 40px 36px;
+    background: linear-gradient(145deg, #12121c, #0c0c14);
+    border: 1px solid #2a2a3e;
+    border-radius: 20px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+
+  .panel h1 {
+    font-size: 22px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #c4b5fd;
+    margin-bottom: 12px;
+  }
+
+  .panel p {
+    font-size: 14px;
+    color: #9ca3af;
+    line-height: 1.6;
+    margin-bottom: 8px;
+  }
+
+  .panel .hint {
+    margin-top: 20px;
+    font-size: 13px;
+    color: #6b7280;
+  }
+
+  .btn-restart {
+    margin-top: 0;
+    padding: 14px 36px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #0f172a;
+    background: linear-gradient(180deg, #a5b4fc, #6366f1);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .btn-restart:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(99, 102, 241, 0.45);
+  }
+
+  .btn-restart:active {
+    transform: translateY(0);
+  }
+
+  .panel-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+  }
+
+  .btn-home {
+    padding: 14px 36px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #a5b4fc;
+    background: transparent;
+    border: 2px solid #6366f1;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  }
+
+  .btn-home:hover {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: #818cf8;
+  }
+
+  .btn-home:active {
+    transform: scale(0.98);
+  }
+
+  body.screen-shake {
+    animation: screenShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  }
+
+  @keyframes screenShake {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    12% { transform: translate(-10px, 5px) rotate(-0.5deg); }
+    25% { transform: translate(9px, -6px) rotate(0.45deg); }
+    38% { transform: translate(-7px, -4px) rotate(-0.35deg); }
+    50% { transform: translate(6px, 5px) rotate(0.25deg); }
+    62% { transform: translate(-5px, 3px) rotate(-0.15deg); }
+    75% { transform: translate(4px, -3px) rotate(0.1deg); }
+    88% { transform: translate(-2px, 2px) rotate(0deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+  }
+
+  #hitFx {
+    position: fixed;
+    inset: 0;
+    z-index: 8000;
+    pointer-events: none;
+    opacity: 0;
+    border: none;
+    box-shadow: inset 0 0 0 transparent;
+  }
+
+  #hitFx.hit-active {
+    animation: hitBorderFlash 0.55s ease-out forwards;
+  }
+
+  @keyframes hitBorderFlash {
+    0% {
+      opacity: 1;
+      box-shadow:
+        inset 0 0 60px rgba(250, 204, 21, 0.95),
+        inset 0 0 140px rgba(168, 85, 247, 0.55),
+        0 0 0 4px rgba(255, 255, 255, 0.95),
+        0 0 50px 8px rgba(99, 102, 241, 0.9);
+    }
+    35% {
+      opacity: 1;
+      box-shadow:
+        inset 0 0 80px rgba(56, 189, 248, 0.9),
+        inset 0 0 100px rgba(244, 114, 182, 0.65),
+        0 0 0 5px rgba(52, 211, 153, 0.95),
+        0 0 70px 12px rgba(250, 204, 21, 0.75);
+    }
+    70% {
+      opacity: 0.85;
+      box-shadow:
+        inset 0 0 40px rgba(196, 181, 253, 0.5),
+        0 0 0 3px rgba(167, 139, 250, 0.6),
+        0 0 30px 4px rgba(99, 102, 241, 0.5);
+    }
+    100% {
+      opacity: 0;
+      box-shadow: inset 0 0 0 transparent, 0 0 0 transparent;
+    }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+<canvas id="handCanvas"></canvas>
+<div id="hitFx" aria-hidden="true"></div>
+<div id="cursor"></div>
+
+<div class="hud">
+  <div class="hud-block">
+    <h2>Score</h2>
+    <div class="val" id="scoreVal">0</div>
+  </div>
+  <div class="hud-block" style="text-align: right;">
+    <h2>Misses</h2>
+    <div class="miss-dots" id="missDots" aria-label="misses"></div>
+  </div>
+</div>
+
+<div id="startOverlay">
+  <div class="panel">
+    <h1>Skeleton Catch</h1>
+    <p>Swipe quickly through the balls with your index finger (cursor). Slow touches do not count.</p>
+    <p>Five misses and it is game over.</p>
+    <p class="hint">Click, tap, or pinch to start. Your camera runs in this browser (not on the server).</p>
+  </div>
+</div>
+
+<div id="gameOverOverlay">
+  <div class="panel">
+    <h1>Game Over</h1>
+    <p>Final score: <strong id="finalScore">0</strong></p>
+    <div class="panel-actions">
+      <button type="button" class="btn-restart" id="btnRestart">Restart</button>
+      <a class="btn-home" id="btnHome" href="/">Home</a>
+    </div>
+    <p class="hint">Or pinch on a button with your hand.</p>
+  </div>
+</div>
+
+<script>
+const HAND_CONNECTIONS = [
+  [0,1],[1,2],[2,3],[3,4],
+  [0,5],[5,6],[6,7],[7,8],
+  [5,9],[9,10],[10,11],[11,12],
+  [9,13],[13,14],[14,15],[15,16],
+  [13,17],[17,18],[18,19],[19,20],
+  [0,17]
+];
+
+const MAX_MISSES = 5;
+const BALL_R = 16;
+const SPAWN_EVERY_MS = 1400;
+const FALL_SPEED_MIN = 220;
+const FALL_SPEED_MAX = 340;
+/** Min speed (px/s) along index path for a swipe to count */
+const MIN_SWIPE_PX_PER_SEC = 420;
+/** Half-width of the swipe “blade” plus ball overlap */
+const SWIPE_HALF_WIDTH = 40;
+/** Recent cursor samples for swipe segments (ms to keep) */
+const SWIPE_HISTORY_MS = 220;
+/** Skip segment pairs that are too far apart in time (not one motion) */
+const SWIPE_MAX_SEGMENT_MS = 0.11;
+
+/** @type {{ x: number, y: number, t: number }[]} */
+let swipeSamples = [];
+
+const gameCanvas = document.getElementById("gameCanvas");
+const gctx = gameCanvas.getContext("2d");
+const handCanvas = document.getElementById("handCanvas");
+const hctx = handCanvas.getContext("2d");
+const cursorEl = document.getElementById("cursor");
+const scoreVal = document.getElementById("scoreVal");
+const missDotsEl = document.getElementById("missDots");
+const startOverlay = document.getElementById("startOverlay");
+const gameOverOverlay = document.getElementById("gameOverOverlay");
+const finalScoreEl = document.getElementById("finalScore");
+const btnRestart = document.getElementById("btnRestart");
+
+let pinchDown = false;
+let lastPos = { x: 0.5, y: 0.5 };
+
+let score = 0;
+let misses = 0;
+let gameOver = false;
+let gameStarted = false;
+
+/** @type {{ x: number, y: number, vy: number, r: number, alive: boolean }[]} */
+let balls = [];
+/** @type {{ x: number, y: number, vx: number, vy: number, life: number, hue: number }[]} */
+let particles = [];
+
+let spawnAcc = 0;
+let lastT = 0;
+
+let audioCtx = null;
+let bgTimer = null;
+
+function distPointSeg(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const len2 = dx * dx + dy * dy;
+  if (len2 < 1e-8) return Math.hypot(px - x1, py - y1);
+  let t = ((px - x1) * dx + (py - y1) * dy) / len2;
+  t = Math.max(0, Math.min(1, t));
+  const nx = x1 + t * dx;
+  const ny = y1 + t * dy;
+  return Math.hypot(px - nx, py - ny);
+}
+
+function swipeHitsBall(bx, by, br) {
+  if (swipeSamples.length < 2) return false;
+  const now = performance.now();
+  for (let i = 1; i < swipeSamples.length; i++) {
+    const a = swipeSamples[i - 1];
+    const b = swipeSamples[i];
+    if (now - b.t > SWIPE_HISTORY_MS) continue;
+    const dt = (b.t - a.t) / 1000;
+    if (dt < 0.005 || dt > SWIPE_MAX_SEGMENT_MS) continue;
+    const speed = Math.hypot(b.x - a.x, b.y - a.y) / dt;
+    if (speed < MIN_SWIPE_PX_PER_SEC) continue;
+    const d = distPointSeg(bx, by, a.x, a.y, b.x, b.y);
+    if (d < br + SWIPE_HALF_WIDTH) return true;
+  }
+  return false;
+}
+
+function burst(x, y) {
+  const n = 14;
+  for (let i = 0; i < n; i++) {
+    const ang = (Math.PI * 2 * i) / n + Math.random() * 0.5;
+    const sp = 80 + Math.random() * 160;
+    particles.push({
+      x, y,
+      vx: Math.cos(ang) * sp,
+      vy: Math.sin(ang) * sp - 40,
+      life: 1,
+      hue: 200 + Math.random() * 80
+    });
+  }
+}
+
+let hitFxTimer = null;
+function triggerHitFeedback() {
+  const body = document.body;
+  const fx = document.getElementById("hitFx");
+  if (!fx) return;
+  body.classList.remove("screen-shake");
+  fx.classList.remove("hit-active");
+  void body.offsetWidth;
+  body.classList.add("screen-shake");
+  fx.classList.add("hit-active");
+  clearTimeout(hitFxTimer);
+  hitFxTimer = setTimeout(() => {
+    body.classList.remove("screen-shake");
+    fx.classList.remove("hit-active");
+  }, 620);
+}
+
+function resizeCanvases() {
+  const vv = window.visualViewport;
+  const vw = vv?.width ?? window.innerWidth;
+  const vh = vv?.height ?? window.innerHeight;
+  const ox = vv?.offsetLeft ?? 0;
+  const oy = vv?.offsetTop ?? 0;
+  const dpr = window.devicePixelRatio || 1;
+
+  for (const c of [gameCanvas, handCanvas]) {
+    c.width = Math.floor(vw * dpr);
+    c.height = Math.floor(vh * dpr);
+    c.style.left = `${ox}px`;
+    c.style.top = `${oy}px`;
+    c.style.width = `${vw}px`;
+    c.style.height = `${vh}px`;
+  }
+  gctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  hctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener("resize", resizeCanvases);
+window.visualViewport?.addEventListener("resize", resizeCanvases);
+window.visualViewport?.addEventListener("scroll", resizeCanvases);
+resizeCanvases();
+
+function drawHand(landmarks) {
+  const vv = window.visualViewport;
+  const vw = vv?.width ?? window.innerWidth;
+  const vh = vv?.height ?? window.innerHeight;
+  hctx.clearRect(0, 0, vw, vh);
+  if (!Array.isArray(landmarks) || landmarks.length !== 21) return;
+
+  const pts = landmarks.map(p => ({ x: p.x * vw, y: p.y * vh }));
+
+  hctx.lineWidth = 3;
+  hctx.strokeStyle = "rgba(96, 165, 250, 0.95)";
+  hctx.beginPath();
+  for (const [a, b] of HAND_CONNECTIONS) {
+    hctx.moveTo(pts[a].x, pts[a].y);
+    hctx.lineTo(pts[b].x, pts[b].y);
+  }
+  hctx.stroke();
+
+  hctx.fillStyle = "rgba(231, 234, 240, 0.95)";
+  for (const p of pts) {
+    hctx.beginPath();
+    hctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+    hctx.fill();
+  }
+}
+
+function getVW() {
+  const vv = window.visualViewport;
+  return vv?.width ?? window.innerWidth;
+}
+function getVH() {
+  const vv = window.visualViewport;
+  return vv?.height ?? window.innerHeight;
+}
+
+function updateMissDots() {
+  missDotsEl.innerHTML = "";
+  for (let i = 0; i < MAX_MISSES; i++) {
+    const s = document.createElement("span");
+    if (i < misses) s.classList.add("lost");
+    missDotsEl.appendChild(s);
+  }
+}
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playHitSound() {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const master = audioCtx.createGain();
+  master.gain.value = 0.35;
+  master.connect(audioCtx.destination);
+
+  [1040, 1320, 1568].forEach((freq, i) => {
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(0.12, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.1 + i * 0.02);
+    o.connect(g);
+    g.connect(master);
+    o.start(t);
+    o.stop(t + 0.15);
+  });
+}
+
+function playMissSound() {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = "sawtooth";
+  o.frequency.setValueAtTime(180, t);
+  o.frequency.exponentialRampToValueAtTime(90, t + 0.2);
+  g.gain.setValueAtTime(0.2, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+  o.connect(g);
+  g.connect(audioCtx.destination);
+  o.start(t);
+  o.stop(t + 0.26);
+}
+
+function startBackgroundMusic() {
+  stopBackgroundMusic();
+  if (!audioCtx) return;
+  const pent = [196, 220, 262, 294, 330];
+  let step = 0;
+  bgTimer = setInterval(() => {
+    if (gameOver || !gameStarted) return;
+    const t = audioCtx.currentTime;
+    const freq = pent[step % pent.length];
+    step++;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = "triangle";
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.045, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    o.start(t);
+    o.stop(t + 0.4);
+  }, 420);
+}
+
+function stopBackgroundMusic() {
+  if (bgTimer) {
+    clearInterval(bgTimer);
+    bgTimer = null;
+  }
+}
+
+function clickAtCursor() {
+  const c = cursorEl.getBoundingClientRect();
+  const cx = c.left + c.width / 2;
+  const cy = c.top + c.height / 2;
+  const skip = (node) => node === cursorEl || node === handCanvas || node === gameCanvas;
+
+  const stack = document.elementsFromPoint ? document.elementsFromPoint(cx, cy) : [];
+  let target = null;
+  for (const el of stack) {
+    if (!el || skip(el)) continue;
+    target = el;
+    break;
+  }
+  if (!target) target = document.elementFromPoint(cx, cy);
+  if (!target || skip(target)) return;
+
+  const startOverlayEl = document.getElementById("startOverlay");
+  if (
+    startOverlayEl &&
+    getComputedStyle(startOverlayEl).display !== "none" &&
+    target.closest &&
+    target.closest("#startOverlay")
+  ) {
+    startOverlayEl.click();
+    return;
+  }
+
+  const clickable = target.closest ? target.closest("button, a, [role='button'], [onclick]") : null;
+  if (clickable && typeof clickable.click === "function") clickable.click();
+}
+
+function applyHandFrame(data) {
+  const vv = window.visualViewport;
+  const vw = vv?.width ?? window.innerWidth;
+  const vh = vv?.height ?? window.innerHeight;
+  const ox = vv?.offsetLeft ?? 0;
+  const oy = vv?.offsetTop ?? 0;
+
+  const nx = data.cursor_x ?? lastPos.x;
+  const ny = data.cursor_y ?? lastPos.y;
+  if (typeof nx === "number" && typeof ny === "number") lastPos = { x: nx, y: ny };
+
+  const x = ox + lastPos.x * vw;
+  const y = oy + lastPos.y * vh;
+  cursorEl.style.left = `${x}px`;
+  cursorEl.style.top = `${y}px`;
+  cursorEl.style.opacity = data.detected ? "1" : "0.35";
+
+  const handDetected = !!data.detected;
+  const latestLandmarks = handDetected && Array.isArray(data.landmarks) && data.landmarks.length === 21
+    ? data.landmarks.map(p => ({ x: p.x * vw, y: p.y * vh }))
+    : null;
+
+  drawHand(data.detected ? data.landmarks : null);
+
+  if (handDetected) {
+    swipeSamples.push({ x, y, t: performance.now() });
+    const tCut = performance.now() - SWIPE_HISTORY_MS;
+    while (swipeSamples.length && swipeSamples[0].t < tCut) swipeSamples.shift();
+    if (swipeSamples.length > 24) swipeSamples.splice(0, swipeSamples.length - 24);
+  } else {
+    swipeSamples.length = 0;
+  }
+
+  const isPinch = data.detected && data.gesture === "pinch";
+  if (isPinch && !pinchDown) { pinchDown = true; clickAtCursor(); }
+  if (!isPinch) pinchDown = false;
+
+  window.__gameHand = { pts: latestLandmarks, detected: handDetected };
+}
+
+function spawnBall() {
+  const vw = getVW();
+  const margin = 40;
+  const x = margin + Math.random() * (vw - 2 * margin);
+  balls.push({
+    x,
+    y: -BALL_R - 4,
+    vy: FALL_SPEED_MIN + Math.random() * (FALL_SPEED_MAX - FALL_SPEED_MIN),
+    r: BALL_R,
+    alive: true
+  });
+}
+
+function resetGame() {
+  score = 0;
+  misses = 0;
+  gameOver = false;
+  balls = [];
+  particles = [];
+  swipeSamples.length = 0;
+  spawnAcc = 0;
+  scoreVal.textContent = "0";
+  updateMissDots();
+  gameOverOverlay.classList.remove("visible");
+  gameStarted = true;
+  startBackgroundMusic();
+}
+
+function endGame() {
+  gameOver = true;
+  stopBackgroundMusic();
+  finalScoreEl.textContent = String(score);
+  gameOverOverlay.classList.add("visible");
+}
+
+function gameLoop(now) {
+  if (!lastT) lastT = now;
+  const dt = Math.min(0.05, (now - lastT) / 1000);
+  lastT = now;
+
+  const vw = getVW();
+  const vh = getVH();
+  const hand = window.__gameHand;
+
+  if (gameStarted && !gameOver) {
+    spawnAcc += dt * 1000;
+    while (spawnAcc >= SPAWN_EVERY_MS) {
+      spawnAcc -= SPAWN_EVERY_MS;
+      spawnBall();
+    }
+
+    for (const b of balls) {
+      if (gameOver) break;
+      if (!b.alive) continue;
+      b.y += b.vy * dt;
+
+      if (hand?.detected && swipeHitsBall(b.x, b.y, b.r)) {
+        b.alive = false;
+        score++;
+        scoreVal.textContent = String(score);
+        burst(b.x, b.y);
+        playHitSound();
+        triggerHitFeedback();
+        continue;
+      }
+
+      if (b.y - b.r > vh + 30) {
+        b.alive = false;
+        misses++;
+        updateMissDots();
+        playMissSound();
+        if (misses >= MAX_MISSES) endGame();
+      }
+    }
+
+    balls = balls.filter(b => b.alive);
+  }
+
+  if (gameStarted) {
+    for (const p of particles) {
+      p.life -= dt * 2.2;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 420 * dt;
+    }
+    particles = particles.filter(p => p.life > 0);
+  }
+
+  gctx.clearRect(0, 0, vw, vh);
+
+  const grd = gctx.createLinearGradient(0, 0, 0, vh);
+  grd.addColorStop(0, "#0c0c18");
+  grd.addColorStop(1, "#050510");
+  gctx.fillStyle = grd;
+  gctx.fillRect(0, 0, vw, vh);
+
+  gctx.strokeStyle = "rgba(99, 102, 241, 0.06)";
+  gctx.lineWidth = 1;
+  for (let gx = 0; gx < vw; gx += 48) {
+    gctx.beginPath();
+    gctx.moveTo(gx, 0);
+    gctx.lineTo(gx, vh);
+    gctx.stroke();
+  }
+
+  if (swipeSamples.length >= 2 && gameStarted) {
+    gctx.strokeStyle = "rgba(196, 181, 253, 0.5)";
+    gctx.lineWidth = 5;
+    gctx.lineCap = "round";
+    gctx.lineJoin = "round";
+    gctx.beginPath();
+    gctx.moveTo(swipeSamples[0].x, swipeSamples[0].y);
+    for (let i = 1; i < swipeSamples.length; i++) {
+      gctx.lineTo(swipeSamples[i].x, swipeSamples[i].y);
+    }
+    gctx.stroke();
+  }
+
+  for (const b of balls) {
+    if (!b.alive) continue;
+    const g = gctx.createRadialGradient(b.x - 5, b.y - 5, 2, b.x, b.y, b.r);
+    g.addColorStop(0, "#e0e7ff");
+    g.addColorStop(0.5, "#6366f1");
+    g.addColorStop(1, "#312e81");
+    gctx.fillStyle = g;
+    gctx.beginPath();
+    gctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    gctx.fill();
+    gctx.strokeStyle = "rgba(255,255,255,0.35)";
+    gctx.lineWidth = 2;
+    gctx.stroke();
+  }
+
+  for (const p of particles) {
+    gctx.fillStyle = `hsla(${p.hue}, 85%, 65%, ${p.life})`;
+    gctx.beginPath();
+    gctx.arc(p.x, p.y, 4 * p.life, 0, Math.PI * 2);
+    gctx.fill();
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+requestAnimationFrame(gameLoop);
+
+let handTrackingStop = null;
+
+async function onStartDismiss() {
+  initAudio();
+  if (audioCtx.state === "suspended") audioCtx.resume();
+  startOverlay.style.display = "none";
+  resetGame();
+
+  if (!handTrackingStop) {
+    try {
+      const { startClientHandTracking } = await import("/static/hand-client.js");
+      handTrackingStop = await startClientHandTracking((data) => {
+        applyHandFrame(data);
+      });
+    } catch (err) {
+      console.error(err);
+      alert(
+        "Camera / hand tracking: " +
+          (err && err.message ? err.message : String(err)) +
+          "\n\nAllow camera access. On mobile, use HTTPS or localhost."
+      );
+    }
+  }
+}
+
+startOverlay.addEventListener("click", onStartDismiss);
+startOverlay.addEventListener("touchstart", (e) => { e.preventDefault(); onStartDismiss(); }, { passive: false });
+
+btnRestart.addEventListener("click", () => {
+  initAudio();
+  if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+  resetGame();
+});
+
+updateMissDots();
+</script>
+</body>
+</html>

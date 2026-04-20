@@ -1,6 +1,8 @@
 fastapi
 uvicorn[standard]
-mediapipe-silicon
+# Use `mediapipe` on Linux (Render, etc.). For Apple Silicon-only local speedups, use mediapipe-silicon in a venv.
+mediapipe
+opencv-python-headless
 websockets
 python-dotenv
 numpy

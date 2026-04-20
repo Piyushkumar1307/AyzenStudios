@@ -18,11 +18,39 @@
   }
 
   header {
+    position: relative;
     text-align: center;
     padding: 24px 20px 12px;
     background: #0a0a0f;
     border-bottom: 1px solid #1e1e2e;
     flex-shrink: 0;
+  }
+
+  .header-game-btn {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    z-index: 2;
+    padding: 10px 18px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #c9a84c;
+    background: #12121e;
+    border: 1px solid #2a2a3e;
+    border-radius: 10px;
+    transition: border-color 0.2s, background 0.2s, transform 0.1s;
+  }
+
+  .header-game-btn:hover {
+    border-color: #c9a84c;
+    background: #1a1a28;
+  }
+
+  .header-game-btn:active {
+    transform: scale(0.97);
   }
 
   header h1 {
@@ -281,6 +309,7 @@
 <div id="cursor"></div>
 
 <header>
+  <a class="header-game-btn" href="/game">Skeleton Catch</a>
   <h1>The Avengers</h1>
   <p>Click a hero to explore their powers</p>
 </header>
@@ -387,40 +416,29 @@ function clickAtCursor() {
   if (clickable && typeof clickable.click === "function") clickable.click();
 }
 
-function connectGestureWs() {
-  const wsUrl = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws/gesture`;
-  const ws = new WebSocket(wsUrl);
+function applyHandFrame(data) {
+  const vv = window.visualViewport;
+  const vw = vv?.width ?? window.innerWidth;
+  const vh = vv?.height ?? window.innerHeight;
+  const ox = vv?.offsetLeft ?? 0;
+  const oy = vv?.offsetTop ?? 0;
 
-  ws.onclose = () => { setTimeout(connectGestureWs, 500); };
+  const nx = data.cursor_x ?? lastPos.x;
+  const ny = data.cursor_y ?? lastPos.y;
+  if (typeof nx === "number" && typeof ny === "number") lastPos = { x: nx, y: ny };
 
-  ws.onmessage = (ev) => {
-    let data;
-    try { data = JSON.parse(ev.data); } catch { return; }
+  const x = ox + lastPos.x * vw;
+  const y = oy + lastPos.y * vh;
+  cursorEl.style.left = `${x}px`;
+  cursorEl.style.top = `${y}px`;
+  cursorEl.style.opacity = data.detected ? "1" : "0.35";
 
-    const vv = window.visualViewport;
-    const vw = vv?.width ?? window.innerWidth;
-    const vh = vv?.height ?? window.innerHeight;
-    const ox = vv?.offsetLeft ?? 0;
-    const oy = vv?.offsetTop ?? 0;
+  drawHand(data.detected ? data.landmarks : null);
 
-    const nx = (data.cursor_x ?? lastPos.x);
-    const ny = (data.cursor_y ?? lastPos.y);
-    if (typeof nx === "number" && typeof ny === "number") lastPos = { x: nx, y: ny };
-
-    const x = ox + (lastPos.x * vw);
-    const y = oy + (lastPos.y * vh);
-    cursorEl.style.left = `${x}px`;
-    cursorEl.style.top = `${y}px`;
-    cursorEl.style.opacity = data.detected ? "1" : "0.35";
-
-    drawHand(data.detected ? data.landmarks : null);
-
-    const isPinch = data.detected && data.gesture === "pinch";
-    if (isPinch && !pinchDown) { pinchDown = true; clickAtCursor(); }
-    if (!isPinch) pinchDown = false;
-  };
+  const isPinch = data.detected && data.gesture === "pinch";
+  if (isPinch && !pinchDown) { pinchDown = true; clickAtCursor(); }
+  if (!isPinch) pinchDown = false;
 }
-connectGestureWs();
 
 // --- Your new Avengers slider UI ---
 const heroes = [
@@ -645,6 +663,53 @@ window.addEventListener('resize', () => {
 document.addEventListener('keydown', e => {
   if (e.key === 'ArrowDown') navigate(1);
   if (e.key === 'ArrowUp') navigate(-1);
+});
+</script>
+<script type="module">
+import { startClientHandTracking } from "/static/hand-client.js";
+
+function failMsg(err) {
+  return "Camera / hand tracking: " + (err && err.message ? err.message : String(err)) +
+    "\n\nAllow camera access and use HTTPS or localhost.";
+}
+
+async function bootHand() {
+  try {
+    await startClientHandTracking((data) => {
+      applyHandFrame(data);
+    });
+  } catch (err) {
+    console.error(err);
+    const name = err && err.name;
+    const denied = name === "NotAllowedError" || name === "PermissionDeniedError";
+    if (denied) {
+      await new Promise((resolve) => {
+        const go = () => {
+          document.removeEventListener("click", go);
+          document.removeEventListener("touchstart", go);
+          resolve();
+        };
+        document.addEventListener("click", go);
+        document.addEventListener("touchstart", go);
+        alert("Tap anywhere on the page to enable the camera for hand tracking.");
+      });
+      try {
+        await startClientHandTracking((data) => {
+          applyHandFrame(data);
+        });
+      } catch (e2) {
+        console.error(e2);
+        alert(failMsg(e2));
+      }
+    } else {
+      alert(failMsg(err));
+    }
+  }
+}
+
+bootHand().catch((err) => {
+  console.error(err);
+  alert(failMsg(err));
 });
 </script>
 </body>
