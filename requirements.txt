@@ -1,7 +1,7 @@
 fastapi
 uvicorn[standard]
 # Legacy mp.solutions.hands API; removed in mediapipe>=0.10.30 — pin below that range.
-mediapipe>=0.10.21,<0.10.30
+mediapipe==0.10.30
 opencv-python-headless
 websockets
 python-dotenv
