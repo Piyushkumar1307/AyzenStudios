@@ -287,7 +287,7 @@
     <h1>Skeleton Catch</h1>
     <p>Swipe quickly through the balls with your index finger (cursor). Slow touches do not count.</p>
     <p>Five misses and it is game over.</p>
-    <p class="hint">Click, tap, or pinch to start. Your camera runs in this browser (not on the server).</p>
+    <p class="hint">Click, tap, or pinch anywhere on this screen to start. The camera runs in your browser (not on the server).</p>
   </div>
 </div>
 
@@ -585,7 +585,7 @@ function clickAtCursor() {
     target.closest &&
     target.closest("#startOverlay")
   ) {
-    startOverlayEl.click();
+    onStartDismiss();
     return;
   }
 
@@ -780,19 +780,49 @@ requestAnimationFrame(gameLoop);
 let handTrackingStop = null;
 
 async function onStartDismiss() {
+  if (!startOverlay || startOverlay.style.display === "none") return;
   initAudio();
   if (audioCtx.state === "suspended") audioCtx.resume();
   startOverlay.style.display = "none";
   resetGame();
+}
 
-  if (!handTrackingStop) {
-    try {
-      const { startClientHandTracking } = await import("/static/hand-client.js");
-      handTrackingStop = await startClientHandTracking((data) => {
-        applyHandFrame(data);
+async function bootstrapHandTracking() {
+  if (handTrackingStop) return;
+  try {
+    const { startClientHandTracking } = await import("/static/hand-client.js");
+    handTrackingStop = await startClientHandTracking((data) => {
+      applyHandFrame(data);
+    });
+  } catch (err) {
+    console.error(err);
+    const name = err && err.name;
+    const denied = name === "NotAllowedError" || name === "PermissionDeniedError";
+    if (denied) {
+      await new Promise((resolve) => {
+        const go = () => {
+          document.removeEventListener("click", go);
+          document.removeEventListener("touchstart", go);
+          resolve();
+        };
+        document.addEventListener("click", go);
+        document.addEventListener("touchstart", go);
+        alert("Tap the screen to allow the camera — then you can pinch to start.");
       });
-    } catch (err) {
-      console.error(err);
+      try {
+        const { startClientHandTracking } = await import("/static/hand-client.js");
+        handTrackingStop = await startClientHandTracking((data) => {
+          applyHandFrame(data);
+        });
+      } catch (e2) {
+        console.error(e2);
+        alert(
+          "Camera / hand tracking: " +
+            (e2 && e2.message ? e2.message : String(e2)) +
+            "\n\nAllow camera access. On mobile, use HTTPS or localhost."
+        );
+      }
+    } else {
       alert(
         "Camera / hand tracking: " +
           (err && err.message ? err.message : String(err)) +
@@ -801,6 +831,8 @@ async function onStartDismiss() {
     }
   }
 }
+
+bootstrapHandTracking();
 
 startOverlay.addEventListener("click", onStartDismiss);
 startOverlay.addEventListener("touchstart", (e) => { e.preventDefault(); onStartDismiss(); }, { passive: false });
