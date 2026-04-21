@@ -59,6 +59,7 @@ app.add_middleware(
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_HTML = os.path.join(BASE_DIR, "static", "index.html")
 GAME_HTML = os.path.join(BASE_DIR, "static", "game.html")
+PUZZLE_HTML = os.path.join(BASE_DIR, "static", "puzzle.html")
 
 @app.get("/")
 def index():
@@ -72,6 +73,10 @@ def index_alt():
 @app.get("/game")
 def game():
     return FileResponse(GAME_HTML)
+
+@app.get("/puzzle")
+def puzzle():
+    return FileResponse(PUZZLE_HTML)
 
 app.mount(
     "/static",

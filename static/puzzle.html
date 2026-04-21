@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neon Pop — Piyush-Store</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #050510;
+    color: #e8e8f0;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  #handCanvas {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  #cursor {
+    position: fixed;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #60a5fa;
+    box-shadow: 0 0 0 6px rgba(96, 165, 250, 0.15);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    opacity: 0;
+    z-index: 10000;
+  }
+
+  .hud {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    padding: 12px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+    pointer-events: none;
+    z-index: 10001;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  }
+
+  .hud-block h2 {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #6b7280;
+    margin-bottom: 2px;
+  }
+
+  .hud-block .val {
+    font-size: 28px;
+    font-weight: 700;
+    color: #22d3ee;
+  }
+
+  .hud-block .sub {
+    font-size: 12px;
+    color: #a78bfa;
+    margin-top: 2px;
+  }
+
+  .hud a {
+    pointer-events: auto;
+    font-size: 13px;
+    color: #a5b4fc;
+    text-decoration: none;
+    align-self: center;
+  }
+
+  .hud a:hover { text-decoration: underline; }
+
+  #startOverlay, #gameOverOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10002;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(5, 5, 16, 0.9);
+    backdrop-filter: blur(8px);
+    pointer-events: auto;
+  }
+
+  #gameOverOverlay { display: none; }
+  #gameOverOverlay.visible { display: flex; }
+
+  .panel {
+    text-align: center;
+    max-width: 420px;
+    padding: 34px 28px;
+    background: linear-gradient(145deg, #12121c, #0c0c14);
+    border: 1px solid #2a2a3e;
+    border-radius: 20px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+
+  .panel h1 {
+    font-size: 20px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #c4b5fd;
+    margin-bottom: 12px;
+  }
+
+  .panel p {
+    font-size: 14px;
+    color: #9ca3af;
+    line-height: 1.65;
+    margin-bottom: 8px;
+  }
+
+  .panel .hint {
+    margin-top: 16px;
+    font-size: 13px;
+    color: #6b7280;
+  }
+
+  .btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 18px;
+  }
+
+  .btn {
+    padding: 12px 26px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 12px;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.12s;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    color: #0f172a;
+    background: linear-gradient(180deg, #67e8f9, #22d3ee);
+    box-shadow: 0 8px 24px rgba(34, 211, 238, 0.35);
+  }
+
+  .btn-ghost {
+    color: #a5b4fc;
+    background: transparent;
+    border: 2px solid #6366f1;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  #gameRoot {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 88px 16px 40px;
+    position: relative;
+    z-index: 1;
+  }
+
+  #gameRoot.visible { display: flex; }
+
+  .game-tagline {
+    font-size: 12px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 8px;
+  }
+
+  .timer-bar-wrap {
+    width: min(88vw, 320px);
+    height: 6px;
+    background: rgba(30, 41, 59, 0.9);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 18px;
+    border: 1px solid rgba(99, 102, 241, 0.25);
+  }
+
+  .timer-bar {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #22d3ee, #a78bfa);
+    transform-origin: left center;
+    transform: scaleX(1);
+    transition: transform 0.05s linear;
+  }
+
+  .grid-wrap {
+    padding: 14px;
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    border-radius: 16px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(72px, 24vw));
+    grid-template-rows: repeat(3, minmax(72px, 24vw));
+    gap: 10px;
+    max-width: min(92vw, 340px);
+  }
+
+  .cell {
+    border-radius: 14px;
+    border: 2px solid rgba(71, 85, 105, 0.6);
+    cursor: pointer;
+    padding: 0;
+    font-size: 0;
+    background: linear-gradient(160deg, #1e293b, #0f172a);
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.45);
+    transition: transform 0.12s, box-shadow 0.15s;
+  }
+
+  .cell:hover { filter: brightness(1.06); }
+
+  .cell.target {
+    border-color: rgba(103, 232, 249, 0.95);
+    background: linear-gradient(160deg, #22d3ee, #0891b2);
+    box-shadow:
+      0 0 28px rgba(34, 211, 238, 0.65),
+      inset 0 0 20px rgba(255,255,255,0.25);
+    animation: pulse 0.55s ease-in-out infinite alternate;
+  }
+
+  @keyframes pulse {
+    from { filter: brightness(1); }
+    to { filter: brightness(1.15); }
+  }
+
+  .cell.wrong-flash {
+    animation: wrong 0.35s ease;
+  }
+
+  @keyframes wrong {
+    0%, 100% { box-shadow: inset 0 2px 10px rgba(0,0,0,0.45); }
+    50% { box-shadow: 0 0 20px rgba(248, 113, 113, 0.8); border-color: #f87171; }
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 28%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: #fef08a;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 10003;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<canvas id="handCanvas"></canvas>
+<div id="cursor"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<div class="hud">
+  <div class="hud-block">
+    <h2>Score</h2>
+    <div class="val" id="scoreVal">0</div>
+    <div class="sub" id="streakVal"></div>
+  </div>
+  <div class="hud-block" style="text-align: right;">
+    <h2>Misses</h2>
+    <div class="val" id="missVal" style="color:#f87171;">0 / 3</div>
+  </div>
+  <a href="/">← Store</a>
+</div>
+
+<div id="startOverlay">
+  <div class="panel">
+    <h1>Neon Pop</h1>
+    <p>One tile lights up — <strong style="color:#67e8f9;">pinch it</strong> before the bar runs out.</p>
+    <p>Each hit speeds things up a little. Three misses and it is game over. Beat your best score.</p>
+    <p class="hint">Point to aim, pinch to tap. Pinch here to start.</p>
+  </div>
+</div>
+
+<div id="gameRoot">
+  <p class="game-tagline">Pinch the glow</p>
+  <div class="timer-bar-wrap" aria-hidden="true">
+    <div class="timer-bar" id="timerBar"></div>
+  </div>
+  <div class="grid-wrap">
+    <div class="grid" id="grid" role="application" aria-label="3 by 3 reaction grid"></div>
+  </div>
+</div>
+
+<div id="gameOverOverlay">
+  <div class="panel">
+    <h1>Game over</h1>
+    <p>Score: <strong id="finalScore">0</strong></p>
+    <p>Best: <strong id="bestScore">0</strong></p>
+    <div class="btn-row">
+      <button type="button" class="btn btn-primary" id="btnRestart">Play again</button>
+      <a class="btn btn-ghost" href="/">Home</a>
+    </div>
+    <p class="hint">Or pinch a button.</p>
+  </div>
+</div>
+
+<script>
+const HAND_CONNECTIONS = [
+  [0,1],[1,2],[2,3],[3,4],
+  [0,5],[5,6],[6,7],[7,8],
+  [5,9],[9,10],[10,11],[11,12],
+  [9,13],[13,14],[14,15],[15,16],
+  [13,17],[17,18],[18,19],[19,20],
+  [0,17]
+];
+
+const GRID = 3;
+const N = GRID * GRID;
+const MAX_MISSES = 3;
+const INITIAL_MS = 1650;
+const MIN_MS = 580;
+const SPEED_MUL = 0.972;
+const BETWEEN_ROUNDS_MS = 280;
+const STORAGE_KEY = "neonPopBest";
+
+const handCanvas = document.getElementById("handCanvas");
+const hctx = handCanvas.getContext("2d");
+const cursorEl = document.getElementById("cursor");
+const startOverlay = document.getElementById("startOverlay");
+const gameRoot = document.getElementById("gameRoot");
+const gameOverOverlay = document.getElementById("gameOverOverlay");
+const gridEl = document.getElementById("grid");
+const scoreVal = document.getElementById("scoreVal");
+const missVal = document.getElementById("missVal");
+const streakVal = document.getElementById("streakVal");
+const timerBar = document.getElementById("timerBar");
+const finalScoreEl = document.getElementById("finalScore");
+const bestScoreEl = document.getElementById("bestScore");
+const btnRestart = document.getElementById("btnRestart");
+const toastEl = document.getElementById("toast");
+
+let pinchDown = false;
+let lastPos = { x: 0.5, y: 0.5 };
+let handTrackingStop = null;
+
+let playing = false;
+let score = 0;
+let misses = 0;
+let streak = 0;
+let currentMs = INITIAL_MS;
+let roundDeadline = 0;
+let currentTarget = -1;
+let lastTarget = -1;
+let tickId = 0;
+let betweenTimer = null;
+
+let audioCtx = null;
+
+function bestScoreRead() {
+  try {
+    const v = localStorage.getItem(STORAGE_KEY);
+    const n = v == null ? NaN : parseInt(v, 10);
+    return Number.isFinite(n) ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function bestScoreWrite(s) {
+  try {
+    const prev = bestScoreRead();
+    if (s > prev) localStorage.setItem(STORAGE_KEY, String(s));
+  } catch { /* ignore */ }
+}
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function beep(freq, dur, vol = 0.08) {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = "sine";
+  o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(g);
+  g.connect(audioCtx.destination);
+  o.start(t);
+  o.stop(t + dur + 0.02);
+}
+
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toastEl.classList.remove("show"), 900);
+}
+
+function resizeHandCanvas() {
+  const vv = window.visualViewport;
+  const vw = vv?.width ?? window.innerWidth;
+  const vh = vv?.height ?? window.innerHeight;
+  const ox = vv?.offsetLeft ?? 0;
+  const oy = vv?.offsetTop ?? 0;
+  const dpr = window.devicePixelRatio || 1;
+
+  handCanvas.width = Math.floor(vw * dpr);
+  handCanvas.height = Math.floor(vh * dpr);
+  handCanvas.style.left = `${ox}px`;
+  handCanvas.style.top = `${oy}px`;
+  handCanvas.style.width = `${vw}px`;
+  handCanvas.style.height = `${vh}px`;
+  hctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener("resize", resizeHandCanvas);
+window.visualViewport?.addEventListener("resize", resizeHandCanvas);
+window.visualViewport?.addEventListener("scroll", resizeHandCanvas);
+resizeHandCanvas();
+
+function drawHand(landmarks) {
+  const vv = window.visualViewport;
+  const vw = vv?.width ?? window.innerWidth;
+  const vh = vv?.height ?? window.innerHeight;
+  hctx.clearRect(0, 0, vw, vh);
+  if (!Array.isArray(landmarks) || landmarks.length !== 21) return;
+
+  const pts = landmarks.map(p => ({ x: p.x * vw, y: p.y * vh }));
+
+  hctx.lineWidth = 3;
+  hctx.strokeStyle = "rgba(96, 165, 250, 0.95)";
+  hctx.beginPath();
+  for (const [a, b] of HAND_CONNECTIONS) {
+    hctx.moveTo(pts[a].x, pts[a].y);
+    hctx.lineTo(pts[b].x, pts[b].y);
+  }
+  hctx.stroke();
+
+  hctx.fillStyle = "rgba(231, 234, 240, 0.95)";
+  for (const p of pts) {
+    hctx.beginPath();
+    hctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+    hctx.fill();
+  }
+}
+
+function clearGridHighlight() {
+  gridEl.querySelectorAll(".cell").forEach((el) => {
+    el.classList.remove("target", "wrong-flash");
+  });
+}
+
+function pickTarget() {
+  let i = Math.floor(Math.random() * N);
+  let guard = 0;
+  while (i === lastTarget && guard++ < 12) {
+    i = Math.floor(Math.random() * N);
+  }
+  return i;
+}
+
+function renderTimer() {
+  const now = performance.now();
+  const left = Math.max(0, roundDeadline - now);
+  const t = currentMs > 0 ? left / currentMs : 0;
+  timerBar.style.transform = `scaleX(${t})`;
+}
+
+function endGame() {
+  playing = false;
+  cancelAnimationFrame(tickId);
+  clearTimeout(betweenTimer);
+  clearGridHighlight();
+  currentTarget = -1;
+  bestScoreWrite(score);
+  finalScoreEl.textContent = String(score);
+  bestScoreEl.textContent = String(Math.max(bestScoreRead(), score));
+  gameOverOverlay.classList.add("visible");
+  beep(180, 0.25, 0.06);
+}
+
+function registerMiss() {
+  cancelAnimationFrame(tickId);
+  misses++;
+  streak = 0;
+  streakVal.textContent = "";
+  missVal.textContent = `${misses} / ${MAX_MISSES}`;
+  beep(120, 0.2, 0.07);
+  if (misses >= MAX_MISSES) {
+    endGame();
+    return;
+  }
+  scheduleNextRound();
+}
+
+function scheduleNextRound() {
+  clearTimeout(betweenTimer);
+  clearGridHighlight();
+  currentTarget = -1;
+  betweenTimer = setTimeout(() => {
+    if (!playing) return;
+    startRound();
+  }, BETWEEN_ROUNDS_MS);
+}
+
+function startRound() {
+  if (!playing) return;
+  cancelAnimationFrame(tickId);
+  clearTimeout(betweenTimer);
+  clearGridHighlight();
+  currentMs = Math.max(MIN_MS, currentMs);
+  currentTarget = pickTarget();
+  lastTarget = currentTarget;
+  const cells = gridEl.querySelectorAll(".cell");
+  cells[currentTarget].classList.add("target");
+  roundDeadline = performance.now() + currentMs;
+  beep(660, 0.06, 0.04);
+
+  function tick() {
+    if (!playing || currentTarget < 0) return;
+    renderTimer();
+    if (performance.now() >= roundDeadline) {
+      registerMiss();
+      return;
+    }
+    tickId = requestAnimationFrame(tick);
+  }
+  tickId = requestAnimationFrame(tick);
+}
+
+function onCellClick(i) {
+  if (!playing || currentTarget < 0) return;
+  if (i === currentTarget) {
+    cancelAnimationFrame(tickId);
+    clearTimeout(betweenTimer);
+    score++;
+    streak++;
+    scoreVal.textContent = String(score);
+    currentMs = Math.max(MIN_MS, currentMs * SPEED_MUL);
+    initAudio();
+    beep(880 + Math.min(streak, 8) * 20, 0.08, 0.07);
+    if (streak === 5) showToast("On fire!");
+    else if (streak === 10) showToast("Unstoppable!");
+    else if (streak === 15) showToast("Neon legend!");
+    streakVal.textContent = streak > 1 ? `${streak} streak` : "";
+    clearGridHighlight();
+    currentTarget = -1;
+    scheduleNextRound();
+  } else {
+    const cells = gridEl.querySelectorAll(".cell");
+    cells[i].classList.add("wrong-flash");
+    setTimeout(() => cells[i].classList.remove("wrong-flash"), 350);
+  }
+}
+
+function buildGrid() {
+  gridEl.innerHTML = "";
+  for (let i = 0; i < N; i++) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "cell";
+    b.setAttribute("aria-label", "Cell " + (i + 1));
+    b.addEventListener("click", () => onCellClick(i));
+    gridEl.appendChild(b);
+  }
+}
+
+function clickAtCursor() {
+  const c = cursorEl.getBoundingClientRect();
+  const cx = c.left + c.width / 2;
+  const cy = c.top + c.height / 2;
+  const skip = (node) => node === cursorEl || node === handCanvas || node === toastEl;
+
+  const stack = document.elementsFromPoint ? document.elementsFromPoint(cx, cy) : [];
+  let target = null;
+  for (const el of stack) {
+    if (!el || skip(el)) continue;
+    target = el;
+    break;
+  }
+  if (!target) target = document.elementFromPoint(cx, cy);
+  if (!target || skip(target)) return;
+
+  if (
+    startOverlay &&
+    getComputedStyle(startOverlay).display !== "none" &&
+    target.closest &&
+    target.closest("#startOverlay")
+  ) {
+    onStartDismiss();
+    return;
+  }
+
+  const clickable = target.closest
+    ? target.closest("button, a[href], [role='button']")
+    : null;
+  if (clickable && typeof clickable.click === "function") clickable.click();
+}
+
+function applyHandFrame(data) {
+  const vv = window.visualViewport;
+  const vw = vv?.width ?? window.innerWidth;
+  const vh = vv?.height ?? window.innerHeight;
+  const ox = vv?.offsetLeft ?? 0;
+  const oy = vv?.offsetTop ?? 0;
+
+  const nx = data.cursor_x ?? lastPos.x;
+  const ny = data.cursor_y ?? lastPos.y;
+  if (typeof nx === "number" && typeof ny === "number") lastPos = { x: nx, y: ny };
+
+  const x = ox + lastPos.x * vw;
+  const y = oy + lastPos.y * vh;
+  cursorEl.style.left = `${x}px`;
+  cursorEl.style.top = `${y}px`;
+  cursorEl.style.opacity = data.detected ? "1" : "0.35";
+
+  drawHand(data.detected ? data.landmarks : null);
+
+  const isPinch = data.detected && data.gesture === "pinch";
+  if (isPinch && !pinchDown) {
+    pinchDown = true;
+    clickAtCursor();
+  }
+  if (!isPinch) pinchDown = false;
+}
+
+function resetRun() {
+  cancelAnimationFrame(tickId);
+  clearTimeout(betweenTimer);
+  score = 0;
+  misses = 0;
+  streak = 0;
+  currentMs = INITIAL_MS;
+  currentTarget = -1;
+  lastTarget = -1;
+  scoreVal.textContent = "0";
+  missVal.textContent = "0 / 3";
+  streakVal.textContent = "";
+  timerBar.style.transform = "scaleX(1)";
+  clearGridHighlight();
+  gameOverOverlay.classList.remove("visible");
+  playing = true;
+  initAudio();
+  if (audioCtx.state === "suspended") audioCtx.resume();
+  startRound();
+}
+
+async function onStartDismiss() {
+  if (!startOverlay || startOverlay.style.display === "none") return;
+  initAudio();
+  if (audioCtx && audioCtx.state === "suspended") await audioCtx.resume();
+  startOverlay.style.display = "none";
+  gameRoot.classList.add("visible");
+  if (!gridEl.querySelector(".cell")) buildGrid();
+  resetRun();
+}
+
+async function bootstrapHandTracking() {
+  if (handTrackingStop) return;
+  try {
+    const { startClientHandTracking } = await import("/static/hand-client.js");
+    handTrackingStop = await startClientHandTracking(applyHandFrame);
+  } catch (err) {
+    console.error(err);
+    const name = err && err.name;
+    const denied = name === "NotAllowedError" || name === "PermissionDeniedError";
+    if (denied) {
+      await new Promise((resolve) => {
+        const go = () => {
+          document.removeEventListener("click", go);
+          document.removeEventListener("touchstart", go);
+          resolve();
+        };
+        document.addEventListener("click", go);
+        document.addEventListener("touchstart", go);
+        alert("Tap the screen to allow the camera — then you can pinch to play.");
+      });
+      try {
+        const { startClientHandTracking } = await import("/static/hand-client.js");
+        handTrackingStop = await startClientHandTracking(applyHandFrame);
+      } catch (e2) {
+        console.error(e2);
+        alert(
+          "Camera / hand tracking: " +
+            (e2 && e2.message ? e2.message : String(e2)) +
+            "\n\nAllow camera access. On mobile, use HTTPS or localhost."
+        );
+      }
+    } else {
+      alert(
+        "Camera / hand tracking: " +
+          (err && err.message ? err.message : String(err)) +
+          "\n\nAllow camera access. On mobile, use HTTPS or localhost."
+      );
+    }
+  }
+}
+
+bootstrapHandTracking();
+
+startOverlay.addEventListener("click", onStartDismiss);
+startOverlay.addEventListener(
+  "touchstart",
+  (e) => {
+    e.preventDefault();
+    onStartDismiss();
+  },
+  { passive: false }
+);
+
+btnRestart.addEventListener("click", () => {
+  resetRun();
+});
+
+</script>
+</body>
+</html>

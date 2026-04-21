@@ -372,7 +372,7 @@
       </div>
       <div class="game-card-body">
         <div class="game-title-row">
-          <h2 class="game-title">Skeleton Catch</h2>
+          <h2 class="game-title">Hit balls</h2>
           <span class="game-price">Free</span>
         </div>
         <p class="game-desc">
@@ -383,11 +383,31 @@
           <span class="tag">Camera</span>
           <span class="tag alt">Arcade</span>
         </div>
-        <a class="play-cta" href="/game" id="store-play-btn">Play now →</a>
+        <a class="play-cta" href="/game">Play now →</a>
+      </div>
+    </article>
+    <article class="game-card" id="game-neon-pop">
+      <div class="game-card-media" style="background: linear-gradient(145deg, rgba(34,211,238,0.2) 0%, transparent 50%), linear-gradient(225deg, rgba(99,102,241,0.15) 0%, transparent 45%), #0a0c18;">
+        <span class="game-icon" aria-hidden="true">⚡</span>
+      </div>
+      <div class="game-card-body">
+        <div class="game-title-row">
+          <h2 class="game-title">Neon Pop</h2>
+          <span class="game-price">Free</span>
+        </div>
+        <p class="game-desc">
+          Simple reflex game: one tile glows — pinch it before the timer runs out. Chain hits for streak bonuses and beat your best score.
+        </p>
+        <div class="game-tags">
+          <span class="tag alt">Reflex</span>
+          <span class="tag">Gesture</span>
+          <span class="tag alt">Casual</span>
+        </div>
+        <a class="play-cta" href="/puzzle">Play now →</a>
       </div>
     </article>
   </div>
-  <p class="footer-hint">Scroll: point with index only, then move your finger up or down. More titles soon.</p>
+  <p class="footer-hint">Scroll: point with index only, then move your finger up or down.</p>
 </main>
 
 <script>
@@ -406,8 +426,6 @@ const HAND_CONNECTIONS = [
 
 let pinchDown = false;
 let lastPos = { x: 0.5, y: 0.5 };
-
-const PLAY_BTN_ID = "store-play-btn";
 
 /** Scroll only in “point” pose: index extended, other fingers down — move index up/down to scroll the page. */
 const SWIPE_SAMPLES = 12;
@@ -487,12 +505,12 @@ function elementAtCursor() {
   return target;
 }
 
-/** Pinch only activates the Play button (not the whole card). */
+/** Pinch only activates a Play link (not the whole card). */
 function clickAtCursor() {
   const target = elementAtCursor();
   if (!target) return;
-  const playBtn = target.closest ? target.closest("#" + PLAY_BTN_ID) : null;
-  if (!playBtn || playBtn.id !== PLAY_BTN_ID) return;
+  const playBtn = target.closest ? target.closest("a.play-cta") : null;
+  if (!playBtn || !playBtn.getAttribute("href")) return;
   if (typeof playBtn.click === "function") playBtn.click();
 }
 
