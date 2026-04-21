@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Skeleton Catch</title>
+<title>Fruit Ninja</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -284,9 +284,10 @@
 
 <div id="startOverlay">
   <div class="panel">
-    <h1>Skeleton Catch</h1>
-    <p>Swipe quickly through the balls with your index finger (cursor). Slow touches do not count.</p>
-    <p>Five misses and it is game over.</p>
+    <h1>Fruit Ninja</h1>
+    <p>Swipe quickly through the falling fruits with your index finger (cursor). Slow touches do not count.</p>
+    <p>Fruits speed up over time. Miss five fruits and it is game over.</p>
+    <p><strong style="color:#fca5a5;">Avoid bombs</strong> — swiping a bomb ends the game instantly.</p>
     <p class="hint">Click, tap, or pinch anywhere on this screen to start. The camera runs in your browser (not on the server).</p>
   </div>
 </div>
@@ -314,10 +315,13 @@ const HAND_CONNECTIONS = [
 ];
 
 const MAX_MISSES = 5;
-const BALL_R = 16;
-const SPAWN_EVERY_MS = 1400;
-const FALL_SPEED_MIN = 220;
-const FALL_SPEED_MAX = 340;
+const FRUIT_R = 16;
+const SPAWN_EVERY_MS = 1300;
+const FALL_SPEED_MIN = 210;
+const FALL_SPEED_MAX = 320;
+const SPEED_RAMP_PER_SEC = 0.022; // gradual difficulty ramp
+const BOMB_BASE_CHANCE = 0.10;    // base probability per spawn
+const BOMB_MAX_CHANCE = 0.22;     // caps the bomb frequency
 /** Min speed (px/s) along index path for a swipe to count */
 const MIN_SWIPE_PX_PER_SEC = 420;
 /** Half-width of the swipe “blade” plus ball overlap */
@@ -349,8 +353,9 @@ let score = 0;
 let misses = 0;
 let gameOver = false;
 let gameStarted = false;
+let gameStartAt = 0;
 
-/** @type {{ x: number, y: number, vy: number, r: number, alive: boolean }[]} */
+/** @type {{ x: number, y: number, vy: number, r: number, alive: boolean, kind: "fruit" | "bomb", hue: number }[]} */
 let balls = [];
 /** @type {{ x: number, y: number, vx: number, vy: number, life: number, hue: number }[]} */
 let particles = [];
@@ -637,12 +642,17 @@ function spawnBall() {
   const vw = getVW();
   const margin = 40;
   const x = margin + Math.random() * (vw - 2 * margin);
+  const tSec = gameStartAt ? (performance.now() - gameStartAt) / 1000 : 0;
+  const bombChance = Math.min(BOMB_MAX_CHANCE, BOMB_BASE_CHANCE + tSec * 0.002);
+  const isBomb = Math.random() < bombChance;
   balls.push({
     x,
-    y: -BALL_R - 4,
+    y: -FRUIT_R - 4,
     vy: FALL_SPEED_MIN + Math.random() * (FALL_SPEED_MAX - FALL_SPEED_MIN),
-    r: BALL_R,
-    alive: true
+    r: FRUIT_R,
+    alive: true,
+    kind: isBomb ? "bomb" : "fruit",
+    hue: 20 + Math.random() * 320
   });
 }
 
@@ -658,6 +668,7 @@ function resetGame() {
   updateMissDots();
   gameOverOverlay.classList.remove("visible");
   gameStarted = true;
+  gameStartAt = performance.now();
   startBackgroundMusic();
 }
 
@@ -678,6 +689,8 @@ function gameLoop(now) {
   const hand = window.__gameHand;
 
   if (gameStarted && !gameOver) {
+    const tSec = gameStartAt ? (performance.now() - gameStartAt) / 1000 : 0;
+    const speedScale = 1 + tSec * SPEED_RAMP_PER_SEC;
     spawnAcc += dt * 1000;
     while (spawnAcc >= SPAWN_EVERY_MS) {
       spawnAcc -= SPAWN_EVERY_MS;
@@ -687,24 +700,33 @@ function gameLoop(now) {
     for (const b of balls) {
       if (gameOver) break;
       if (!b.alive) continue;
-      b.y += b.vy * dt;
+      b.y += b.vy * dt * speedScale;
 
       if (hand?.detected && swipeHitsBall(b.x, b.y, b.r)) {
         b.alive = false;
-        score++;
-        scoreVal.textContent = String(score);
-        burst(b.x, b.y);
-        playHitSound();
-        triggerHitFeedback();
+        if (b.kind === "bomb") {
+          // Bomb hit = instant game over.
+          playMissSound();
+          endGame();
+          break;
+        } else {
+          score++;
+          scoreVal.textContent = String(score);
+          burst(b.x, b.y);
+          playHitSound();
+          triggerHitFeedback();
+        }
         continue;
       }
 
       if (b.y - b.r > vh + 30) {
         b.alive = false;
-        misses++;
-        updateMissDots();
-        playMissSound();
-        if (misses >= MAX_MISSES) endGame();
+        if (b.kind === "fruit") {
+          misses++;
+          updateMissDots();
+          playMissSound();
+          if (misses >= MAX_MISSES) endGame();
+        }
       }
     }
 
@@ -753,17 +775,43 @@ function gameLoop(now) {
 
   for (const b of balls) {
     if (!b.alive) continue;
-    const g = gctx.createRadialGradient(b.x - 5, b.y - 5, 2, b.x, b.y, b.r);
-    g.addColorStop(0, "#e0e7ff");
-    g.addColorStop(0.5, "#6366f1");
-    g.addColorStop(1, "#312e81");
-    gctx.fillStyle = g;
-    gctx.beginPath();
-    gctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-    gctx.fill();
-    gctx.strokeStyle = "rgba(255,255,255,0.35)";
-    gctx.lineWidth = 2;
-    gctx.stroke();
+    if (b.kind === "bomb") {
+      const g = gctx.createRadialGradient(b.x - 4, b.y - 6, 2, b.x, b.y, b.r);
+      g.addColorStop(0, "rgba(255,255,255,0.55)");
+      g.addColorStop(0.25, "#111827");
+      g.addColorStop(1, "#000000");
+      gctx.fillStyle = g;
+      gctx.beginPath();
+      gctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      gctx.fill();
+      // fuse glow
+      gctx.strokeStyle = "rgba(248,113,113,0.9)";
+      gctx.lineWidth = 3;
+      gctx.beginPath();
+      gctx.arc(b.x + b.r * 0.35, b.y - b.r * 0.55, b.r * 0.35, 0, Math.PI * 2);
+      gctx.stroke();
+      gctx.strokeStyle = "rgba(255,255,255,0.25)";
+      gctx.lineWidth = 2;
+      gctx.strokeRect(b.x - b.r * 0.35, b.y - b.r * 1.05, b.r * 0.7, b.r * 0.3);
+    } else {
+      const g = gctx.createRadialGradient(b.x - 5, b.y - 5, 2, b.x, b.y, b.r);
+      g.addColorStop(0, `hsla(${b.hue}, 95%, 85%, 0.95)`);
+      g.addColorStop(0.55, `hsla(${b.hue}, 85%, 55%, 0.95)`);
+      g.addColorStop(1, `hsla(${b.hue}, 70%, 30%, 0.95)`);
+      gctx.fillStyle = g;
+      gctx.beginPath();
+      gctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      gctx.fill();
+      // highlight
+      gctx.strokeStyle = "rgba(255,255,255,0.32)";
+      gctx.lineWidth = 2;
+      gctx.stroke();
+      // tiny leaf
+      gctx.fillStyle = "rgba(52, 211, 153, 0.75)";
+      gctx.beginPath();
+      gctx.ellipse(b.x + b.r * 0.1, b.y - b.r * 0.95, b.r * 0.35, b.r * 0.2, -0.6, 0, Math.PI * 2);
+      gctx.fill();
+    }
   }
 
   for (const p of particles) {
