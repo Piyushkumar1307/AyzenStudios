@@ -507,6 +507,27 @@
         <a class="play-cta" href="#" data-game-link="neon_runner" data-route="/runner">Checking access…</a>
       </div>
     </article>
+
+    <article class="game-card" id="game-tictactoe">
+      <div class="game-card-media" style="background: linear-gradient(145deg, rgba(34,211,238,0.15) 0%, transparent 50%), linear-gradient(225deg, rgba(167,139,250,0.2) 0%, transparent 45%), #0a0c18;">
+        <span class="game-icon" aria-hidden="true">◫</span>
+      </div>
+      <div class="game-card-body">
+        <div class="game-title-row">
+          <h2 class="game-title">Neon Tic-Tac-Toe</h2>
+          <span class="game-price" data-price-for="tictactoe">₹10</span>
+        </div>
+        <p class="game-desc">
+          Choose X or O, then face an AI that levels up every match. Pinch the grid; ambient neon loop keeps the pace.
+        </p>
+        <div class="game-tags">
+          <span class="tag alt">Strategy</span>
+          <span class="tag">Gesture</span>
+          <span class="tag alt">AI</span>
+        </div>
+        <a class="play-cta" href="#" data-game-link="tictactoe" data-route="/tictactoe">Checking access…</a>
+      </div>
+    </article>
   </div>
   <p class="footer-hint">Scroll: point with index only, then move your finger up or down.</p>
 </main>
@@ -518,6 +539,13 @@ const ENT_KEY = "piyush_entitlements_v1";
 const PAID_GAMES = {
   neon_pop: { title: "Neon Pop", route: "/puzzle", priceLabel: "₹10" },
   neon_runner: { title: "Neon Runner", route: "/runner", priceLabel: "₹10" },
+  tictactoe: { title: "Neon Tic-Tac-Toe", route: "/tictactoe", priceLabel: "₹10" },
+};
+
+const PAID_GAME_CARD_ID = {
+  neon_pop: "game-neon-pop",
+  neon_runner: "game-neon-runner",
+  tictactoe: "game-tictactoe",
 };
 
 function logout() {
@@ -592,7 +620,8 @@ function setPaidLinksEnabled(enabled) {
 
 function applyLockUI(games, { isLoading = false } = {}) {
   for (const [gid, meta] of Object.entries(PAID_GAMES)) {
-    const card = document.querySelector(gid === "neon_pop" ? "#game-neon-pop" : "#game-neon-runner");
+    const cardId = PAID_GAME_CARD_ID[gid];
+    const card = cardId ? document.getElementById(cardId) : null;
     const link = document.querySelector(`[data-game-link="${gid}"]`);
     const priceEl = document.querySelector(`[data-price-for="${gid}"]`);
     if (priceEl) priceEl.textContent = meta.priceLabel;

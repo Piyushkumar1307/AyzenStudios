@@ -90,6 +90,7 @@ INDEX_HTML = os.path.join(BASE_DIR, "static", "index.html")
 GAME_HTML = os.path.join(BASE_DIR, "static", "game.html")
 PUZZLE_HTML = os.path.join(BASE_DIR, "static", "puzzle.html")
 RUNNER_HTML = os.path.join(BASE_DIR, "static", "runner.html")
+TICTACTOE_HTML = os.path.join(BASE_DIR, "static", "tictactoe.html")
 LOGIN_HTML = os.path.join(BASE_DIR, "static", "login.html")
 PROFILE_HTML = os.path.join(BASE_DIR, "static", "profile.html")
 
@@ -97,6 +98,7 @@ PROFILE_HTML = os.path.join(BASE_DIR, "static", "profile.html")
 PAID_GAMES = {
     "neon_pop": {"route": "/puzzle", "title": "Neon Pop", "amount_paise": 1000},       # ₹10
     "neon_runner": {"route": "/runner", "title": "Neon Runner", "amount_paise": 1000}, # ₹10
+    "tictactoe": {"route": "/tictactoe", "title": "Neon Tic-Tac-Toe", "amount_paise": 1000},  # ₹10
 }
 
 @app.get("/")
@@ -119,6 +121,10 @@ def puzzle():
 @app.get("/runner")
 def runner():
     return FileResponse(RUNNER_HTML)
+
+@app.get("/tictactoe")
+def tictactoe():
+    return FileResponse(TICTACTOE_HTML)
 
 @app.get("/login")
 def login_page():

@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neon Tic-Tac-Toe — Piyush-Store</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #050510;
+    color: #e8e8f0;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  #handCanvas {
+    position: fixed; left: 0; top: 0; width: 100vw; height: 100vh;
+    pointer-events: none; z-index: 9999;
+  }
+  #cursor {
+    position: fixed; width: 18px; height: 18px; border-radius: 50%;
+    background: #60a5fa;
+    box-shadow: 0 0 0 6px rgba(96, 165, 250, 0.15);
+    transform: translate(-50%, -50%);
+    pointer-events: none; opacity: 0; z-index: 10000;
+  }
+  .toast {
+    position: fixed; bottom: 22%; left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    padding: 10px 20px; font-size: 14px; font-weight: 600;
+    letter-spacing: 0.06em; color: #fef08a; opacity: 0; pointer-events: none;
+    z-index: 10004; transition: opacity 0.2s, transform 0.2s; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .hud {
+    position: fixed; left: 0; right: 0; top: 0;
+    padding: max(12px, env(safe-area-inset-top, 0px)) 18px 10px;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    flex-wrap: wrap; gap: 10px; pointer-events: none; z-index: 10001;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  }
+  .hud-block h2 {
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #6b7280;
+    margin-bottom: 2px;
+  }
+  .hud-block .val { font-size: 24px; font-weight: 700; color: #22d3ee; }
+  .hud a { pointer-events: auto; font-size: 13px; color: #a5b4fc; text-decoration: none; }
+  .hud a:hover { text-decoration: underline; }
+
+  .panel-wrap {
+    position: fixed; inset: 0; z-index: 10002; display: flex; align-items: center;
+    justify-content: center; background: rgba(5, 5, 16, 0.9); backdrop-filter: blur(8px);
+    pointer-events: auto; padding: 20px;
+  }
+  .panel-wrap.hidden { display: none; }
+
+  .panel {
+    text-align: center; max-width: 420px; width: 100%;
+    padding: 32px 26px; background: linear-gradient(145deg, #12121c, #0c0c14);
+    border: 1px solid #2a2a3e; border-radius: 20px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+  .panel h1 {
+    font-size: 20px; letter-spacing: 4px; text-transform: uppercase; color: #c4b5fd;
+    margin-bottom: 12px;
+  }
+  .panel p { font-size: 14px; color: #9ca3af; line-height: 1.65; margin-bottom: 8px; }
+  .panel .hint { margin-top: 14px; font-size: 13px; color: #6b7280; }
+  .sym-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+  .btn {
+    padding: 14px 28px; font-size: 15px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; border-radius: 12px; cursor: pointer; border: none;
+    transition: transform 0.12s; min-width: 120px;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-x {
+    color: #0f172a; background: linear-gradient(180deg, #67e8f9, #22d3ee);
+    box-shadow: 0 8px 24px rgba(34, 211, 238, 0.35);
+  }
+  .btn-o {
+    color: #f8fafc; background: linear-gradient(180deg, #a78bfa, #7c3aed);
+    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.35);
+  }
+  .btn-ghost {
+    color: #a5b4fc; background: transparent; border: 2px solid #6366f1;
+    text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
+  }
+  .btn-wide { min-width: 200px; }
+  .btn-primary {
+    color: #0f172a; background: linear-gradient(180deg, #67e8f9, #22d3ee);
+    box-shadow: 0 8px 24px rgba(34, 211, 238, 0.35);
+  }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 18px; }
+
+  #gameRoot {
+    position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 1;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    padding:
+      calc(64px + env(safe-area-inset-top, 0px)) 16px
+      max(20px, env(safe-area-inset-bottom, 0px)) 16px;
+  }
+  #gameRoot.visible { display: flex; }
+
+  .ttt-tagline {
+    font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: #64748b;
+    margin-bottom: 10px;
+  }
+  .diff-pill {
+    font-size: 12px; color: #a78bfa; margin-bottom: 16px; letter-spacing: 0.08em;
+  }
+
+  .board-wrap {
+    padding: 16px; background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(99, 102, 241, 0.35); border-radius: 18px;
+  }
+  .board-stack { position: relative; display: inline-block; }
+  .board {
+    display: grid; grid-template-columns: repeat(3, minmax(72px, min(26vw, 100px)));
+    grid-template-rows: repeat(3, minmax(72px, min(26vw, 100px)));
+    gap: 10px; width: min(92vw, 320px);
+    position: relative; z-index: 1;
+  }
+  .win-strike {
+    position: absolute; inset: 0; z-index: 2;
+    width: 100%; height: 100%; pointer-events: none; overflow: visible;
+    opacity: 0; transition: opacity 0.15s ease;
+  }
+  .win-strike.visible { opacity: 1; }
+  .win-strike line {
+    stroke: #fef08a; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round;
+    filter: drop-shadow(0 0 8px rgba(254, 240, 138, 0.85));
+  }
+  .cell.winning {
+    box-shadow: inset 0 0 0 2px #fef08a, 0 0 20px rgba(254, 240, 138, 0.35);
+  }
+  .cell {
+    border-radius: 14px; border: 2px solid rgba(71, 85, 105, 0.6);
+    cursor: pointer; font-size: clamp(28px, 8vw, 40px); font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(160deg, #1e293b, #0f172a);
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.45);
+    transition: transform 0.1s, box-shadow 0.15s; color: #e2e8f0;
+  }
+  .cell:hover:enabled { filter: brightness(1.08); }
+  .cell:disabled { opacity: 0.9; cursor: default; }
+  .cell.human { color: #22d3ee; text-shadow: 0 0 20px rgba(34, 211, 238, 0.5); }
+  .cell.ai { color: #a78bfa; text-shadow: 0 0 16px rgba(167, 139, 250, 0.45); }
+  .cell.ghost { border-style: dashed; opacity: 0.5; }
+</style>
+</head>
+<body>
+<canvas id="handCanvas"></canvas>
+<div id="cursor"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const TOKEN_KEY = "piyush_token";
+const GAME_ID = "tictactoe";
+async function ensureAccess() {
+  const t = sessionStorage.getItem(TOKEN_KEY);
+  if (!t) { window.location.href = "/login"; return false; }
+  try {
+    const res = await fetch("/api/entitlements", { headers: { Authorization: "Bearer " + t } });
+    if (!res.ok) { window.location.href = "/login"; return false; }
+    const data = await res.json();
+    const games = new Set(Array.isArray(data.games) ? data.games : []);
+    if (!games.has(GAME_ID)) {
+      alert("This game is locked. Please unlock it from the store (Home).");
+      window.location.href = "/";
+      return false;
+    }
+    return true;
+  } catch {
+    window.location.href = "/login";
+    return false;
+  }
+}
+ensureAccess();
+</script>
+
+<div class="hud">
+  <div class="hud-block">
+    <h2>You</h2>
+    <div class="val" id="hudYou">—</div>
+  </div>
+  <div class="hud-block" style="text-align:right">
+    <h2>Match</h2>
+    <div class="val" id="hudMatch" style="font-size:18px; color:#a78bfa">1</div>
+  </div>
+  <a href="/">← Store</a>
+</div>
+
+<div class="panel-wrap" id="symbolOverlay">
+  <div class="panel">
+    <h1>Tic-Tac-Toe</h1>
+    <p>Pick your side. <strong style="color:#67e8f9;">X</strong> always opens. If you play <strong style="color:#a78bfa;">O</strong>, the AI moves first.</p>
+    <p class="hint">Point to aim, <strong>pinch</strong> to tap — on buttons and the grid.</p>
+    <div class="sym-row">
+      <button type="button" class="btn btn-x" id="btnPickX" data-sym="X">Play as X</button>
+      <button type="button" class="btn btn-o" id="btnPickO" data-sym="O">Play as O</button>
+    </div>
+  </div>
+</div>
+
+<div id="gameRoot">
+  <p class="ttt-tagline" id="turnLine">Your turn</p>
+  <p class="diff-pill" id="diffLine">AI · level 1 / 5</p>
+  <div class="board-wrap">
+    <div class="board-stack" id="boardStack">
+      <div class="board" id="board" role="grid" aria-label="3 by 3 board"></div>
+      <svg class="win-strike" id="winStrike" aria-hidden="true" preserveAspectRatio="none">
+        <line id="winStrikeLine" x1="0" y1="0" x2="0" y2="0" fill="none" />
+      </svg>
+    </div>
+  </div>
+</div>
+
+<div class="panel-wrap hidden" id="resultOverlay">
+  <div class="panel">
+    <h1 id="resultTitle">You win</h1>
+    <p id="resultMsg">First to three in a row.</p>
+    <p class="hint" id="resultLevel">Next match: level 2</p>
+    <div class="btn-row">
+      <button type="button" class="btn btn-primary btn-wide" id="btnAgain">Rematch</button>
+      <button type="button" class="btn btn-ghost" id="btnResymbol">Change symbol</button>
+      <a class="btn btn-ghost" href="/">Home</a>
+    </div>
+    <p class="hint">Pinch a button to continue.</p>
+  </div>
+</div>
+
+<script>
+const LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+const handCanvas = document.getElementById("handCanvas");
+const hctx = handCanvas.getContext("2d");
+const cursorEl = document.getElementById("cursor");
+const toastEl = document.getElementById("toast");
+const symbolOverlay = document.getElementById("symbolOverlay");
+const gameRoot = document.getElementById("gameRoot");
+const resultOverlay = document.getElementById("resultOverlay");
+const boardEl = document.getElementById("board");
+const hudYou = document.getElementById("hudYou");
+const hudMatch = document.getElementById("hudMatch");
+const turnLine = document.getElementById("turnLine");
+const diffLine = document.getElementById("diffLine");
+const resultTitle = document.getElementById("resultTitle");
+const resultMsg = document.getElementById("resultMsg");
+const resultLevel = document.getElementById("resultLevel");
+
+const HAND_CONNECTIONS = [
+  [0,1],[1,2],[2,3],[3,4], [0,5],[5,6],[6,7],[7,8], [5,9],[9,10],[10,11],[11,12],
+  [9,13],[13,14],[14,15],[15,16], [13,17],[17,18],[18,19],[19,20], [0,17]
+];
+
+let pinchDown = false;
+let lastPos = { x: 0.5, y: 0.5 };
+let handTrackingStop = null;
+let audioCtx = null;
+let bgMusicTimer = null;
+
+let human = "X";
+let ai = "O";
+let board = Array(9).fill(null);
+let completedGames = 0;
+let thinking = false;
+let gameActive = false;
+let endRoundDelayTimer = null;
+const END_ROUND_MS = 2000;
+
+function difficultyLevel() {
+  return Math.min(5, 1 + completedGames);
+}
+function levelLabel() {
+  const d = difficultyLevel();
+  const names = ["", "Rookie", "Learner", "Tactician", "Strategist", "Perfect"];
+  return `AI · level ${d}/5 — ${names[d]}`;
+}
+function showToast(t) {
+  toastEl.textContent = t;
+  toastEl.classList.add("show");
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toastEl.classList.remove("show"), 1200);
+}
+function lineWinner(cells) {
+  for (const [a,b,c] of LINES) {
+    if (cells[a] && cells[a] === cells[b] && cells[a] === cells[c]) return cells[a];
+  }
+  return null;
+}
+/** @returns {number[] | null} three cell indices of the winning line */
+function getWinningLineIndices(cells) {
+  for (const line of LINES) {
+    const [a, b, c] = line;
+    if (cells[a] && cells[a] === cells[b] && cells[a] === cells[c]) return line;
+  }
+  return null;
+}
+function clearWinningLine() {
+  const svg = document.getElementById("winStrike");
+  if (svg) {
+    svg.classList.remove("visible");
+    svg.removeAttribute("width");
+    svg.removeAttribute("height");
+    svg.removeAttribute("viewBox");
+  }
+  const lineEl = document.getElementById("winStrikeLine");
+  if (lineEl) {
+    lineEl.setAttribute("x1", "0");
+    lineEl.setAttribute("y1", "0");
+    lineEl.setAttribute("x2", "0");
+    lineEl.setAttribute("y2", "0");
+  }
+  boardEl.querySelectorAll(".cell.winning").forEach((el) => el.classList.remove("winning"));
+}
+function showWinningLineStroke(indices) {
+  const stack = document.getElementById("boardStack");
+  const svg = document.getElementById("winStrike");
+  const lineEl = document.getElementById("winStrikeLine");
+  const cells = boardEl.querySelectorAll(".cell");
+  if (!stack || !svg || !lineEl || !indices || indices.length !== 3) return;
+  const w = stack.clientWidth;
+  const h = stack.clientHeight;
+  if (w < 8 || h < 8) return;
+  svg.setAttribute("width", String(w));
+  svg.setAttribute("height", String(h));
+  svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  const brStack = stack.getBoundingClientRect();
+  const centers = indices.map((i) => {
+    const r = cells[i].getBoundingClientRect();
+    return { x: r.left + r.width / 2 - brStack.left, y: r.top + r.height / 2 - brStack.top };
+  });
+  lineEl.setAttribute("x1", String(centers[0].x));
+  lineEl.setAttribute("y1", String(centers[0].y));
+  lineEl.setAttribute("x2", String(centers[2].x));
+  lineEl.setAttribute("y2", String(centers[2].y));
+  svg.classList.add("visible");
+  indices.forEach((i) => cells[i]?.classList.add("winning"));
+}
+function boardResult(cells) {
+  const w = lineWinner(cells);
+  if (w) return w;
+  if (cells.every(Boolean)) return "draw";
+  return null;
+}
+function emptyIdx(cells) {
+  const o = [];
+  for (let i = 0; i < 9; i++) if (!cells[i]) o.push(i);
+  return o;
+}
+function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+function stopBgm() {
+  if (bgMusicTimer) { clearInterval(bgMusicTimer); bgMusicTimer = null; }
+}
+function startBgm() {
+  stopBgm();
+  if (!audioCtx) return;
+  const base = 147;
+  const scale = [0, 2, 4, 5, 7, 9, 11, 12].map(s => base * Math.pow(2, s / 12));
+  let step = 0;
+  bgMusicTimer = setInterval(() => {
+    if (!gameActive) return;
+    const t = audioCtx.currentTime;
+    const f = scale[step % scale.length];
+    step++;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = "triangle";
+    o.frequency.setValueAtTime(f, t);
+    g.gain.setValueAtTime(0.032, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    o.start(t);
+    o.stop(t + 0.3);
+  }, 300);
+}
+function beep(f, d, v = 0.07) {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = "sine";
+  o.frequency.setValueAtTime(f, t);
+  g.gain.setValueAtTime(v, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + d);
+  o.connect(g);
+  g.connect(audioCtx.destination);
+  o.start(t);
+  o.stop(t + d + 0.02);
+}
+function minimax(cells, isMax, aiL, humL) {
+  const r = boardResult(cells);
+  if (r === aiL) return 1;
+  if (r === humL) return -1;
+  if (r === "draw") return 0;
+  const turn = isMax ? aiL : humL;
+  let best = isMax ? -2 : 2;
+  for (let i = 0; i < 9; i++) {
+    if (cells[i]) continue;
+    const n = cells.slice();
+    n[i] = turn;
+    const sc = minimax(n, !isMax, aiL, humL);
+    if (isMax) best = Math.max(best, sc);
+    else best = Math.min(best, sc);
+  }
+  return best;
+}
+function bestMoveMinimax(cells, aiL, humL) {
+  let b = -2;
+  const moves = [];
+  for (let i = 0; i < 9; i++) {
+    if (cells[i]) continue;
+    const n = cells.slice();
+    n[i] = aiL;
+    const sc = minimax(n, false, aiL, humL);
+    if (sc > b) { b = sc; moves.length = 0; moves.push(i); }
+    else if (sc === b) moves.push(i);
+  }
+  return moves[Math.floor(Math.random() * moves.length)];
+}
+function findWinningMove(cells, sym) {
+  for (const i of emptyIdx(cells)) {
+    const t = cells.slice();
+    t[i] = sym;
+    if (lineWinner(t) === sym) return i;
+  }
+  return -1;
+}
+function pickCenterCornerEdge(cells) {
+  if (!cells[4]) return 4;
+  const corners = [0,2,6,8].filter(i => !cells[i]);
+  if (corners.length) return corners[Math.floor(Math.random() * corners.length)];
+  const edges = [1,3,5,7].filter(i => !cells[i]);
+  if (edges.length) return edges[Math.floor(Math.random() * edges.length)];
+  return emptyIdx(cells)[0];
+}
+function aiChooseMove() {
+  const d = difficultyLevel();
+  const cells = board;
+  if (d <= 1) {
+    const e = emptyIdx(cells);
+    return e[Math.floor(Math.random() * e.length)];
+  }
+  if (d === 2) {
+    const w = findWinningMove(cells, ai);
+    if (w >= 0) return w;
+    const e = emptyIdx(cells);
+    return e[Math.floor(Math.random() * e.length)];
+  }
+  if (d === 3) {
+    const w = findWinningMove(cells, ai);
+    if (w >= 0) return w;
+    const b = findWinningMove(cells, human);
+    if (b >= 0) return b;
+    return pickCenterCornerEdge(cells);
+  }
+  if (d === 4) {
+    if (Math.random() < 0.28) {
+      const e = emptyIdx(cells);
+      return e[Math.floor(Math.random() * e.length)];
+    }
+    return bestMoveMinimax(cells, ai, human);
+  }
+  return bestMoveMinimax(cells, ai, human);
+}
+function resizeHandCanvas() {
+  const vv = window.visualViewport;
+  const vw = vv?.width ?? window.innerWidth;
+  const vh = vv?.height ?? window.innerHeight;
+  const ox = vv?.offsetLeft ?? 0;
+  const oy = vv?.offsetTop ?? 0;
+  const dpr = window.devicePixelRatio || 1;
+  handCanvas.width = Math.floor(vw * dpr);
+  handCanvas.height = Math.floor(vh * dpr);
+  handCanvas.style.left = `${ox}px`;
+  handCanvas.style.top = `${oy}px`;
+  handCanvas.style.width = `${vw}px`;
+  handCanvas.style.height = `${vh}px`;
+  hctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener("resize", resizeHandCanvas);
+window.visualViewport?.addEventListener("resize", resizeHandCanvas);
+window.visualViewport?.addEventListener("scroll", resizeHandCanvas);
+resizeHandCanvas();
+function drawHand(landmarks) {
+  const vv = window.visualViewport;
+  const vw = vv?.width ?? window.innerWidth;
+  const vh = vv?.height ?? window.innerHeight;
+  hctx.clearRect(0, 0, vw, vh);
+  if (!landmarks || landmarks.length !== 21) return;
+  const pts = landmarks.map(p => ({ x: p.x * vw, y: p.y * vh }));
+  hctx.lineWidth = 3;
+  hctx.strokeStyle = "rgba(96, 165, 250, 0.95)";
+  hctx.beginPath();
+  for (const [a,b] of HAND_CONNECTIONS) {
+    hctx.moveTo(pts[a].x, pts[a].y);
+    hctx.lineTo(pts[b].x, pts[b].y);
+  }
+  hctx.stroke();
+  hctx.fillStyle = "rgba(231, 234, 240, 0.95)";
+  for (const p of pts) {
+    hctx.beginPath();
+    hctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+    hctx.fill();
+  }
+}
+function buildBoard() {
+  boardEl.innerHTML = "";
+  for (let i = 0; i < 9; i++) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "cell";
+    b.dataset.index = String(i);
+    b.setAttribute("aria-label", "Cell " + (i + 1));
+    b.addEventListener("click", () => onCell(i));
+    boardEl.appendChild(b);
+  }
+}
+function renderBoard() {
+  const cells = boardEl.querySelectorAll(".cell");
+  board.forEach((v, i) => {
+    const el = cells[i];
+    if (!v) { el.textContent = ""; el.classList.remove("human", "ai"); }
+    else {
+      el.textContent = v;
+      el.classList.toggle("human", v === human);
+      el.classList.toggle("ai", v === ai);
+    }
+  });
+}
+function setCellsInteractive(on) {
+  boardEl.querySelectorAll(".cell").forEach((el) => { el.disabled = !on; });
+}
+function isHumanTurn() {
+  const n = board.filter(Boolean).length;
+  if (n % 2 === 0) return human === "X";
+  return human === "O";
+}
+function updateTurnText() {
+  if (!gameActive) return;
+  if (thinking) { turnLine.textContent = "AI thinking…"; return; }
+  if (isHumanTurn()) turnLine.textContent = "Your turn — pinch a square";
+  else turnLine.textContent = "…";
+  diffLine.textContent = levelLabel();
+}
+function onCell(i) {
+  if (!gameActive || thinking) return;
+  if (!isHumanTurn()) return;
+  if (board[i]) return;
+  board[i] = human;
+  beep(520, 0.06, 0.08);
+  renderBoard();
+  setCellsInteractive(false);
+  const r = boardResult(board);
+  if (r) { endRound(r); return; }
+  scheduleAi();
+}
+function scheduleAi() {
+  if (!gameActive) return;
+  thinking = true;
+  updateTurnText();
+  setTimeout(() => {
+    if (!gameActive) return;
+    runAi();
+  }, 360 + Math.random() * 220);
+}
+function runAi() {
+  if (!gameActive) return;
+  thinking = true;
+  const move = aiChooseMove();
+  if (move < 0 || board[move]) {
+    thinking = false;
+    setCellsInteractive(true);
+    updateTurnText();
+    return;
+  }
+  board[move] = ai;
+  beep(220, 0.07, 0.06);
+  renderBoard();
+  thinking = false;
+  const r = boardResult(board);
+  if (r) { endRound(r); return; }
+  setCellsInteractive(true);
+  updateTurnText();
+}
+function showResultPanel(r) {
+  completedGames++;
+  const nextLv = Math.min(5, 1 + completedGames);
+  clearWinningLine();
+  if (r === "draw") {
+    resultTitle.textContent = "Draw";
+    resultMsg.textContent = "Board full — no three in a row.";
+  } else if (r === human) {
+    resultTitle.textContent = "You win";
+    resultMsg.textContent = "Three in a row. Nicely done.";
+  } else {
+    resultTitle.textContent = "AI wins";
+    resultMsg.textContent = "The neon mind found a line.";
+  }
+  resultLevel.textContent = nextLv <= 5
+    ? `Next match: AI level ${nextLv} / 5 (ramps up every game you finish)`
+    : "Max difficulty — give it your best shot.";
+  gameRoot.classList.remove("visible");
+  resultOverlay.classList.remove("hidden");
+}
+
+function endRound(r) {
+  gameActive = false;
+  thinking = false;
+  stopBgm();
+  setCellsInteractive(false);
+  if (endRoundDelayTimer) {
+    clearTimeout(endRoundDelayTimer);
+    endRoundDelayTimer = null;
+  }
+
+  if (r === "draw") {
+    beep(180, 0.12, 0.06);
+  } else if (r === human) {
+    beep(660, 0.15, 0.1);
+  } else {
+    beep(130, 0.2, 0.08);
+  }
+
+  const winLine = r !== "draw" ? getWinningLineIndices(board) : null;
+  if (winLine) {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => showWinningLineStroke(winLine));
+    });
+  }
+
+  endRoundDelayTimer = setTimeout(() => {
+    endRoundDelayTimer = null;
+    showResultPanel(r);
+  }, END_ROUND_MS);
+}
+function startMatch() {
+  if (endRoundDelayTimer) {
+    clearTimeout(endRoundDelayTimer);
+    endRoundDelayTimer = null;
+  }
+  clearWinningLine();
+  board = Array(9).fill(null);
+  if (!boardEl.querySelector(".cell")) buildBoard();
+  gameActive = true;
+  thinking = false;
+  setCellsInteractive(true);
+  renderBoard();
+  diffLine.textContent = levelLabel();
+  hudYou.textContent = human;
+  hudMatch.textContent = String(completedGames + 1);
+  resultOverlay.classList.add("hidden");
+  gameRoot.classList.add("visible");
+  initAudio();
+  if (audioCtx.state === "suspended") audioCtx.resume();
+  startBgm();
+  updateTurnText();
+  if (human === "O") {
+    setCellsInteractive(false);
+    thinking = true;
+    updateTurnText();
+    setTimeout(() => runAi(), 420);
+  }
+}
+function onPickSym(sym) {
+  if (sym === "X") { human = "X"; ai = "O"; }
+  else { human = "O"; ai = "X"; }
+  initAudio();
+  if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+  symbolOverlay.classList.add("hidden");
+  startMatch();
+}
+document.getElementById("btnPickX").addEventListener("click", () => onPickSym("X"));
+document.getElementById("btnPickO").addEventListener("click", () => onPickSym("O"));
+document.getElementById("btnAgain").addEventListener("click", () => {
+  initAudio();
+  startMatch();
+});
+document.getElementById("btnResymbol").addEventListener("click", () => {
+  if (endRoundDelayTimer) {
+    clearTimeout(endRoundDelayTimer);
+    endRoundDelayTimer = null;
+  }
+  clearWinningLine();
+  gameActive = false;
+  stopBgm();
+  gameRoot.classList.remove("visible");
+  resultOverlay.classList.add("hidden");
+  symbolOverlay.classList.remove("hidden");
+  hudYou.textContent = "—";
+});
+function clickAtCursor() {
+  const c = cursorEl.getBoundingClientRect();
+  const cx = c.left + c.width / 2;
+  const cy = c.top + c.height / 2;
+  const skip = (n) => n === cursorEl || n === handCanvas || n === toastEl;
+  const stack = document.elementsFromPoint ? document.elementsFromPoint(cx, cy) : [];
+  let target = null;
+  for (const el of stack) {
+    if (!el || skip(el)) continue;
+    target = el;
+    break;
+  }
+  if (!target) target = document.elementFromPoint(cx, cy);
+  if (!target || skip(target)) return;
+  if (!symbolOverlay.classList.contains("hidden") && target.closest && target.closest("#symbolOverlay")) {
+    const btn = target.closest("button");
+    if (btn && (btn.id === "btnPickX" || btn.id === "btnPickO")) { btn.click(); return; }
+  }
+  if (!resultOverlay.classList.contains("hidden") && target.closest && target.closest("#resultOverlay")) {
+    const clicky = target.closest("button, a[href], [role='button']");
+    if (clicky && clicky.click) { clicky.click(); return; }
+  }
+  const b = target.closest && target.closest(".board .cell");
+  if (b && !b.disabled && b.dataset && b.dataset.index != null) b.click();
+}
+function applyHandFrame(data) {
+  const vv = window.visualViewport;
+  const vw = vv?.width ?? window.innerWidth;
+  const vh = vv?.height ?? window.innerHeight;
+  const ox = vv?.offsetLeft ?? 0;
+  const oy = vv?.offsetTop ?? 0;
+  const nx = data.cursor_x ?? lastPos.x;
+  const ny = data.cursor_y ?? lastPos.y;
+  if (typeof nx === "number" && typeof ny === "number") lastPos = { x: nx, y: ny };
+  const x = ox + lastPos.x * vw;
+  const y = oy + lastPos.y * vh;
+  cursorEl.style.left = `${x}px`;
+  cursorEl.style.top = `${y}px`;
+  cursorEl.style.opacity = data.detected ? "1" : "0.35";
+  drawHand(data.detected ? data.landmarks : null);
+  const isPinch = data.detected && data.gesture === "pinch";
+  if (isPinch && !pinchDown) { pinchDown = true; clickAtCursor(); }
+  if (!isPinch) pinchDown = false;
+}
+async function bootstrapHandTracking() {
+  if (handTrackingStop) return;
+  try {
+    const { startClientHandTracking } = await import("/static/hand-client.js");
+    handTrackingStop = await startClientHandTracking(applyHandFrame);
+  } catch (err) {
+    console.error(err);
+    const name = err && err.name;
+    const denied = name === "NotAllowedError" || name === "PermissionDeniedError";
+    if (denied) {
+      await new Promise((resolve) => {
+        const go = () => {
+          document.removeEventListener("click", go);
+          document.removeEventListener("touchstart", go);
+          resolve();
+        };
+        document.addEventListener("click", go);
+        document.addEventListener("touchstart", go);
+        alert("Tap the screen to allow the camera — then you can pinch to play.");
+      });
+      try {
+        const { startClientHandTracking } = await import("/static/hand-client.js");
+        handTrackingStop = await startClientHandTracking(applyHandFrame);
+      } catch (e2) {
+        console.error(e2);
+        alert("Camera / hand tracking: " + (e2 && e2.message ? e2.message : String(e2)));
+      }
+    } else {
+      alert("Camera / hand tracking: " + (err && err.message ? err.message : String(err)));
+    }
+  }
+}
+bootstrapHandTracking();
+</script>
+</body>
+</html>
