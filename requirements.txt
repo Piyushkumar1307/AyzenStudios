@@ -12,3 +12,4 @@ python-jose[cryptography]
 passlib[bcrypt]
 email-validator
 bcrypt<4.0
+razorpay

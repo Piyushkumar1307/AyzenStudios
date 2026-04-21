@@ -310,6 +310,39 @@
 <div id="cursor"></div>
 <div class="toast" id="toast" role="status"></div>
 
+<script>
+const TOKEN_KEY = "piyush_token";
+const GAME_ID = "neon_pop";
+
+async function ensureAccess() {
+  const t = localStorage.getItem(TOKEN_KEY);
+  if (!t) {
+    window.location.href = "/login";
+    return false;
+  }
+  try {
+    const res = await fetch("/api/entitlements", { headers: { Authorization: "Bearer " + t } });
+    if (!res.ok) {
+      window.location.href = "/login";
+      return false;
+    }
+    const data = await res.json();
+    const games = new Set(Array.isArray(data.games) ? data.games : []);
+    if (!games.has(GAME_ID)) {
+      alert("This game is locked. Please unlock it from the store (Home).");
+      window.location.href = "/";
+      return false;
+    }
+    return true;
+  } catch {
+    window.location.href = "/login";
+    return false;
+  }
+}
+
+ensureAccess();
+</script>
+
 <div class="hud">
   <div class="hud-block">
     <h2>Score</h2>

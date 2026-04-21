@@ -381,6 +381,32 @@
     transform: scale(0.98);
   }
 
+  .locked .play-cta {
+    background: linear-gradient(135deg, rgba(148,163,184,0.35), rgba(148,163,184,0.15));
+    box-shadow: none;
+    color: rgba(232,236,244,0.9);
+  }
+
+  .play-cta[aria-disabled="true"] {
+    cursor: not-allowed;
+    filter: grayscale(0.2) brightness(0.95);
+  }
+
+  .lock-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.12);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    color: #cbd5e1;
+    margin-top: -2px;
+  }
+
   .footer-hint {
     margin-top: 40px;
     text-align: center;
@@ -447,7 +473,7 @@
       <div class="game-card-body">
         <div class="game-title-row">
           <h2 class="game-title">Neon Pop</h2>
-          <span class="game-price">Free</span>
+          <span class="game-price" data-price-for="neon_pop">₹10</span>
         </div>
         <p class="game-desc">
           Simple reflex game: one tile glows — pinch it before the timer runs out. Chain hits for streak bonuses and beat your best score.
@@ -457,7 +483,7 @@
           <span class="tag">Gesture</span>
           <span class="tag alt">Casual</span>
         </div>
-        <a class="play-cta" href="/puzzle">Play now →</a>
+        <a class="play-cta" href="#" data-game-link="neon_pop" data-route="/puzzle">Checking access…</a>
       </div>
     </article>
 
@@ -468,7 +494,7 @@
       <div class="game-card-body">
         <div class="game-title-row">
           <h2 class="game-title">Neon Runner</h2>
-          <span class="game-price">Free</span>
+          <span class="game-price" data-price-for="neon_runner">₹10</span>
         </div>
         <p class="game-desc">
           Endless runner: pinch to jump over obstacles and collect coins. Speed ramps up as you survive.
@@ -478,19 +504,43 @@
           <span class="tag">Gesture</span>
           <span class="tag alt">Endless</span>
         </div>
-        <a class="play-cta" href="/runner">Play now →</a>
+        <a class="play-cta" href="#" data-game-link="neon_runner" data-route="/runner">Checking access…</a>
       </div>
     </article>
   </div>
   <p class="footer-hint">Scroll: point with index only, then move your finger up or down.</p>
 </main>
 
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
 const TOKEN_KEY = "piyush_token";
+const ENT_KEY = "piyush_entitlements_v1";
+const PAID_GAMES = {
+  neon_pop: { title: "Neon Pop", route: "/puzzle", priceLabel: "₹10" },
+  neon_runner: { title: "Neon Runner", route: "/runner", priceLabel: "₹10" },
+};
 
 function logout() {
   localStorage.removeItem(TOKEN_KEY);
   window.location.href = "/login";
+}
+
+function entitlementsRead() {
+  try {
+    const raw = localStorage.getItem(ENT_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.games)) return new Set();
+    return new Set(parsed.games);
+  } catch {
+    return new Set();
+  }
+}
+
+function entitlementsWrite(games) {
+  try {
+    localStorage.setItem(ENT_KEY, JSON.stringify({ games: Array.from(games), ts: Date.now() }));
+  } catch { /* ignore */ }
 }
 
 async function requireAuth() {
@@ -516,7 +566,162 @@ async function requireAuth() {
   }
 }
 
-requireAuth();
+async function refreshEntitlements() {
+  const t = localStorage.getItem(TOKEN_KEY);
+  if (!t) return new Set();
+  try {
+    const res = await fetch("/api/entitlements", { headers: { Authorization: "Bearer " + t } });
+    if (!res.ok) return entitlementsRead();
+    const data = await res.json();
+    const games = new Set(Array.isArray(data.games) ? data.games : []);
+    entitlementsWrite(games);
+    return games;
+  } catch {
+    return entitlementsRead();
+  }
+}
+
+function setPaidLinksEnabled(enabled) {
+  for (const gid of Object.keys(PAID_GAMES)) {
+    const link = document.querySelector(`[data-game-link="${gid}"]`);
+    if (!link) continue;
+    link.setAttribute("aria-disabled", enabled ? "false" : "true");
+    link.tabIndex = enabled ? 0 : -1;
+  }
+}
+
+function applyLockUI(games, { isLoading = false } = {}) {
+  for (const [gid, meta] of Object.entries(PAID_GAMES)) {
+    const card = document.querySelector(gid === "neon_pop" ? "#game-neon-pop" : "#game-neon-runner");
+    const link = document.querySelector(`[data-game-link="${gid}"]`);
+    const priceEl = document.querySelector(`[data-price-for="${gid}"]`);
+    if (priceEl) priceEl.textContent = meta.priceLabel;
+    const unlocked = games.has(gid);
+    if (!card || !link) continue;
+
+    card.classList.toggle("locked", !unlocked);
+    if (isLoading) link.textContent = unlocked ? "Play now →" : "Checking access…";
+    else link.textContent = unlocked ? "Play now →" : "Unlock ₹10 →";
+
+    // Add a small “LOCKED” pill once
+    if (!unlocked && !card.querySelector(".lock-pill")) {
+      const pill = document.createElement("div");
+      pill.className = "lock-pill";
+      pill.textContent = "Locked · Pay to play";
+      const body = card.querySelector(".game-card-body");
+      const desc = body ? body.querySelector(".game-desc") : null;
+      if (body && desc) body.insertBefore(pill, desc);
+    }
+  }
+}
+
+async function unlockAndGo(gameId) {
+  const t = localStorage.getItem(TOKEN_KEY);
+  if (!t) return logout();
+
+  const meta = PAID_GAMES[gameId];
+  if (!meta) return;
+
+  const ent = entitlementsRead();
+  if (ent.has(gameId)) {
+    window.location.href = meta.route;
+    return;
+  }
+
+  const orderRes = await fetch("/api/payments/create-order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + t },
+    body: JSON.stringify({ game_id: gameId }),
+  });
+  const order = await orderRes.json().catch(() => ({}));
+  if (!orderRes.ok) {
+    alert(order && order.detail ? order.detail : "Payment init failed");
+    return;
+  }
+  if (order.already_unlocked) {
+    ent.add(gameId);
+    entitlementsWrite(ent);
+    applyLockUI(ent);
+    window.location.href = meta.route;
+    return;
+  }
+
+  const options = {
+    key: order.key_id,
+    amount: order.amount,
+    currency: order.currency || "INR",
+    name: "Piyush-Store",
+    description: `${meta.title} unlock`,
+    order_id: order.order_id,
+    handler: async function (resp) {
+      const verifyRes = await fetch("/api/payments/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + t },
+        body: JSON.stringify({
+          game_id: gameId,
+          razorpay_order_id: resp.razorpay_order_id,
+          razorpay_payment_id: resp.razorpay_payment_id,
+          razorpay_signature: resp.razorpay_signature,
+        }),
+      });
+      const vr = await verifyRes.json().catch(() => ({}));
+      if (!verifyRes.ok) {
+        alert(vr && vr.detail ? vr.detail : "Payment verification failed");
+        return;
+      }
+      ent.add(gameId);
+      entitlementsWrite(ent);
+      applyLockUI(ent);
+      window.location.href = meta.route;
+    },
+    modal: { ondismiss: function () {} },
+    theme: { color: "#00f5ff" },
+  };
+
+  try {
+    const rzp = new Razorpay(options);
+    rzp.on("payment.failed", function (e) {
+      const msg = (e && e.error && e.error.description) ? e.error.description : "Payment failed";
+      alert(msg);
+    });
+    rzp.open();
+  } catch (e) {
+    alert("Razorpay checkout failed to open");
+  }
+}
+
+function wirePaidGameLinks() {
+  for (const gid of Object.keys(PAID_GAMES)) {
+    const link = document.querySelector(`[data-game-link="${gid}"]`);
+    if (!link) continue;
+    link.addEventListener("click", async (e) => {
+      e.preventDefault();
+      if (link.getAttribute("aria-disabled") === "true") return;
+      const ent = entitlementsRead();
+      if (ent.has(gid)) {
+        window.location.href = PAID_GAMES[gid].route;
+        return;
+      }
+      await unlockAndGo(gid);
+    });
+  }
+}
+
+(async () => {
+  const me = await requireAuth();
+  if (!me) return;
+  // Smooth UX: default to locked immediately, but use cached entitlements instantly.
+  // Also disable paid links until we finish the server check, to avoid "click fast → later locked".
+  setPaidLinksEnabled(false);
+  wirePaidGameLinks();
+
+  const cached = entitlementsRead();
+  applyLockUI(cached, { isLoading: true });
+
+  const games = await refreshEntitlements();
+  applyLockUI(games, { isLoading: false });
+  setPaidLinksEnabled(true);
+})();
 </script>
 
 <script>

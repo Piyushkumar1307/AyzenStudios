@@ -2,6 +2,9 @@ import asyncio
 import json
 import os
 import time
+import hmac
+import hashlib
+import secrets
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
@@ -16,7 +19,7 @@ from sqlalchemy.exc import ProgrammingError
 from gesture_detector import GestureDetector
 from models import HandState
 from auth import create_access_token, get_current_user, hash_password, verify_password
-from auth_models import Base, User
+from auth_models import Base, GameEntitlement, User
 from auth_schemas import LoginRequest, MeResponse, RegisterRequest, TokenResponse
 from db import engine, get_db
 
@@ -77,6 +80,12 @@ PUZZLE_HTML = os.path.join(BASE_DIR, "static", "puzzle.html")
 RUNNER_HTML = os.path.join(BASE_DIR, "static", "runner.html")
 LOGIN_HTML = os.path.join(BASE_DIR, "static", "login.html")
 PROFILE_HTML = os.path.join(BASE_DIR, "static", "profile.html")
+
+# --- Store / Razorpay config ---
+PAID_GAMES = {
+    "neon_pop": {"route": "/puzzle", "title": "Neon Pop", "amount_paise": 1000},       # ₹10
+    "neon_runner": {"route": "/runner", "title": "Neon Runner", "amount_paise": 1000}, # ₹10
+}
 
 @app.get("/")
 def index():
@@ -192,6 +201,121 @@ def api_login(payload: LoginRequest, db: Session = Depends(get_db)):
 @app.get("/api/me", response_model=MeResponse)
 def api_me(user: User = Depends(get_current_user)):
     return MeResponse(id=str(user.id), name=user.name, email=user.email)
+
+
+def _razorpay_keypair_or_500():
+    key_id = os.environ.get("RAZORPAY_KEY_ID", "").strip()
+    key_secret = os.environ.get("RAZORPAY_KEY_SECRET", "").strip()
+    if not key_id or not key_secret:
+        raise HTTPException(status_code=500, detail="Razorpay keys not configured")
+    # Common local-dev mistake: pasting masked secrets like "********"
+    # Treat "all non-alnum" (stars/bullets) as masked.
+    if not any(ch.isalnum() for ch in key_secret):
+        raise HTTPException(status_code=500, detail="Razorpay key secret looks masked; paste the real secret value")
+    return key_id, key_secret
+
+
+@app.get("/api/entitlements")
+def api_entitlements(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    _ensure_tables_or_503()
+    rows = db.query(GameEntitlement).filter(GameEntitlement.user_id == user.id).all()
+    return {"games": sorted({r.game_id for r in rows})}
+
+
+@app.post("/api/payments/create-order")
+def api_create_order(payload: dict, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    _ensure_tables_or_503()
+    key_id, key_secret = _razorpay_keypair_or_500()
+
+    game_id = (payload.get("game_id") or "").strip()
+    if game_id not in PAID_GAMES:
+        raise HTTPException(status_code=400, detail="Unknown game")
+
+    already = (
+        db.query(GameEntitlement)
+        .filter(GameEntitlement.user_id == user.id, GameEntitlement.game_id == game_id)
+        .first()
+        is not None
+    )
+    if already:
+        return {"already_unlocked": True, "game_id": game_id}
+
+    try:
+        import razorpay  # type: ignore
+    except Exception:
+        raise HTTPException(status_code=500, detail="razorpay package missing")
+
+    client = razorpay.Client(auth=(key_id, key_secret))
+    amount = int(PAID_GAMES[game_id]["amount_paise"])
+    # Razorpay receipt max length is 40 characters.
+    # Keep it short but still useful for debugging.
+    receipt = f"g_{game_id}_{secrets.token_hex(10)}"[:40]
+    try:
+        order = client.order.create(
+            {
+                "amount": amount,
+                "currency": "INR",
+                "receipt": receipt,
+                "payment_capture": 1,
+                "notes": {"user_id": str(user.id), "game_id": game_id},
+            }
+        )
+    except Exception as e:
+        msg = str(e).strip()
+        if len(msg) > 240:
+            msg = msg[:240] + "…"
+        detail = f"Razorpay order failed: {type(e).__name__}"
+        if msg:
+            detail += f" ({msg})"
+        raise HTTPException(status_code=502, detail=detail)
+
+    return {
+        "key_id": key_id,
+        "order_id": order.get("id"),
+        "amount": amount,
+        "currency": "INR",
+        "game_id": game_id,
+        "title": PAID_GAMES[game_id]["title"],
+    }
+
+
+@app.post("/api/payments/verify")
+def api_verify_payment(payload: dict, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    _ensure_tables_or_503()
+    _, key_secret = _razorpay_keypair_or_500()
+
+    game_id = (payload.get("game_id") or "").strip()
+    order_id = (payload.get("razorpay_order_id") or "").strip()
+    payment_id = (payload.get("razorpay_payment_id") or "").strip()
+    signature = (payload.get("razorpay_signature") or "").strip()
+
+    if game_id not in PAID_GAMES:
+        raise HTTPException(status_code=400, detail="Unknown game")
+    if not order_id or not payment_id or not signature:
+        raise HTTPException(status_code=400, detail="Missing payment fields")
+
+    msg = f"{order_id}|{payment_id}".encode()
+    digest = hmac.new(key_secret.encode(), msg, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(digest, signature):
+        raise HTTPException(status_code=400, detail="Invalid signature")
+
+    ent = GameEntitlement(
+        user_id=user.id,
+        game_id=game_id,
+        razorpay_order_id=order_id,
+        razorpay_payment_id=payment_id,
+    )
+    db.add(ent)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+    except OperationalError:
+        db.rollback()
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    return {"ok": True, "game_id": game_id}
+
 
 def _mjpeg_generator():
     boundary = b"frame"
