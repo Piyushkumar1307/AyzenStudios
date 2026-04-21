@@ -43,7 +43,7 @@
     left: 0;
     right: 0;
     top: 0;
-    padding: 12px 18px;
+    padding: max(12px, env(safe-area-inset-top, 0px)) 18px 12px;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -169,16 +169,35 @@
 
   #gameRoot {
     display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
-    padding: 88px 16px 40px;
-    position: relative;
-    z-index: 1;
+    padding:
+      calc(58px + env(safe-area-inset-top, 0px))
+      max(16px, env(safe-area-inset-right, 0px))
+      max(20px, env(safe-area-inset-bottom, 0px))
+      max(16px, env(safe-area-inset-left, 0px));
+    box-sizing: border-box;
   }
 
   #gameRoot.visible { display: flex; }
+
+  .game-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    width: 100%;
+    max-width: min(100%, 400px);
+    margin: auto;
+  }
 
   .game-tagline {
     font-size: 12px;
@@ -189,7 +208,8 @@
   }
 
   .timer-bar-wrap {
-    width: min(88vw, 320px);
+    width: 100%;
+    max-width: min(88vw, 320px);
     height: 6px;
     background: rgba(30, 41, 59, 0.9);
     border-radius: 6px;
@@ -212,14 +232,18 @@
     background: rgba(15, 23, 42, 0.55);
     border: 1px solid rgba(99, 102, 241, 0.35);
     border-radius: 16px;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto;
   }
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(72px, 24vw));
-    grid-template-rows: repeat(3, minmax(72px, 24vw));
+    grid-template-columns: repeat(3, minmax(64px, min(28vw, 104px)));
+    grid-template-rows: repeat(3, minmax(64px, min(28vw, 104px)));
     gap: 10px;
-    max-width: min(92vw, 340px);
+    width: min(92vw, 340px);
+    max-width: 100%;
   }
 
   .cell {
@@ -309,12 +333,14 @@
 </div>
 
 <div id="gameRoot">
-  <p class="game-tagline">Pinch the glow</p>
-  <div class="timer-bar-wrap" aria-hidden="true">
-    <div class="timer-bar" id="timerBar"></div>
-  </div>
-  <div class="grid-wrap">
-    <div class="grid" id="grid" role="application" aria-label="3 by 3 reaction grid"></div>
+  <div class="game-stage">
+    <p class="game-tagline">Pinch the glow</p>
+    <div class="timer-bar-wrap" aria-hidden="true">
+      <div class="timer-bar" id="timerBar"></div>
+    </div>
+    <div class="grid-wrap">
+      <div class="grid" id="grid" role="application" aria-label="3 by 3 reaction grid"></div>
+    </div>
   </div>
 </div>
 
@@ -382,6 +408,7 @@ let tickId = 0;
 let betweenTimer = null;
 
 let audioCtx = null;
+let bgMusicTimer = null;
 
 function bestScoreRead() {
   try {
@@ -403,6 +430,37 @@ function bestScoreWrite(s) {
 function initAudio() {
   if (audioCtx) return;
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function stopBackgroundMusic() {
+  if (bgMusicTimer) {
+    clearInterval(bgMusicTimer);
+    bgMusicTimer = null;
+  }
+}
+
+/** Soft looping arpeggio — same pattern as arcade BGM, different progression. */
+function startBackgroundMusic() {
+  stopBackgroundMusic();
+  if (!audioCtx) return;
+  const scale = [196, 220, 262, 294, 330, 349, 392, 440];
+  let step = 0;
+  bgMusicTimer = setInterval(() => {
+    if (!playing) return;
+    const t = audioCtx.currentTime;
+    const freq = scale[step % scale.length];
+    step++;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = "triangle";
+    o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(0.038, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    o.start(t);
+    o.stop(t + 0.34);
+  }, 340);
 }
 
 function beep(freq, dur, vol = 0.08) {
@@ -498,6 +556,7 @@ function renderTimer() {
 
 function endGame() {
   playing = false;
+  stopBackgroundMusic();
   cancelAnimationFrame(tickId);
   clearTimeout(betweenTimer);
   clearGridHighlight();
@@ -672,6 +731,7 @@ function resetRun() {
   playing = true;
   initAudio();
   if (audioCtx.state === "suspended") audioCtx.resume();
+  startBackgroundMusic();
   startRound();
 }
 
