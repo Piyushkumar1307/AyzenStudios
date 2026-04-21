@@ -593,13 +593,24 @@ function elementAtCursor() {
   return target;
 }
 
-/** Pinch only activates a Play link (not the whole card). */
+/** Pinch activates only explicit controls (no whole-card clicks). */
 function clickAtCursor() {
   const target = elementAtCursor();
   if (!target) return;
+
+  // Allow Play buttons
   const playBtn = target.closest ? target.closest("a.play-cta") : null;
-  if (!playBtn || !playBtn.getAttribute("href")) return;
-  if (typeof playBtn.click === "function") playBtn.click();
+  if (playBtn && playBtn.getAttribute("href") && typeof playBtn.click === "function") {
+    playBtn.click();
+    return;
+  }
+
+  // Allow header profile/logout controls
+  const headerBtn = target.closest ? target.closest("#btnProfile, #btnLogout, .hdr-btn") : null;
+  if (headerBtn && typeof headerBtn.click === "function") {
+    headerBtn.click();
+    return;
+  }
 }
 
 function scrollPageBy(delta) {
