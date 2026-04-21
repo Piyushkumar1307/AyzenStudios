@@ -74,6 +74,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_HTML = os.path.join(BASE_DIR, "static", "index.html")
 GAME_HTML = os.path.join(BASE_DIR, "static", "game.html")
 PUZZLE_HTML = os.path.join(BASE_DIR, "static", "puzzle.html")
+RUNNER_HTML = os.path.join(BASE_DIR, "static", "runner.html")
 LOGIN_HTML = os.path.join(BASE_DIR, "static", "login.html")
 PROFILE_HTML = os.path.join(BASE_DIR, "static", "profile.html")
 
@@ -93,6 +94,10 @@ def game():
 @app.get("/puzzle")
 def puzzle():
     return FileResponse(PUZZLE_HTML)
+
+@app.get("/runner")
+def runner():
+    return FileResponse(RUNNER_HTML)
 
 @app.get("/login")
 def login_page():
