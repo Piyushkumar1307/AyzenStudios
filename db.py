@@ -26,7 +26,14 @@ def _database_url() -> str:
     return url
 
 
-engine = create_engine(_database_url(), pool_pre_ping=True)
+# Prevent long "pending" API calls if DB networking stalls (common with remote Postgres/Neon).
+# - `connect_timeout` is passed through libpq
+# - `statement_timeout` aborts a single query if the DB is wedged
+engine = create_engine(
+    _database_url(),
+    pool_pre_ping=True,
+    connect_args={"connect_timeout": 10, "options": "-c statement_timeout=10000"},
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 

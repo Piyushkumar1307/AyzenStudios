@@ -1,140 +1,116 @@
-# Piyush-Store (Gesture Games) — Auth + Postgres
+# HandGesture Web Navigation — Gesture Games Store (FastAPI + Razorpay)
 
-This app serves a futuristic static store (`/`) with gesture-based games and a FastAPI backend.
+Gesture-controlled web game store with **login + Postgres** and **Razorpay paywall** for premium games.
 
-## Required environment variables
+- **Cursor**: point with index finger
+- **Click**: pinch gesture
+- **Hand skeleton overlay**: drawn in the browser
 
-- **`DATABASE_URL`**: PostgreSQL connection string.
-  - Local example: `postgresql://postgres:password@localhost:5432/piyush_store`
-  - Render sometimes provides `postgres://...` — the app automatically converts it to `postgresql://...` for SQLAlchemy.
-- **`JWT_SECRET`**: a random secret string used to sign JWTs.
-- **`JWT_EXPIRES_MINUTES`** (optional): defaults to **7 days**.
+## Games & pricing
 
-## Local run
+- **Fruit-Ninja** (`/game`): **Free**
+- **Neon Pop** (`/puzzle`): **₹10** (locked until purchased)
+- **Neon Runner** (`/runner`): **₹10** (locked until purchased)
 
-1. Create a Postgres database locally.
-2. Create a `.env` file in the project root:
+Purchases are stored as **entitlements per user** in Postgres.
 
-```bash
-DATABASE_URL=postgresql://postgres:password@localhost:5432/piyush_store
-JWT_SECRET=change-me-to-a-long-random-string
-JWT_EXPIRES_MINUTES=10080
-```
+## Features
 
-3. Install and run:
+- **Auth**: register/login with JWT
+- **Payments**: Razorpay Checkout + server-side signature verification
+- **Entitlements**: unlock games per user (Postgres)
+- **Gesture UI**: hand tracking + pinch-to-click controls
+
+## Tech stack
+
+- **Backend**: Python, FastAPI, SQLAlchemy, Postgres, Razorpay SDK
+- **Frontend**: HTML/CSS/JS + Canvas (static pages in `static/`)
+
+## Local setup
+
+### Prerequisites
+
+- Python 3.10+ (recommended 3.11)
+- A Postgres database (local or hosted)
+- A Razorpay account (Test keys are enough for local testing)
+
+### 1) Install dependencies
 
 ```bash
 pip install -r requirements.txt
+```
+
+### 2) Configure environment
+
+Create `.env` in the project root (use `.env.example` as a template):
+
+```bash
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DBNAME?sslmode=require
+JWT_SECRET=change-me-to-a-long-random-string
+JWT_EXPIRES_MINUTES=10080
+
+RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxxxx
+RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+Notes:
+- Some platforms provide `postgres://...`; the app converts it to `postgresql://...`.
+- **Never commit** `.env` (contains secrets).
+
+### 3) Run
+
+```bash
 uvicorn main:app --reload
 ```
 
-4. Open:
-   - **`/login`** to sign up / log in
-   - **`/`** for the store (requires auth)
-   - **`/profile`** to view name/email
+Open:
+- `http://127.0.0.1:8000/login` (register/login)
+- `http://127.0.0.1:8000/` (store)
 
-## Render deployment
+## Razorpay payment flow
 
-Add these env vars in your Render service settings:
+1. Store calls `POST /api/payments/create-order` with `game_id`
+2. Backend creates an order for **₹10**
+3. Browser opens Razorpay Checkout
+4. On success, store calls `POST /api/payments/verify`
+5. Backend verifies the signature and writes entitlement to Postgres
+6. Store refreshes `/api/entitlements` and unlocks the game
 
-- `DATABASE_URL` (from your Render Postgres instance)
-- `JWT_SECRET` (generate a secure random string)
+## API
+
+### Auth
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/me`
+
+### Entitlements / payments (requires `Authorization: Bearer <token>`)
+- `GET /api/entitlements`
+- `POST /api/payments/create-order`
+- `POST /api/payments/verify`
+
+### Gesture endpoints (optional / legacy)
+- `GET /health`
+- `GET /gesture`
+- `GET /video`
+- `WS /ws/gesture`
+
+## Deployment notes
+
+Set these env vars on your host (Render/VPS/etc):
+- `DATABASE_URL`
+- `JWT_SECRET`
 - `JWT_EXPIRES_MINUTES` (optional)
+- `RAZORPAY_KEY_ID`
+- `RAZORPAY_KEY_SECRET`
 
-The app creates the `users` table automatically on startup.
+Use **Test keys** in development; switch to **Live keys** only when ready to accept real payments.
 
-# ✋ Hand Gesture Controlled Web UI
+## Security notes
 
-A real-time hand-gesture controlled web interface that transforms **pinch + hand tracking** into a fully functional **cursor + click system** — no mouse required.
+- Razorpay secret stays **server-side only** (frontend only uses `key_id`)
+- Game unlock is granted **only after** server-side signature verification
 
-This project demonstrates how **Computer Vision + Real-time systems + Web technologies** can create intuitive, touchless user experiences.
+## Troubleshooting
 
----
-
-## 🚀 Demo
-
-> Control your browser using just your hand  
-> Move cursor → Point with index finger  
-> Click → Pinch gesture  
-
----
-
-## 🧠 How It Works
-
-### 🔄 End-to-End Flow
-
-1. **Capture**
-   - Webcam captures live video feed
-
-2. **Process**
-   - MediaPipe detects **21 hand landmarks**
-
-3. **Classify**
-   - Custom gesture classifier identifies:
-     - Pinch (Click)
-     - Point (Cursor)
-     - Open Hand
-     - Fist
-     - Peace
-
-4. **Stream**
-   - Data sent via **WebSockets (FastAPI backend)**
-
-5. **Render**
-   - Frontend:
-     - Draws live hand skeleton
-     - Moves cursor
-     - Triggers click events
-
----
-
-## 🏗️ Tech Stack
-
-### 🔙 Backend
-- Python
-- FastAPI
-- OpenCV
-- MediaPipe
-- WebSockets
-
-### 🔜 Frontend
-- HTML5
-- CSS3
-- JavaScript
-- Canvas API
-- WebSocket Client
-
----
-
-## ⚡ Features
-
-- 🎯 Real-time hand tracking (21 landmarks)
-- 🖱️ Cursor control using index finger
-- 🤏 Pinch-to-click interaction
-- 🧍 Live hand skeleton overlay
-- 🔄 Low-latency WebSocket streaming
-- 🧠 Custom gesture classification
-- 🌐 Fully browser-based UI
-
----
-
-## 📡 API Endpoints
-
-### REST
-- `GET /health` → Check server status
-- `GET /gesture` → Get current gesture state
-
-### Streaming
-- `GET /video` → MJPEG video stream
-
-### WebSocket
-- `/ws/gesture` → Real-time gesture data
-
----
-
-## 📦 Installation
-
-### 1. Clone repo
-```bash
-git clone https://github.com/your-username/HandGesture-WebNavigation.git
-cd HandGesture-WebNavigation
+- **Paid games show locked after login**: entitlements load from `/api/entitlements` (first load may take a moment on cold start).
+- **Camera not working**: allow camera permission; on mobile use HTTPS or localhost.

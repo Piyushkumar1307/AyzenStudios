@@ -204,6 +204,37 @@
     .msg.error { color: var(--danger); }
     .msg.ok { color: var(--ok); }
 
+    .otp-box {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(191, 95, 255, 0.25);
+      background: rgba(191, 95, 255, 0.08);
+      display: none;
+    }
+
+    .otp-box.visible { display: block; }
+
+    .otp-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .btn-ghost {
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(99, 102, 241, 0.55);
+      background: transparent;
+      color: #a5b4fc;
+      cursor: pointer;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+
     .foot {
       padding: 14px 22px 18px;
       border-top: 1px solid rgba(0, 245, 255, 0.10);
@@ -240,9 +271,18 @@
         </div>
         <div class="actions">
           <button class="btn" id="btnLogin" type="submit">Login</button>
-          <a class="link" href="/" id="btnBack">Store</a>
+        
         </div>
         <div class="msg" id="loginMsg"></div>
+        <div class="otp-box" id="otpBoxLogin" aria-live="polite">
+          <label for="otpLogin">OTP</label>
+          <input id="otpLogin" type="text" inputmode="numeric" placeholder="6-digit OTP" />
+          <div class="otp-actions">
+            <button class="btn-ghost" type="button" id="btnSendOtpLogin">Send OTP</button>
+            <button class="btn" type="button" id="btnVerifyOtpLogin">Verify</button>
+          </div>
+          <div class="msg" id="otpMsgLogin"></div>
+        </div>
       </form>
 
       <form id="formSignup" autocomplete="on" style="display:none;">
@@ -260,9 +300,18 @@
         </div>
         <div class="actions">
           <button class="btn" id="btnSignup" type="submit">Create</button>
-          <a class="link" href="/" id="btnBack2">Store</a>
+          
         </div>
         <div class="msg" id="signupMsg"></div>
+        <div class="otp-box" id="otpBoxSignup" aria-live="polite">
+          <label for="otpSignup">OTP</label>
+          <input id="otpSignup" type="text" inputmode="numeric" placeholder="6-digit OTP" />
+          <div class="otp-actions">
+            <button class="btn-ghost" type="button" id="btnSendOtpSignup">Resend OTP</button>
+            <button class="btn" type="button" id="btnVerifyOtpSignup">Verify</button>
+          </div>
+          <div class="msg" id="otpMsgSignup"></div>
+        </div>
       </form>
     </div>
 
@@ -307,8 +356,24 @@
       return data;
     }
 
+    async function apiOtp(path, body) {
+      const res = await fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      // OTP APIs return {ok, detail} with 200; but we also support standard FastAPI errors.
+      if (!res.ok) {
+        const msg = data && data.detail ? data.detail : ("HTTP " + res.status);
+        throw new Error(msg);
+      }
+      return data;
+    }
+
     function saveToken(accessToken) {
-      localStorage.setItem(TOKEN_KEY, accessToken);
+      // Session-only login: clears when browser/app closes.
+      sessionStorage.setItem(TOKEN_KEY, accessToken);
     }
 
     function goStore() {
@@ -317,7 +382,7 @@
 
     // If already logged in, jump straight to store.
     (function boot() {
-      const t = localStorage.getItem(TOKEN_KEY);
+      const t = sessionStorage.getItem(TOKEN_KEY);
       if (t) goStore();
     })();
 
@@ -335,7 +400,11 @@
         setMsg(msg, "Logged in. Redirecting…", "ok");
         setTimeout(goStore, 250);
       } catch (err) {
-        setMsg(msg, String(err && err.message ? err.message : err), "error");
+        const emsg = String(err && err.message ? err.message : err);
+        setMsg(msg, emsg, "error");
+        if (emsg.toLowerCase().includes("email not verified")) {
+          document.getElementById("otpBoxLogin").classList.add("visible");
+        }
       } finally {
         btn.disabled = false;
       }
@@ -351,15 +420,62 @@
         const name = document.getElementById("signupName").value.trim();
         const email = document.getElementById("signupEmail").value.trim();
         const password = document.getElementById("signupPassword").value;
-        const data = await api("/api/auth/register", { name, email, password });
-        saveToken(data.access_token);
-        setMsg(msg, "Account created. Redirecting…", "ok");
-        setTimeout(goStore, 250);
+        // Register now sends OTP and asks user to verify.
+        const res = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!(res.status === 201 || res.ok)) {
+          const m = data && data.detail ? data.detail : ("HTTP " + res.status);
+          throw new Error(m);
+        }
+        setMsg(msg, "Account created. OTP sent to your email — verify to login.", "ok");
+        document.getElementById("otpBoxSignup").classList.add("visible");
       } catch (err) {
         setMsg(msg, String(err && err.message ? err.message : err), "error");
       } finally {
         btn.disabled = false;
       }
+    });
+
+    async function sendOtp(emailElId, msgElId) {
+      const email = document.getElementById(emailElId).value.trim();
+      const msgEl = document.getElementById(msgElId);
+      setMsg(msgEl, "");
+      const data = await apiOtp("/api/auth/request-email-otp", { email });
+      setMsg(msgEl, data && data.detail ? data.detail : "OTP sent", "ok");
+    }
+
+    async function verifyOtp(emailElId, otpElId, msgElId) {
+      const email = document.getElementById(emailElId).value.trim();
+      const code = document.getElementById(otpElId).value.trim();
+      const msgEl = document.getElementById(msgElId);
+      setMsg(msgEl, "");
+      const data = await apiOtp("/api/auth/verify-email-otp", { email, code });
+      if (data && data.ok) {
+        setMsg(msgEl, "Verified. Now login.", "ok");
+        showTab("login");
+        document.getElementById("loginEmail").value = email;
+        document.getElementById("loginPassword").focus();
+      } else {
+        setMsg(msgEl, data && data.detail ? data.detail : "Invalid OTP", "error");
+      }
+    }
+
+    document.getElementById("btnSendOtpLogin").addEventListener("click", async () => {
+      try { await sendOtp("loginEmail", "otpMsgLogin"); } catch (e) { setMsg(document.getElementById("otpMsgLogin"), String(e.message || e), "error"); }
+    });
+    document.getElementById("btnVerifyOtpLogin").addEventListener("click", async () => {
+      try { await verifyOtp("loginEmail", "otpLogin", "otpMsgLogin"); } catch (e) { setMsg(document.getElementById("otpMsgLogin"), String(e.message || e), "error"); }
+    });
+
+    document.getElementById("btnSendOtpSignup").addEventListener("click", async () => {
+      try { await sendOtp("signupEmail", "otpMsgSignup"); } catch (e) { setMsg(document.getElementById("otpMsgSignup"), String(e.message || e), "error"); }
+    });
+    document.getElementById("btnVerifyOtpSignup").addEventListener("click", async () => {
+      try { await verifyOtp("signupEmail", "otpSignup", "otpMsgSignup"); } catch (e) { setMsg(document.getElementById("otpMsgSignup"), String(e.message || e), "error"); }
     });
   </script>
 </body>

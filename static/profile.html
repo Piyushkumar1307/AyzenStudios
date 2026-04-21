@@ -185,7 +185,7 @@
 
   <script>
     const TOKEN_KEY = "piyush_token";
-    const token = localStorage.getItem(TOKEN_KEY);
+    const token = sessionStorage.getItem(TOKEN_KEY);
     const msg = document.getElementById("msg");
 
     function fail(text) {
@@ -194,7 +194,7 @@
     }
 
     function logout() {
-      localStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(TOKEN_KEY);
       window.location.href = "/login";
     }
 

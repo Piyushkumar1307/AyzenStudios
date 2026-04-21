@@ -171,7 +171,7 @@ const TOKEN_KEY = "piyush_token";
 const GAME_ID = "neon_runner";
 
 async function ensureAccess() {
-  const t = localStorage.getItem(TOKEN_KEY);
+  const t = sessionStorage.getItem(TOKEN_KEY);
   if (!t) {
     window.location.href = "/login";
     return false;

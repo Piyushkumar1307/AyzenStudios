@@ -521,7 +521,7 @@ const PAID_GAMES = {
 };
 
 function logout() {
-  localStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
   window.location.href = "/login";
 }
 
@@ -544,7 +544,7 @@ function entitlementsWrite(games) {
 }
 
 async function requireAuth() {
-  const t = localStorage.getItem(TOKEN_KEY);
+  const t = sessionStorage.getItem(TOKEN_KEY);
   if (!t) {
     window.location.href = "/login";
     return null;
@@ -567,7 +567,7 @@ async function requireAuth() {
 }
 
 async function refreshEntitlements() {
-  const t = localStorage.getItem(TOKEN_KEY);
+  const t = sessionStorage.getItem(TOKEN_KEY);
   if (!t) return new Set();
   try {
     const res = await fetch("/api/entitlements", { headers: { Authorization: "Bearer " + t } });
@@ -616,7 +616,7 @@ function applyLockUI(games, { isLoading = false } = {}) {
 }
 
 async function unlockAndGo(gameId) {
-  const t = localStorage.getItem(TOKEN_KEY);
+  const t = sessionStorage.getItem(TOKEN_KEY);
   if (!t) return logout();
 
   const meta = PAID_GAMES[gameId];

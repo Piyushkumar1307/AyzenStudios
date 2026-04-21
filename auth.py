@@ -1,4 +1,5 @@
 import os
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -70,8 +71,14 @@ def get_current_user(
     sub = payload.get("sub")
     if not sub:
         raise HTTPException(status_code=401, detail="Invalid token subject")
+    # JWT subject is a string; `users.id` is UUID. Comparing as text can hang on Postgres
+    # and/or never match. Always compare using UUIDs.
+    try:
+        sub_uuid = uuid.UUID(str(sub))
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token subject")
 
-    user = db.query(User).filter(User.id == sub).first()
+    user = db.query(User).filter(User.id == sub_uuid).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     return user
