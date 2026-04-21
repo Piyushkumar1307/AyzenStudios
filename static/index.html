@@ -157,6 +157,55 @@
     margin-top: 4px;
   }
 
+  .header-actions {
+    margin-top: 14px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .user-pill {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    padding: 8px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    background: rgba(18, 18, 30, 0.55);
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .hdr-btn {
+    padding: 9px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 245, 255, 0.20);
+    background: rgba(18, 18, 30, 0.65);
+    color: var(--text);
+    text-decoration: none;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    transition: border-color 0.2s, filter 0.2s, transform 0.12s;
+  }
+
+  .hdr-btn:hover { border-color: rgba(0, 245, 255, 0.55); filter: brightness(1.06); }
+  .hdr-btn:active { transform: scale(0.98); }
+
+  .hdr-btn.primary {
+    color: #05050c;
+    border: none;
+    background: linear-gradient(135deg, var(--glow), #5eead4);
+    box-shadow: 0 0 24px rgba(0, 245, 255, 0.20);
+  }
+
   .store-main {
     flex: 1;
     padding: 32px 24px min(70vh, 520px);
@@ -359,6 +408,11 @@
     <div class="header-meta">
       Live hand tracking
       <strong>Point (index only) — swipe up/down to scroll · Pinch on Play</strong>
+      <div class="header-actions">
+        <div class="user-pill" id="userPill">Authenticating…</div>
+        <a class="hdr-btn" href="/profile" id="btnProfile">Profile</a>
+        <button class="hdr-btn primary" type="button" id="btnLogout">Logout</button>
+      </div>
     </div>
   </div>
 </header>
@@ -409,6 +463,40 @@
   </div>
   <p class="footer-hint">Scroll: point with index only, then move your finger up or down.</p>
 </main>
+
+<script>
+const TOKEN_KEY = "piyush_token";
+
+function logout() {
+  localStorage.removeItem(TOKEN_KEY);
+  window.location.href = "/login";
+}
+
+async function requireAuth() {
+  const t = localStorage.getItem(TOKEN_KEY);
+  if (!t) {
+    window.location.href = "/login";
+    return null;
+  }
+  try {
+    const res = await fetch("/api/me", { headers: { Authorization: "Bearer " + t } });
+    if (!res.ok) {
+      logout();
+      return null;
+    }
+    const me = await res.json();
+    const pill = document.getElementById("userPill");
+    pill.textContent = (me && me.name ? me.name : "User") + " · " + (me && me.email ? me.email : "");
+    document.getElementById("btnLogout").addEventListener("click", logout);
+    return me;
+  } catch (e) {
+    logout();
+    return null;
+  }
+}
+
+requireAuth();
+</script>
 
 <script>
 const cursorEl = document.getElementById("cursor");

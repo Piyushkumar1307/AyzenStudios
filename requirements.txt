@@ -6,3 +6,9 @@ opencv-python-headless
 websockets
 python-dotenv
 numpy
+SQLAlchemy
+psycopg2-binary
+python-jose[cryptography]
+passlib[bcrypt]
+email-validator
+bcrypt<4.0

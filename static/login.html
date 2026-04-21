@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — Piyush-Store</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #05050c;
+      --panel: rgba(12, 14, 28, 0.72);
+      --border: rgba(0, 245, 255, 0.22);
+      --glow: #00f5ff;
+      --accent: #bf5fff;
+      --text: #e8ecf4;
+      --muted: #6b7280;
+      --danger: #f87171;
+      --ok: #34d399;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, sans-serif;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 45% at 50% -10%, rgba(0, 245, 255, 0.14), transparent 55%),
+        radial-gradient(ellipse 55% 35% at 100% 55%, rgba(191, 95, 255, 0.10), transparent 55%),
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 47px,
+          rgba(0, 245, 255, 0.04) 47px,
+          rgba(0, 245, 255, 0.04) 48px
+        );
+      pointer-events: none;
+    }
+
+    .wrap {
+      width: min(520px, 94vw);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 24px 70px rgba(0,0,0,0.55), 0 0 80px rgba(0, 245, 255, 0.08);
+      backdrop-filter: blur(12px);
+      overflow: hidden;
+    }
+
+    .head {
+      padding: 22px 22px 16px;
+      border-bottom: 1px solid rgba(0, 245, 255, 0.12);
+    }
+
+    .brand {
+      font-size: 12px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--glow);
+    }
+
+    .title {
+      margin-top: 10px;
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 0%, var(--glow) 45%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .tabs {
+      display: flex;
+      padding: 10px;
+      gap: 10px;
+      background: rgba(5, 5, 12, 0.55);
+      border-top: 1px solid rgba(255,255,255,0.04);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(0, 245, 255, 0.14);
+      background: rgba(18, 18, 30, 0.7);
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 12px;
+      transition: filter 0.2s, border-color 0.2s;
+    }
+
+    .tab.active {
+      border-color: rgba(0, 245, 255, 0.55);
+      filter: brightness(1.1);
+      box-shadow: 0 0 30px rgba(0, 245, 255, 0.10);
+    }
+
+    .body {
+      padding: 20px 22px 22px;
+    }
+
+    .row {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    label {
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #94a3b8;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      background: rgba(10, 12, 24, 0.9);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus { border-color: rgba(0, 245, 255, 0.55); }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-top: 14px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-size: 12px;
+      color: #05050c;
+      background: linear-gradient(135deg, var(--glow), #5eead4);
+      box-shadow: 0 0 24px rgba(0, 245, 255, 0.28);
+      transition: transform 0.12s, filter 0.2s;
+    }
+
+    .btn:active { transform: scale(0.98); }
+    .btn:hover { filter: brightness(1.06); }
+    .btn:disabled { opacity: 0.55; cursor: default; }
+
+    .link {
+      flex: 0;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(99, 102, 241, 0.55);
+      background: transparent;
+      color: #a5b4fc;
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+    }
+
+    .msg {
+      margin-top: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--muted);
+      min-height: 20px;
+    }
+
+    .msg.error { color: var(--danger); }
+    .msg.ok { color: var(--ok); }
+
+    .foot {
+      padding: 14px 22px 18px;
+      border-top: 1px solid rgba(0, 245, 255, 0.10);
+      background: rgba(5, 5, 12, 0.55);
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <div class="brand">Piyush-Store</div>
+      <div class="title">Access Terminal</div>
+      <div class="subtitle">Sign in to continue</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" id="tabLogin" type="button">Login</button>
+      <button class="tab" id="tabSignup" type="button">Sign up</button>
+    </div>
+
+    <div class="body">
+      <form id="formLogin" autocomplete="on">
+        <div class="row">
+          <label for="loginEmail">Email</label>
+          <input id="loginEmail" name="email" type="email" placeholder="you@example.com" required />
+        </div>
+        <div class="row">
+          <label for="loginPassword">Password</label>
+          <input id="loginPassword" name="password" type="password" placeholder="••••••••" required />
+        </div>
+        <div class="actions">
+          <button class="btn" id="btnLogin" type="submit">Login</button>
+          <a class="link" href="/" id="btnBack">Store</a>
+        </div>
+        <div class="msg" id="loginMsg"></div>
+      </form>
+
+      <form id="formSignup" autocomplete="on" style="display:none;">
+        <div class="row">
+          <label for="signupName">Name</label>
+          <input id="signupName" name="name" type="text" placeholder="Piyush" required />
+        </div>
+        <div class="row">
+          <label for="signupEmail">Email</label>
+          <input id="signupEmail" name="email" type="email" placeholder="you@example.com" required />
+        </div>
+        <div class="row">
+          <label for="signupPassword">Password</label>
+          <input id="signupPassword" name="password" type="password" placeholder="Min 6 characters" minlength="6" required />
+        </div>
+        <div class="actions">
+          <button class="btn" id="btnSignup" type="submit">Create</button>
+          <a class="link" href="/" id="btnBack2">Store</a>
+        </div>
+        <div class="msg" id="signupMsg"></div>
+      </form>
+    </div>
+
+    <div class="foot">
+      Tip: if you see 401 errors, log in again.
+    </div>
+  </div>
+
+  <script>
+    const TOKEN_KEY = "piyush_token";
+
+    function setMsg(el, text, kind) {
+      el.textContent = text || "";
+      el.classList.remove("error", "ok");
+      if (kind) el.classList.add(kind);
+    }
+
+    function showTab(which) {
+      const login = which === "login";
+      document.getElementById("tabLogin").classList.toggle("active", login);
+      document.getElementById("tabSignup").classList.toggle("active", !login);
+      document.getElementById("formLogin").style.display = login ? "block" : "none";
+      document.getElementById("formSignup").style.display = login ? "none" : "block";
+      setMsg(document.getElementById("loginMsg"), "");
+      setMsg(document.getElementById("signupMsg"), "");
+    }
+
+    document.getElementById("tabLogin").addEventListener("click", () => showTab("login"));
+    document.getElementById("tabSignup").addEventListener("click", () => showTab("signup"));
+
+    async function api(path, body) {
+      const res = await fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = data && data.detail ? data.detail : ("HTTP " + res.status);
+        throw new Error(msg);
+      }
+      return data;
+    }
+
+    function saveToken(accessToken) {
+      localStorage.setItem(TOKEN_KEY, accessToken);
+    }
+
+    function goStore() {
+      window.location.href = "/";
+    }
+
+    // If already logged in, jump straight to store.
+    (function boot() {
+      const t = localStorage.getItem(TOKEN_KEY);
+      if (t) goStore();
+    })();
+
+    document.getElementById("formLogin").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("loginMsg");
+      const btn = document.getElementById("btnLogin");
+      setMsg(msg, "");
+      btn.disabled = true;
+      try {
+        const email = document.getElementById("loginEmail").value.trim();
+        const password = document.getElementById("loginPassword").value;
+        const data = await api("/api/auth/login", { email, password });
+        saveToken(data.access_token);
+        setMsg(msg, "Logged in. Redirecting…", "ok");
+        setTimeout(goStore, 250);
+      } catch (err) {
+        setMsg(msg, String(err && err.message ? err.message : err), "error");
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById("formSignup").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("signupMsg");
+      const btn = document.getElementById("btnSignup");
+      setMsg(msg, "");
+      btn.disabled = true;
+      try {
+        const name = document.getElementById("signupName").value.trim();
+        const email = document.getElementById("signupEmail").value.trim();
+        const password = document.getElementById("signupPassword").value;
+        const data = await api("/api/auth/register", { name, email, password });
+        saveToken(data.access_token);
+        setMsg(msg, "Account created. Redirecting…", "ok");
+        setTimeout(goStore, 250);
+      } catch (err) {
+        setMsg(msg, String(err && err.message ? err.message : err), "error");
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
+
