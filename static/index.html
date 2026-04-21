@@ -3,304 +3,345 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Avengers</title>
+<title>Piyush-Store</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  :root {
+    --bg-deep: #05050c;
+    --bg-panel: rgba(12, 14, 28, 0.72);
+    --border: rgba(0, 245, 255, 0.22);
+    --glow: #00f5ff;
+    --accent2: #bf5fff;
+    --text: #e8ecf4;
+    --muted: #6b7280;
+  }
+
+  html {
+    overflow-y: auto;
+    scroll-behavior: smooth;
+  }
+
   body {
-    background: #0a0a0f;
-    color: #f0f0f0;
-    font-family: 'Segoe UI', sans-serif;
-    height: 100vh;
-    overflow: hidden;
+    background: var(--bg-deep);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
-  }
-
-  header {
-    position: relative;
-    text-align: center;
-    padding: 24px 20px 12px;
-    background: #0a0a0f;
-    border-bottom: 1px solid #1e1e2e;
-    flex-shrink: 0;
-  }
-
-  .header-game-btn {
-    position: absolute;
-    top: 16px;
-    right: 20px;
-    z-index: 2;
-    padding: 10px 18px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    text-decoration: none;
-    color: #c9a84c;
-    background: #12121e;
-    border: 1px solid #2a2a3e;
-    border-radius: 10px;
-    transition: border-color 0.2s, background 0.2s, transform 0.1s;
-  }
-
-  .header-game-btn:hover {
-    border-color: #c9a84c;
-    background: #1a1a28;
-  }
-
-  .header-game-btn:active {
-    transform: scale(0.97);
-  }
-
-  header h1 {
-    font-size: 28px;
-    font-weight: 700;
-    letter-spacing: 6px;
-    color: #c9a84c;
-    text-transform: uppercase;
-  }
-
-  header p {
-    font-size: 13px;
-    color: #666;
-    margin-top: 4px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-  }
-
-  .viewport {
-    flex: 1;
-    overflow: hidden;
     position: relative;
   }
 
-  .slides-wrapper {
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+      linear-gradient(180deg, rgba(0, 245, 255, 0.03) 0%, transparent 40%),
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 47px,
+        rgba(0, 245, 255, 0.04) 47px,
+        rgba(0, 245, 255, 0.04) 48px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 47px,
+        rgba(191, 95, 255, 0.03) 47px,
+        rgba(191, 95, 255, 0.03) 48px
+      );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: -20%;
+    background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 245, 255, 0.12), transparent 55%),
+                radial-gradient(ellipse 60% 40% at 100% 50%, rgba(191, 95, 255, 0.08), transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .store-header,
+  .store-main {
+    position: relative;
+    z-index: 1;
+  }
+
+  .store-header {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid rgba(0, 245, 255, 0.15);
+    background: linear-gradient(180deg, rgba(5, 5, 12, 0.95), rgba(5, 5, 12, 0.6));
+    backdrop-filter: blur(12px);
+  }
+
+  .header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .brand {
     display: flex;
     flex-direction: column;
-    transition: transform 0.6s cubic-bezier(0.77, 0, 0.175, 1);
+    gap: 6px;
   }
 
-  .hero-slide {
-    min-height: calc(100vh - 130px);
-    display: flex;
+  .brand-badge {
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    padding: 30px 20px;
-    flex-shrink: 0;
-  }
-
-  .hero-card {
-    max-width: 700px;
-    width: 100%;
-    background: #12121e;
-    border: 1px solid #2a2a3e;
-    border-radius: 20px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: border-color 0.3s, transform 0.2s;
-  }
-
-  .hero-card:hover { border-color: #c9a84c; transform: scale(1.01); }
-  .hero-card:active { transform: scale(0.99); }
-
-  .card-banner {
-    height: 6px;
-  }
-
-  .card-body {
-    padding: 32px 36px;
-    display: flex;
-    gap: 28px;
-    align-items: flex-start;
-  }
-
-  .hero-avatar {
-    width: 90px;
-    height: 90px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 36px;
-    flex-shrink: 0;
-    border: 2px solid rgba(255,255,255,0.1);
-  }
-
-  .hero-info { flex: 1; }
-
-  .hero-name {
-    font-size: 26px;
-    font-weight: 700;
-    color: #f0f0f0;
-    letter-spacing: 1px;
-  }
-
-  .hero-alias {
-    font-size: 13px;
-    color: #888;
-    margin-top: 2px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-  }
-
-  .hero-bio {
-    font-size: 14px;
-    color: #aaa;
-    line-height: 1.7;
-    margin-top: 14px;
-  }
-
-  .powers-title {
+    gap: 10px;
     font-size: 11px;
-    letter-spacing: 2px;
+    letter-spacing: 4px;
     text-transform: uppercase;
-    color: #555;
-    margin-top: 20px;
+    color: var(--glow);
+    text-shadow: 0 0 20px rgba(0, 245, 255, 0.5);
+  }
+
+  .brand-badge::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--glow);
+    box-shadow: 0 0 12px var(--glow);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.85); }
+  }
+
+  .store-name {
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    background: linear-gradient(135deg, #fff 0%, var(--glow) 45%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 30px rgba(0, 245, 255, 0.25));
+  }
+
+  .store-tagline {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .header-meta {
+    text-align: right;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .header-meta strong {
+    display: block;
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    color: var(--accent2);
+    margin-top: 4px;
+  }
+
+  .store-main {
+    flex: 1;
+    padding: 32px 24px min(70vh, 520px);
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+    min-height: 120vh;
+  }
+
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(0, 245, 255, 0.35), transparent);
+    max-width: 200px;
+  }
+
+  .game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+  }
+
+  .game-card {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+      0 24px 48px rgba(0, 0, 0, 0.45),
+      0 0 60px rgba(0, 245, 255, 0.06);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    color: inherit;
+    display: block;
+  }
+
+  .game-card:hover {
+    border-color: rgba(0, 245, 255, 0.45);
+    box-shadow:
+      0 0 0 1px rgba(0, 245, 255, 0.2) inset,
+      0 28px 56px rgba(0, 0, 0, 0.5),
+      0 0 80px rgba(0, 245, 255, 0.12);
+  }
+
+  .game-card-media {
+    height: 160px;
+    background:
+      linear-gradient(145deg, rgba(0, 245, 255, 0.15) 0%, transparent 50%),
+      linear-gradient(225deg, rgba(191, 95, 255, 0.12) 0%, transparent 45%),
+      #0a0c18;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .game-card-media::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 30%, rgba(0, 245, 255, 0.2), transparent 50%);
+  }
+
+  .game-icon {
+    font-size: 64px;
+    line-height: 1;
+    filter: drop-shadow(0 0 20px rgba(0, 245, 255, 0.4));
+    position: relative;
+    z-index: 1;
+  }
+
+  .game-card-body {
+    padding: 22px 22px 24px;
+  }
+
+  .game-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
     margin-bottom: 10px;
   }
 
-  .powers-grid {
+  .game-title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .game-price {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--glow);
+    padding: 6px 10px;
+    border: 1px solid rgba(0, 245, 255, 0.35);
+    border-radius: 8px;
+    background: rgba(0, 245, 255, 0.08);
+    white-space: nowrap;
+  }
+
+  .game-desc {
+    font-size: 14px;
+    line-height: 1.65;
+    color: #9ca3af;
+    margin-bottom: 16px;
+  }
+
+  .game-tags {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+    margin-bottom: 18px;
   }
 
-  .power-tag {
-    font-size: 12px;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-  }
-
-  .stats-row {
-    display: flex;
-    gap: 16px;
-    margin-top: 24px;
-    padding-top: 20px;
-    border-top: 1px solid #1e1e2e;
-  }
-
-  .stat {
-    text-align: center;
-    flex: 1;
-  }
-
-  .stat-val {
-    font-size: 22px;
-    font-weight: 700;
-    color: #f0f0f0;
-  }
-
-  .stat-label {
-    font-size: 10px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: #555;
-    margin-top: 2px;
-  }
-
-  .detail-panel {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.5s ease;
-    border-top: 0 solid #1e1e2e;
-  }
-
-  .detail-panel.open {
-    max-height: 300px;
-    border-top: 1px solid #1e1e2e;
-  }
-
-  .detail-inner {
-    padding: 24px 36px;
-  }
-
-  .detail-inner h4 {
+  .tag {
     font-size: 11px;
-    letter-spacing: 2px;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #555;
-    margin-bottom: 12px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: rgba(191, 95, 255, 0.12);
+    border: 1px solid rgba(191, 95, 255, 0.25);
+    color: #c4b5fd;
   }
 
-  .detail-inner p {
-    font-size: 13px;
-    color: #999;
-    line-height: 1.8;
+  .tag.alt {
+    background: rgba(0, 245, 255, 0.1);
+    border-color: rgba(0, 245, 255, 0.28);
+    color: #67e8f9;
   }
 
-  .click-hint {
-    font-size: 12px;
-    color: #444;
-    text-align: right;
-    margin-top: 16px;
-    letter-spacing: 1px;
-  }
-
-  .nav-buttons {
-    flex-shrink: 0;
+  .play-cta {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 16px;
+    gap: 10px;
+    width: 100%;
     padding: 14px 20px;
-    background: #0a0a0f;
-    border-top: 1px solid #1e1e2e;
-  }
-
-  .nav-btn {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    border: 1px solid #2a2a3e;
-    background: #12121e;
-    color: #c9a84c;
-    cursor: pointer;
-    font-size: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s, border-color 0.2s, transform 0.1s;
-    user-select: none;
-  }
-
-  .nav-btn:hover { background: #1e1e2e; border-color: #c9a84c; }
-  .nav-btn:active { transform: scale(0.92); }
-  .nav-btn:disabled { opacity: 0.25; cursor: default; }
-
-  .nav-indicator {
     font-size: 13px;
-    color: #555;
-    min-width: 80px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #05050c;
+    background: linear-gradient(135deg, var(--glow), #5eead4);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 0 24px rgba(0, 245, 255, 0.35);
+    text-decoration: none;
+    transition: filter 0.2s ease, transform 0.15s ease;
+  }
+
+  .play-cta:hover {
+    filter: brightness(1.08);
+  }
+
+  .play-cta:active {
+    transform: scale(0.98);
+  }
+
+  .footer-hint {
+    margin-top: 40px;
     text-align: center;
-    letter-spacing: 1px;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
   }
 
-  .nav-dots {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-  }
-
-  .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #2a2a3e;
-    transition: background 0.3s, transform 0.3s;
-  }
-
-  .dot.active {
-    background: #c9a84c;
-    transform: scale(1.4);
-  }
-
-  /* Gesture overlay UI */
   #handCanvas { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; pointer-events:none; z-index: 9999; }
   #cursor { position: fixed; width:18px; height:18px; border-radius:50%; background:#60a5fa; box-shadow:0 0 0 6px rgba(96,165,250,.15); transform: translate(-50%, -50%); pointer-events:none; opacity:0; z-index: 10000; }
-  /* HUD removed (kept gesture overlay only) */
 </style>
 </head>
 <body>
@@ -308,26 +349,48 @@
 <canvas id="handCanvas"></canvas>
 <div id="cursor"></div>
 
-<header>
-  <a class="header-game-btn" href="/game">Skeleton Catch</a>
-  <h1>The Avengers</h1>
-  <p>Click a hero to explore their powers</p>
+<header class="store-header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-badge">Neural catalog</span>
+      <h1 class="store-name">Piyush-Store</h1>
+      <p class="store-tagline">Gesture-native games · camera powered</p>
+    </div>
+    <div class="header-meta">
+      Live hand tracking
+      <strong>Point (index only) — swipe up/down to scroll · Pinch on Play</strong>
+    </div>
+  </div>
 </header>
 
-<div class="viewport" id="viewport">
-  <div class="slides-wrapper" id="slides"></div>
-</div>
-
-<div class="nav-buttons">
-  <button class="nav-btn" id="btn-up" onclick="navigate(-1)" title="Previous">&#8593;</button>
-  <div>
-    <div class="nav-dots" id="dots"></div>
+<main class="store-main">
+  <p class="section-label">Featured titles</p>
+  <div class="game-grid">
+    <article class="game-card" id="game-skeleton-catch">
+      <div class="game-card-media">
+        <span class="game-icon" aria-hidden="true">☠️</span>
+      </div>
+      <div class="game-card-body">
+        <div class="game-title-row">
+          <h2 class="game-title">Skeleton Catch</h2>
+          <span class="game-price">Free</span>
+        </div>
+        <p class="game-desc">
+          Arcade reflex game: point with your index finger to move and scroll; pinch on Play to start. Catch falling targets before they slip away.
+        </p>
+        <div class="game-tags">
+          <span class="tag alt">Gesture</span>
+          <span class="tag">Camera</span>
+          <span class="tag alt">Arcade</span>
+        </div>
+        <a class="play-cta" href="/game" id="store-play-btn">Play now →</a>
+      </div>
+    </article>
   </div>
-  <button class="nav-btn" id="btn-down" onclick="navigate(1)" title="Next">&#8595;</button>
-</div>
+  <p class="footer-hint">Scroll: point with index only, then move your finger up or down. More titles soon.</p>
+</main>
 
 <script>
-// --- Gesture overlay (WebSocket -> cursor + skeleton + pinch click) ---
 const cursorEl = document.getElementById("cursor");
 const canvas = document.getElementById("handCanvas");
 const ctx = canvas.getContext("2d");
@@ -343,6 +406,18 @@ const HAND_CONNECTIONS = [
 
 let pinchDown = false;
 let lastPos = { x: 0.5, y: 0.5 };
+
+const PLAY_BTN_ID = "store-play-btn";
+
+/** Scroll only in “point” pose: index extended, other fingers down — move index up/down to scroll the page. */
+const SWIPE_SAMPLES = 12;
+const SWIPE_MIN_SPAN_MS = 55;
+const SWIPE_V_THRESH = 0.85;
+const SWIPE_DY_MIN = 0.07;
+const SWIPE_STEP_PX = 240;
+const SWIPE_COOLDOWN_MS = 380;
+let swipeSamples = [];
+let lastScrollAt = 0;
 
 function resizeCanvas() {
   const vv = window.visualViewport;
@@ -391,29 +466,73 @@ function drawHand(landmarks) {
   }
 }
 
-function clickAtCursor() {
+function elementAtCursor() {
   const c = cursorEl.getBoundingClientRect();
   const cx = c.left + c.width / 2;
   const cy = c.top + c.height / 2;
   const isOverlayEl = (node) => node === cursorEl || node === canvas;
 
-  // Safari can be picky about elementFromPoint with overlays; use elementsFromPoint.
   const stack = (document.elementsFromPoint ? document.elementsFromPoint(cx, cy) : []);
   let target = null;
 
   for (const el of stack) {
     if (!el || isOverlayEl(el)) continue;
-    // Ignore the HUD if you re-enable it later
     if (el.closest && el.closest("#hud")) continue;
     target = el;
     break;
   }
 
   if (!target) target = document.elementFromPoint(cx, cy);
-  if (!target || isOverlayEl(target)) return;
+  if (!target || isOverlayEl(target)) return null;
+  return target;
+}
 
-  const clickable = target.closest ? target.closest("button, a, [role='button'], [onclick]") : null;
-  if (clickable && typeof clickable.click === "function") clickable.click();
+/** Pinch only activates the Play button (not the whole card). */
+function clickAtCursor() {
+  const target = elementAtCursor();
+  if (!target) return;
+  const playBtn = target.closest ? target.closest("#" + PLAY_BTN_ID) : null;
+  if (!playBtn || playBtn.id !== PLAY_BTN_ID) return;
+  if (typeof playBtn.click === "function") playBtn.click();
+}
+
+function scrollPageBy(delta) {
+  const el = document.scrollingElement || document.documentElement;
+  el.scrollBy({ top: delta, behavior: "smooth" });
+}
+
+function trySwipeScroll(data) {
+  const now = performance.now();
+  if (now - lastScrollAt < SWIPE_COOLDOWN_MS) return;
+
+  if (!data.detected || data.gesture !== "point") {
+    swipeSamples = [];
+    return;
+  }
+
+  const y = data.cursor_y;
+  swipeSamples.push({ t: now, y });
+  if (swipeSamples.length > SWIPE_SAMPLES) swipeSamples.shift();
+  if (swipeSamples.length < 4) return;
+
+  const first = swipeSamples[0];
+  const last = swipeSamples[swipeSamples.length - 1];
+  const dt = (last.t - first.t) / 1000;
+  if (dt < SWIPE_MIN_SPAN_MS / 1000) return;
+
+  const dy = last.y - first.y;
+  const v = dt > 0 ? dy / dt : 0;
+  const fastEnough = Math.abs(v) >= SWIPE_V_THRESH;
+  const draggedEnough = Math.abs(dy) >= SWIPE_DY_MIN && dt >= 0.1;
+  if (!fastEnough && !draggedEnough) return;
+
+  lastScrollAt = now;
+  swipeSamples = [];
+  if (v > 0) {
+    scrollPageBy(SWIPE_STEP_PX);
+  } else {
+    scrollPageBy(-SWIPE_STEP_PX);
+  }
 }
 
 function applyHandFrame(data) {
@@ -435,235 +554,12 @@ function applyHandFrame(data) {
 
   drawHand(data.detected ? data.landmarks : null);
 
+  trySwipeScroll(data);
+
   const isPinch = data.detected && data.gesture === "pinch";
   if (isPinch && !pinchDown) { pinchDown = true; clickAtCursor(); }
   if (!isPinch) pinchDown = false;
 }
-
-// --- Your new Avengers slider UI ---
-const heroes = [
-  {
-    name: "Iron Man",
-    alias: "Tony Stark",
-    color: "#c0392b",
-    bg: "#1a0808",
-    avatar: "#c0392b",
-    initials: "TS",
-    bio: "Genius billionaire Tony Stark built a powered suit of armor to escape captivity — and never stopped improving it. His mind is as much a weapon as the suit itself.",
-    powers: ["Powered armor", "Energy repulsors", "Flight", "AI interface", "Genius-level intellect"],
-    tagColors: { bg: "#2a0808", text: "#e87070", border: "#5a1a1a" },
-    stats: { suits: "85+", iq: "270", speed: "Mach 5" },
-    statLabels: ["Suits built", "Est. IQ", "Top speed"],
-    detail: "The Iron Man armor has evolved from a crude escape suit to nano-tech that assembles from Tony's very bloodstream. The Mark L and beyond can form any weapon on demand. His EDITH network controls a satellite weapons system. In the Infinity War, he faced Thanos alone — and nearly won."
-  },
-  {
-    name: "Captain America",
-    alias: "Steve Rogers",
-    color: "#2471a3",
-    bg: "#060d1a",
-    avatar: "#2471a3",
-    initials: "SR",
-    bio: "A frail kid from Brooklyn became the world's first super soldier. Steve Rogers carries the weight of every era he's lived through — and still believes in people.",
-    powers: ["Super-soldier serum", "Vibranium shield", "Peak human strength", "Enhanced healing", "Master tactician"],
-    tagColors: { bg: "#060d1a", text: "#7fb3d3", border: "#1a3a5a" },
-    stats: { wars: "3", shield: "Vibranium", years: "100+" },
-    statLabels: ["Wars fought", "Shield material", "Age (cryo)"],
-    detail: "The super-soldier serum pushed every aspect of Steve's biology to peak human potential. His vibranium shield absorbs kinetic energy — it can be thrown to richochet off multiple targets and return like a boomerang. As a tactician, he has led every major Avengers operation and earned the trust of Thor himself."
-  },
-  {
-    name: "Thor",
-    alias: "Son of Odin",
-    color: "#7d3c98",
-    bg: "#0f0a1a",
-    avatar: "#7d3c98",
-    initials: "TH",
-    bio: "The Asgardian god of thunder is 1,500 years old and has fought wars across the nine realms. He's also really into coffee and Midgard pop culture.",
-    powers: ["God-level strength", "Mjolnir / Stormbreaker", "Lightning control", "Flight", "Near-immortality"],
-    tagColors: { bg: "#160a2a", text: "#b07fd4", border: "#4a1a7a" },
-    stats: { age: "1,500+", strength: "Class 100", axes: "1" },
-    statLabels: ["Years old", "Strength class", "Stormbreaker"],
-    detail: "Thor's true power isn't Mjolnir — it's the storm. The hammer merely focuses it. After losing Mjolnir, he discovered he was the god of thunder all along. Stormbreaker, forged in a dying star, is the only weapon in the universe powerful enough to kill Thanos — and nearly did."
-  },
-  {
-    name: "Black Widow",
-    alias: "Natasha Romanoff",
-    color: "#1e8449",
-    bg: "#060f08",
-    avatar: "#1e8449",
-    initials: "NR",
-    bio: "A product of the Soviet Red Room, Natasha Romanoff turned her lethal training against the people who created her. She's the most dangerous person in any room with no powers at all.",
-    powers: ["Master assassin", "Widow's Bite (electroshock)", "Expert martial artist", "Master spy", "Peak human agility"],
-    tagColors: { bg: "#060f08", text: "#6fcf97", border: "#1a4a2a" },
-    stats: { langs: "7", training: "Red Room", ops: "100+" },
-    statLabels: ["Languages", "Training program", "Black ops missions"],
-    detail: "The Red Room program erased her past and replaced it with perfect lethal instinct. Natasha mastered the Martial Arts of 16 styles. Her Widow's Bite gauntlets deliver 30,000 volts of electricity. She is the only Avenger who has successfully infiltrated HYDRA, A.I.M, and S.H.I.E.L.D simultaneously."
-  },
-  {
-    name: "Hulk",
-    alias: "Bruce Banner",
-    color: "#239b56",
-    bg: "#041a06",
-    avatar: "#239b56",
-    initials: "BB",
-    bio: "Gamma radiation accident turned brilliant scientist Bruce Banner into a creature of limitless rage. The angrier he gets, the stronger he becomes — with no upper limit ever recorded.",
-    powers: ["Unlimited strength (rage-scaled)", "Extreme durability", "Regenerative healing", "Gamma radiation", "Genius intellect (Banner)"],
-    tagColors: { bg: "#051a07", text: "#52be80", border: "#1a5a22" },
-    stats: { strength: "Unlimited", healing: "Instant", phds: "7" },
-    statLabels: ["Strength cap", "Healing factor", "Banner's PhDs"],
-    detail: "The Hulk's strength is literally boundless — he has never reached a recorded maximum. The madder he gets, the stronger he becomes. He has stopped a 150-billion-ton mountain from falling, held tectonic plates together, and survived nuclear blasts. Prof. Hulk merges Banner's mind with the Hulk's body — the best of both."
-  },
-  {
-    name: "Hawkeye",
-    alias: "Clint Barton",
-    color: "#7f8c8d",
-    bg: "#0d0f10",
-    avatar: "#7f8c8d",
-    initials: "CB",
-    bio: "No powers. No serum. Just a man with a bow who never misses. Clint Barton is proof that heart and skill can stand beside gods.",
-    powers: ["Perfect marksmanship", "Expert archer", "Trick arrows", "Master combatant", "Tactical genius"],
-    tagColors: { bg: "#111315", text: "#aab7b8", border: "#3a4040" },
-    stats: { accuracy: "100%", arrows: "32 types", range: "300m" },
-    statLabels: ["Mission accuracy", "Arrow types", "Effective range"],
-    detail: "Clint's trick arrow arsenal includes EMP arrows, explosive arrows, grapple arrows, Pym particle arrows (that shrink targets), and sonic arrows. He trained extensively under the Swordsman and later became Ronin. He has saved the world multiple times armed with nothing but a bow — and refuses to make it look easy."
-  },
-  {
-    name: "Doctor Strange",
-    alias: "Stephen Strange",
-    color: "#c0392b",
-    bg: "#1a0808",
-    avatar: "#8e44ad",
-    initials: "SS",
-    bio: "Arrogant surgeon, humbled by accident, reborn as Sorcerer Supreme. Strange commands the mystic arts to protect reality itself from threats beyond comprehension.",
-    powers: ["Sorcery Supreme", "Time manipulation (Time Stone)", "Dimensional travel", "Astral projection", "Mirror dimension"],
-    tagColors: { bg: "#1a0a2a", text: "#c39bd3", border: "#5a1a7a" },
-    stats: { dimensions: "Infinite", relics: "Eye of Agamotto", ops: "14M+" },
-    statLabels: ["Dimensions accessed", "Primary relic", "Futures viewed"],
-    detail: "Strange viewed 14,000,605 possible futures before Thanos's snap — and saw only one where the Avengers won. He orchestrated the entire endgame from that moment. The Cloak of Levitation is semi-sentient and chooses its wearer. The Eye of Agamotto can reverse, pause, or loop time itself."
-  },
-  {
-    name: "Spider-Man",
-    alias: "Peter Parker",
-    color: "#c0392b",
-    bg: "#1a0606",
-    avatar: "#e74c3c",
-    initials: "PP",
-    bio: "Radioactive spider bite gave a brilliant teenager proportional spider strength and the proportional responsibility that comes with it. Queens' finest.",
-    powers: ["Spider-Sense", "Wall-crawling", "Super strength & agility", "Web-shooters", "Genius inventor"],
-    tagColors: { bg: "#1a0606", text: "#ec7063", border: "#5a1010" },
-    stats: { age: "16", webs: "Web-fluid", iq: "Top 5% MIT" },
-    statLabels: ["Age (recruited)", "Signature weapon", "Academic rank"],
-    detail: "Peter's Spider-Sense is a precognitive danger awareness that fires faster than conscious thought — he can dodge bullets he can't see. He designed his own web-fluid formula (which baffled Stark Industries chemists) and built web-shooters from scratch. He has held a collapsing building, a crashing ferry, and a disintegrating bridge — simultaneously."
-  }
-];
-
-let current = 0;
-let open = null;
-const slideHeight = () => document.getElementById('viewport').offsetHeight;
-
-function buildSlides() {
-  const wrapper = document.getElementById('slides');
-  const dots = document.getElementById('dots');
-  wrapper.innerHTML = '';
-  dots.innerHTML = '';
-
-  heroes.forEach((h, i) => {
-    const slide = document.createElement('div');
-    slide.className = 'hero-slide';
-    slide.style.minHeight = slideHeight() + 'px';
-
-    const tagHTML = h.powers.map(p =>
-      `<span class="power-tag" style="background:${h.tagColors.bg};color:${h.tagColors.text};border:1px solid ${h.tagColors.border}">${p}</span>`
-    ).join('');
-
-    slide.innerHTML = `
-      <div class="hero-card" id="card-${i}" onclick="toggleDetail(${i})">
-        <div class="card-banner" style="background:${h.color}"></div>
-        <div class="card-body">
-          <div class="hero-avatar" style="background:${h.avatar}20;border-color:${h.color}40">
-            <span style="font-size:32px;font-weight:700;color:${h.color}">${h.initials}</span>
-          </div>
-          <div class="hero-info">
-            <div class="hero-name">${h.name}</div>
-            <div class="hero-alias">${h.alias}</div>
-            <div class="hero-bio">${h.bio}</div>
-            <div class="powers-title">Powers &amp; abilities</div>
-            <div class="powers-grid">${tagHTML}</div>
-            <div class="stats-row">
-              ${Object.values(h.stats).map((v,j) => `
-                <div class="stat">
-                  <div class="stat-val" style="color:${h.color}">${v}</div>
-                  <div class="stat-label">${h.statLabels[j]}</div>
-                </div>`).join('')}
-            </div>
-            <div class="click-hint">Click to reveal classified intel ▼</div>
-          </div>
-        </div>
-        <div class="detail-panel" id="detail-${i}">
-          <div class="detail-inner">
-            <h4>Classified intel</h4>
-            <p>${h.detail}</p>
-          </div>
-        </div>
-      </div>
-    `;
-
-    wrapper.appendChild(slide);
-
-    const dot = document.createElement('div');
-    dot.className = 'dot' + (i === 0 ? ' active' : '');
-    dots.appendChild(dot);
-  });
-
-  updatePosition();
-}
-
-function toggleDetail(i) {
-  const panel = document.getElementById(`detail-${i}`);
-  const hint = document.getElementById(`card-${i}`).querySelector('.click-hint');
-  if (panel.classList.contains('open')) {
-    panel.classList.remove('open');
-    hint.textContent = 'Click to reveal classified intel ▼';
-  } else {
-    if (open !== null && open !== i) {
-      document.getElementById(`detail-${open}`).classList.remove('open');
-      document.getElementById(`card-${open}`).querySelector('.click-hint').textContent = 'Click to reveal classified intel ▼';
-    }
-    panel.classList.add('open');
-    hint.textContent = 'Click to hide ▲';
-    open = i;
-  }
-}
-
-function navigate(dir) {
-  const next = current + dir;
-  if (next < 0 || next >= heroes.length) return;
-  if (open !== null) {
-    document.getElementById(`detail-${open}`).classList.remove('open');
-    open = null;
-  }
-  current = next;
-  updatePosition();
-}
-
-function updatePosition() {
-  const h = slideHeight();
-  document.getElementById('slides').style.transform = `translateY(-${current * h}px)`;
-  document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === current));
-  document.getElementById('btn-up').disabled = current === 0;
-  document.getElementById('btn-down').disabled = current === heroes.length - 1;
-}
-
-buildSlides();
-
-window.addEventListener('resize', () => {
-  document.querySelectorAll('.hero-slide').forEach(s => s.style.minHeight = slideHeight() + 'px');
-  updatePosition();
-});
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowDown') navigate(1);
-  if (e.key === 'ArrowUp') navigate(-1);
-});
 </script>
 <script type="module">
 import { startClientHandTracking } from "/static/hand-client.js";
@@ -714,4 +610,3 @@ bootHand().catch((err) => {
 </script>
 </body>
 </html>
-
