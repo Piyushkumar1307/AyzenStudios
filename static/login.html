@@ -148,6 +148,34 @@
 
     input:focus { border-color: rgba(0, 245, 255, 0.55); }
 
+    .pw-wrap {
+      position: relative;
+      width: 100%;
+    }
+    .pw-wrap input {
+      padding-right: 46px;
+    }
+    .pw-toggle {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      background: rgba(10, 12, 24, 0.55);
+      color: rgba(231, 234, 240, 0.9);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: filter 0.2s, border-color 0.2s, transform 0.12s;
+      user-select: none;
+    }
+    .pw-toggle:hover { filter: brightness(1.08); border-color: rgba(0, 245, 255, 0.28); }
+    .pw-toggle:active { transform: translateY(-50%) scale(0.98); }
+    .pw-toggle .ico { font-size: 16px; line-height: 1; }
+
     .actions {
       display: flex;
       gap: 12px;
@@ -329,7 +357,12 @@
         </div>
         <div class="row">
           <label for="loginPassword">Password</label>
-          <input id="loginPassword" name="password" type="password" placeholder="••••••••" required />
+          <div class="pw-wrap">
+            <input id="loginPassword" name="password" type="password" placeholder="••••••••" required />
+            <button class="pw-toggle" type="button" data-toggle-for="loginPassword" aria-label="Show password">
+              <span class="ico" aria-hidden="true">👁</span>
+            </button>
+          </div>
         </div>
         <div class="actions">
           <button class="btn" id="btnLogin" type="submit">Login</button>
@@ -358,7 +391,21 @@
         </div>
         <div class="row">
           <label for="signupPassword">Password</label>
-          <input id="signupPassword" name="password" type="password" placeholder="Min 6 characters" minlength="6" required />
+          <div class="pw-wrap">
+            <input
+              id="signupPassword"
+              name="password"
+              type="password"
+              placeholder="Min 6 chars (Aa1!)"
+              minlength="6"
+              pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{6,}"
+              title="Min 6 characters, with 1 uppercase, 1 lowercase, 1 number, and 1 symbol."
+              required
+            />
+            <button class="pw-toggle" type="button" data-toggle-for="signupPassword" aria-label="Show password">
+              <span class="ico" aria-hidden="true">👁</span>
+            </button>
+          </div>
         </div>
         <div class="actions">
           <button class="btn" id="btnSignup" type="submit">Create</button>
@@ -419,6 +466,22 @@
 
     document.getElementById("tabLogin").addEventListener("click", () => showTab("login"));
     document.getElementById("tabSignup").addEventListener("click", () => showTab("signup"));
+
+    // Password visibility toggles (eye button)
+    document.querySelectorAll("[data-toggle-for]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-toggle-for");
+        const inp = id ? document.getElementById(id) : null;
+        if (!inp) return;
+        const nowText = inp.getAttribute("type") === "password";
+        inp.setAttribute("type", nowText ? "text" : "password");
+        const ico = btn.querySelector(".ico");
+        if (ico) ico.textContent = nowText ? "🙈" : "👁";
+        btn.setAttribute("aria-label", nowText ? "Hide password" : "Show password");
+        inp.focus();
+        try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch { /* ignore */ }
+      });
+    });
 
     async function api(path, body) {
       const res = await fetch(path, {
@@ -501,6 +564,16 @@
         const name = document.getElementById("signupName").value.trim();
         const email = document.getElementById("signupEmail").value.trim();
         const password = document.getElementById("signupPassword").value;
+        // Client-side validation (server also enforces).
+        const ok =
+          password.length >= 6 &&
+          /[a-z]/.test(password) &&
+          /[A-Z]/.test(password) &&
+          /\d/.test(password) &&
+          /[^A-Za-z0-9]/.test(password);
+        if (!ok) {
+          throw new Error("Password must be 6+ chars with 1 uppercase, 1 lowercase, 1 number, and 1 symbol.");
+        }
         // Register now sends OTP and asks user to verify.
         const res = await fetch("/api/auth/register", {
           method: "POST",

@@ -35,6 +35,26 @@ from auth_schemas import (
 )
 from db import engine, get_db
 
+# --- Password policy ---
+def _validate_password_or_400(pw: str) -> None:
+    """
+    Require:
+    - min 6 chars
+    - 1 uppercase, 1 lowercase, 1 digit, 1 symbol
+    """
+    s = (pw or "").strip()
+    if len(s) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    has_upper = any("A" <= c <= "Z" for c in s)
+    has_lower = any("a" <= c <= "z" for c in s)
+    has_digit = any("0" <= c <= "9" for c in s)
+    has_symbol = any(not c.isalnum() for c in s)
+    if not (has_upper and has_lower and has_digit and has_symbol):
+        raise HTTPException(
+            status_code=400,
+            detail="Password must include 1 uppercase, 1 lowercase, 1 number, and 1 symbol",
+        )
+
 # --- Global detector instance ---
 detector = GestureDetector()
 
@@ -205,6 +225,7 @@ def _startup_db():
 def api_register(payload: RegisterRequest, db: Session = Depends(get_db)):
     # Ensure table exists even if DB was down at startup.
     _ensure_tables_or_503()
+    _validate_password_or_400(payload.password)
     email = payload.email.strip().lower()
     user = User(
         name=payload.name.strip(),
