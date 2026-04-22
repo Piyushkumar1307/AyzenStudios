@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # Game-Store
+=======
+# HandGesture Web Navigation
+>>>>>>> 08df400 (leaderboard , ui updates and new game added)
 
 **Piyush-Store** — a gesture-driven web game storefront built with **FastAPI**, **PostgreSQL**, and **Razorpay**. Users sign up with email, verify via OTP, then browse free and paid games. Premium titles unlock per user as **entitlements** stored in the database; payments go through **Razorpay Checkout** with **server-side signature verification**.
 

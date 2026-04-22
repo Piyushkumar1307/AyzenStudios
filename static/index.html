@@ -166,19 +166,38 @@
     flex-wrap: wrap;
   }
 
-  .user-pill {
-    font-size: 11px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: #94a3b8;
-    padding: 8px 10px;
+  .avatar-btn {
+    width: 42px;
+    height: 42px;
     border-radius: 999px;
-    border: 1px solid rgba(148, 163, 184, 0.22);
-    background: rgba(18, 18, 30, 0.55);
-    max-width: 260px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    border: 1px solid rgba(0, 245, 255, 0.28);
+    background:
+      radial-gradient(circle at 30% 30%, rgba(0, 245, 255, 0.22), transparent 55%),
+      rgba(18, 18, 30, 0.65);
+    box-shadow: 0 0 24px rgba(0, 245, 255, 0.16);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--text);
+    cursor: pointer;
+    transition: transform 0.12s, filter 0.2s, border-color 0.2s;
+  }
+  .avatar-btn:hover { filter: brightness(1.05); border-color: rgba(0, 245, 255, 0.55); }
+  .avatar-btn:active { transform: scale(0.97); }
+  .avatar-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 999px;
+    object-fit: cover;
+    display: none;
+  }
+  .avatar-text {
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    color: #e8ecf4;
+    text-shadow: 0 0 18px rgba(0, 245, 255, 0.32);
+    user-select: none;
   }
 
   .hdr-btn {
@@ -415,29 +434,85 @@
     letter-spacing: 0.12em;
   }
 
-  #handCanvas { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; pointer-events:none; z-index: 9999; }
-  #cursor { position: fixed; width:18px; height:18px; border-radius:50%; background:#60a5fa; box-shadow:0 0 0 6px rgba(96,165,250,.15); transform: translate(-50%, -50%); pointer-events:none; opacity:0; z-index: 10000; }
+  /* --- Loading overlay (payments) --- */
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 20000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    background: rgba(5, 5, 12, 0.82);
+    backdrop-filter: blur(10px);
+  }
+  .loading-overlay.visible { display: flex; }
+  .loading-card {
+    width: min(460px, 92vw);
+    border-radius: 18px;
+    border: 1px solid rgba(0, 245, 255, 0.22);
+    background: linear-gradient(145deg, rgba(18, 18, 30, 0.85), rgba(10, 12, 24, 0.85));
+    box-shadow: 0 24px 90px rgba(0,0,0,0.6), 0 0 60px rgba(0, 245, 255, 0.12);
+    padding: 22px 20px;
+    text-align: center;
+  }
+  .loading-title {
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 12px;
+  }
+  .spinner {
+    width: 62px;
+    height: 62px;
+    border-radius: 999px;
+    margin: 10px auto 14px;
+    border: 3px solid rgba(0, 245, 255, 0.15);
+    border-top-color: rgba(0, 245, 255, 0.95);
+    box-shadow: 0 0 28px rgba(0, 245, 255, 0.25);
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-msg {
+    font-size: 14px;
+    color: var(--text);
+    letter-spacing: 0.02em;
+    line-height: 1.45;
+  }
+  .loading-sub {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
 </style>
 </head>
 <body>
 
-<canvas id="handCanvas"></canvas>
-<div id="cursor"></div>
+<div class="loading-overlay" id="loadingOverlay" aria-live="polite" aria-busy="true">
+  <div class="loading-card" role="status">
+    <div class="loading-title">Processing</div>
+    <div class="spinner" aria-hidden="true"></div>
+    <div class="loading-msg" id="loadingMsg">Please wait…</div>
+    <div class="loading-sub" id="loadingSub">This usually takes a moment.</div>
+  </div>
+</div>
 
 <header class="store-header">
   <div class="header-inner">
     <div class="brand">
       <span class="brand-badge">Welcome to</span>
       <h1 class="store-name">Piyush-Store</h1>
-      <p class="store-tagline">Gesture-native games · camera powered</p>
+      <p class="store-tagline">Games store · instant play</p>
     </div>
     <div class="header-meta">
-      Live hand tracking
-      <strong>Point (index only) — swipe up/down to scroll · Pinch on Play</strong>
       <div class="header-actions">
-        <div class="user-pill" id="userPill">Authenticating…</div>
-        <a class="hdr-btn" href="/profile" id="btnProfile">Profile</a>
-        <button class="hdr-btn primary" type="button" id="btnLogout">Logout</button>
+        <a class="hdr-btn" href="/leaderboard" aria-label="Leaderboard">Leaderboard</a>
+        <a class="avatar-btn" href="/profile" id="btnAvatar" aria-label="Profile">
+          <img class="avatar-img" id="avatarImg" alt="" />
+          <span class="avatar-text" id="avatarText">?</span>
+        </a>
       </div>
     </div>
   </div>
@@ -528,8 +603,29 @@
         <a class="play-cta" href="#" data-game-link="tictactoe" data-route="/tictactoe">Checking access…</a>
       </div>
     </article>
+
+    <article class="game-card" id="game-traffic">
+      <div class="game-card-media" style="background: linear-gradient(145deg, rgba(251,191,36,0.14) 0%, transparent 55%), linear-gradient(225deg, rgba(34,211,238,0.12) 0%, transparent 45%), #0a0c18;">
+        <span class="game-icon" aria-hidden="true">🚗</span>
+      </div>
+      <div class="game-card-body">
+        <div class="game-title-row">
+          <h2 class="game-title">Traffic Rush</h2>
+          <span class="game-price" data-price-for="traffic">₹15</span>
+        </div>
+        <p class="game-desc">
+          Three-lane rush hour: dodge oncoming cars as speed ramps up. Steer by moving your index finger left/right (pinch to start).
+        </p>
+        <div class="game-tags">
+          <span class="tag alt">Arcade</span>
+          <span class="tag">Gesture</span>
+          <span class="tag alt">Reflex</span>
+        </div>
+        <a class="play-cta" href="#" data-game-link="traffic" data-route="/traffic">Checking access…</a>
+      </div>
+    </article>
   </div>
-  <p class="footer-hint">Scroll: point with index only, then move your finger up or down.</p>
+  <p class="footer-hint">Tip: unlock premium games to play instantly.</p>
 </main>
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
@@ -540,17 +636,36 @@ const PAID_GAMES = {
   neon_pop: { title: "Neon Pop", route: "/puzzle", priceLabel: "₹10" },
   neon_runner: { title: "Neon Runner", route: "/runner", priceLabel: "₹10" },
   tictactoe: { title: "Neon Tic-Tac-Toe", route: "/tictactoe", priceLabel: "₹10" },
+  traffic: { title: "Traffic Rush", route: "/traffic", priceLabel: "₹15" },
 };
 
 const PAID_GAME_CARD_ID = {
   neon_pop: "game-neon-pop",
   neon_runner: "game-neon-runner",
   tictactoe: "game-tictactoe",
+  traffic: "game-traffic",
 };
 
+const loadingOverlay = document.getElementById("loadingOverlay");
+const loadingMsg = document.getElementById("loadingMsg");
+const loadingSub = document.getElementById("loadingSub");
+let loadingCount = 0;
+function setLoading(on, { msg = "Please wait…", sub = "This usually takes a moment." } = {}) {
+  if (on) {
+    loadingCount++;
+    if (loadingMsg) loadingMsg.textContent = msg;
+    if (loadingSub) loadingSub.textContent = sub;
+    loadingOverlay?.classList.add("visible");
+  } else {
+    loadingCount = Math.max(0, loadingCount - 1);
+    if (loadingCount === 0) loadingOverlay?.classList.remove("visible");
+  }
+}
+
 function logout() {
+  setLoading(true, { msg: "Signing out…", sub: "See you soon." });
   sessionStorage.removeItem(TOKEN_KEY);
-  window.location.href = "/login";
+  setTimeout(() => { window.location.href = "/login"; }, 200);
 }
 
 function entitlementsRead() {
@@ -584,9 +699,45 @@ async function requireAuth() {
       return null;
     }
     const me = await res.json();
-    const pill = document.getElementById("userPill");
-    pill.textContent = (me && me.name ? me.name : "User") + " · " + (me && me.email ? me.email : "");
-    document.getElementById("btnLogout").addEventListener("click", logout);
+    const name = (me && me.name ? String(me.name) : "").trim();
+    const email = (me && me.email ? String(me.email) : "").trim();
+    const userId = (me && me.id ? String(me.id) : "").trim();
+
+    function avatarKey() {
+      return "piyush_avatar_v1_" + (userId || email || "anon");
+    }
+    function safeJsonParse(s) {
+      try { return JSON.parse(s); } catch { return null; }
+    }
+    function loadAvatar() {
+      const key = avatarKey();
+      let raw = null;
+      try { raw = localStorage.getItem(key); } catch { raw = null; }
+      if (!raw) return { kind: "emoji", data: "🧑" };
+      const obj = raw.trim().startsWith("{") ? safeJsonParse(raw) : null;
+      if (obj && obj.kind && obj.data) return obj;
+      // Back-compat: old emoji string
+      return { kind: "emoji", data: raw };
+    }
+
+    const avatarObj = loadAvatar();
+    const avatarImg = document.getElementById("avatarImg");
+    const avatarText = document.getElementById("avatarText");
+    if (avatarObj.kind === "svg" && typeof avatarObj.data === "string" && avatarObj.data.startsWith("data:image/svg+xml")) {
+      if (avatarImg) {
+        avatarImg.src = avatarObj.data;
+        avatarImg.style.display = "block";
+      }
+      if (avatarText) avatarText.style.display = "none";
+    } else {
+      if (avatarImg) avatarImg.style.display = "none";
+      if (avatarText) {
+        avatarText.style.display = "inline";
+        avatarText.textContent = String(avatarObj.data || "🧑");
+      }
+    }
+    const avatar = document.getElementById("btnAvatar");
+    if (avatar) avatar.setAttribute("aria-label", name ? `Profile (${name})` : "Profile");
     return me;
   } catch (e) {
     logout();
@@ -630,7 +781,7 @@ function applyLockUI(games, { isLoading = false } = {}) {
 
     card.classList.toggle("locked", !unlocked);
     if (isLoading) link.textContent = unlocked ? "Play now →" : "Checking access…";
-    else link.textContent = unlocked ? "Play now →" : "Unlock ₹10 →";
+    else link.textContent = unlocked ? "Play now →" : `Unlock ${meta.priceLabel} →`;
 
     // Add a small “LOCKED” pill once
     if (!unlocked && !card.querySelector(".lock-pill")) {
@@ -657,6 +808,7 @@ async function unlockAndGo(gameId) {
     return;
   }
 
+  setLoading(true, { msg: "Starting payment…", sub: "Creating your order securely." });
   const orderRes = await fetch("/api/payments/create-order", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: "Bearer " + t },
@@ -664,10 +816,12 @@ async function unlockAndGo(gameId) {
   });
   const order = await orderRes.json().catch(() => ({}));
   if (!orderRes.ok) {
+    setLoading(false);
     alert(order && order.detail ? order.detail : "Payment init failed");
     return;
   }
   if (order.already_unlocked) {
+    setLoading(false);
     ent.add(gameId);
     entitlementsWrite(ent);
     applyLockUI(ent);
@@ -683,6 +837,7 @@ async function unlockAndGo(gameId) {
     description: `${meta.title} unlock`,
     order_id: order.order_id,
     handler: async function (resp) {
+      setLoading(true, { msg: "Verifying payment…", sub: "Unlocking your game." });
       const verifyRes = await fetch("/api/payments/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: "Bearer " + t },
@@ -695,6 +850,7 @@ async function unlockAndGo(gameId) {
       });
       const vr = await verifyRes.json().catch(() => ({}));
       if (!verifyRes.ok) {
+        setLoading(false);
         alert(vr && vr.detail ? vr.detail : "Payment verification failed");
         return;
       }
@@ -703,18 +859,22 @@ async function unlockAndGo(gameId) {
       applyLockUI(ent);
       window.location.href = meta.route;
     },
-    modal: { ondismiss: function () {} },
+    modal: { ondismiss: function () { setLoading(false); } },
     theme: { color: "#00f5ff" },
   };
 
   try {
     const rzp = new Razorpay(options);
     rzp.on("payment.failed", function (e) {
+      setLoading(false);
       const msg = (e && e.error && e.error.description) ? e.error.description : "Payment failed";
       alert(msg);
     });
+    // Hand off to Razorpay UI; stop our overlay so the modal is visible.
+    setLoading(false);
     rzp.open();
   } catch (e) {
+    setLoading(false);
     alert("Razorpay checkout failed to open");
   }
 }
@@ -751,234 +911,6 @@ function wirePaidGameLinks() {
   applyLockUI(games, { isLoading: false });
   setPaidLinksEnabled(true);
 })();
-</script>
-
-<script>
-const cursorEl = document.getElementById("cursor");
-const canvas = document.getElementById("handCanvas");
-const ctx = canvas.getContext("2d");
-
-const HAND_CONNECTIONS = [
-  [0,1],[1,2],[2,3],[3,4],
-  [0,5],[5,6],[6,7],[7,8],
-  [5,9],[9,10],[10,11],[11,12],
-  [9,13],[13,14],[14,15],[15,16],
-  [13,17],[17,18],[18,19],[19,20],
-  [0,17]
-];
-
-let pinchDown = false;
-let lastPos = { x: 0.5, y: 0.5 };
-
-/** Scroll only in “point” pose: index extended, other fingers down — move index up/down to scroll the page. */
-const SWIPE_SAMPLES = 12;
-const SWIPE_MIN_SPAN_MS = 55;
-const SWIPE_V_THRESH = 0.85;
-const SWIPE_DY_MIN = 0.07;
-const SWIPE_STEP_PX = 240;
-const SWIPE_COOLDOWN_MS = 380;
-let swipeSamples = [];
-let lastScrollAt = 0;
-
-function resizeCanvas() {
-  const vv = window.visualViewport;
-  const vw = vv?.width ?? window.innerWidth;
-  const vh = vv?.height ?? window.innerHeight;
-  const ox = vv?.offsetLeft ?? 0;
-  const oy = vv?.offsetTop ?? 0;
-  const dpr = window.devicePixelRatio || 1;
-
-  canvas.width = Math.floor(vw * dpr);
-  canvas.height = Math.floor(vh * dpr);
-  canvas.style.left = `${ox}px`;
-  canvas.style.top = `${oy}px`;
-  canvas.style.width = `${vw}px`;
-  canvas.style.height = `${vh}px`;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-}
-window.addEventListener("resize", resizeCanvas);
-window.visualViewport?.addEventListener("resize", resizeCanvas);
-window.visualViewport?.addEventListener("scroll", resizeCanvas);
-resizeCanvas();
-
-function drawHand(landmarks) {
-  const vv = window.visualViewport;
-  const vw = vv?.width ?? window.innerWidth;
-  const vh = vv?.height ?? window.innerHeight;
-  ctx.clearRect(0, 0, vw, vh);
-  if (!Array.isArray(landmarks) || landmarks.length !== 21) return;
-
-  const pts = landmarks.map(p => ({ x: p.x * vw, y: p.y * vh }));
-
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = "rgba(96,165,250,0.95)";
-  ctx.beginPath();
-  for (const [a,b] of HAND_CONNECTIONS) {
-    ctx.moveTo(pts[a].x, pts[a].y);
-    ctx.lineTo(pts[b].x, pts[b].y);
-  }
-  ctx.stroke();
-
-  ctx.fillStyle = "rgba(231,234,240,0.95)";
-  for (const p of pts) {
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
-    ctx.fill();
-  }
-}
-
-function elementAtCursor() {
-  const c = cursorEl.getBoundingClientRect();
-  const cx = c.left + c.width / 2;
-  const cy = c.top + c.height / 2;
-  const isOverlayEl = (node) => node === cursorEl || node === canvas;
-
-  const stack = (document.elementsFromPoint ? document.elementsFromPoint(cx, cy) : []);
-  let target = null;
-
-  for (const el of stack) {
-    if (!el || isOverlayEl(el)) continue;
-    if (el.closest && el.closest("#hud")) continue;
-    target = el;
-    break;
-  }
-
-  if (!target) target = document.elementFromPoint(cx, cy);
-  if (!target || isOverlayEl(target)) return null;
-  return target;
-}
-
-/** Pinch activates only explicit controls (no whole-card clicks). */
-function clickAtCursor() {
-  const target = elementAtCursor();
-  if (!target) return;
-
-  // Allow Play buttons
-  const playBtn = target.closest ? target.closest("a.play-cta") : null;
-  if (playBtn && playBtn.getAttribute("href") && typeof playBtn.click === "function") {
-    playBtn.click();
-    return;
-  }
-
-  // Allow header profile/logout controls
-  const headerBtn = target.closest ? target.closest("#btnProfile, #btnLogout, .hdr-btn") : null;
-  if (headerBtn && typeof headerBtn.click === "function") {
-    headerBtn.click();
-    return;
-  }
-}
-
-function scrollPageBy(delta) {
-  const el = document.scrollingElement || document.documentElement;
-  el.scrollBy({ top: delta, behavior: "smooth" });
-}
-
-function trySwipeScroll(data) {
-  const now = performance.now();
-  if (now - lastScrollAt < SWIPE_COOLDOWN_MS) return;
-
-  if (!data.detected || data.gesture !== "point") {
-    swipeSamples = [];
-    return;
-  }
-
-  const y = data.cursor_y;
-  swipeSamples.push({ t: now, y });
-  if (swipeSamples.length > SWIPE_SAMPLES) swipeSamples.shift();
-  if (swipeSamples.length < 4) return;
-
-  const first = swipeSamples[0];
-  const last = swipeSamples[swipeSamples.length - 1];
-  const dt = (last.t - first.t) / 1000;
-  if (dt < SWIPE_MIN_SPAN_MS / 1000) return;
-
-  const dy = last.y - first.y;
-  const v = dt > 0 ? dy / dt : 0;
-  const fastEnough = Math.abs(v) >= SWIPE_V_THRESH;
-  const draggedEnough = Math.abs(dy) >= SWIPE_DY_MIN && dt >= 0.1;
-  if (!fastEnough && !draggedEnough) return;
-
-  lastScrollAt = now;
-  swipeSamples = [];
-  if (v > 0) {
-    scrollPageBy(SWIPE_STEP_PX);
-  } else {
-    scrollPageBy(-SWIPE_STEP_PX);
-  }
-}
-
-function applyHandFrame(data) {
-  const vv = window.visualViewport;
-  const vw = vv?.width ?? window.innerWidth;
-  const vh = vv?.height ?? window.innerHeight;
-  const ox = vv?.offsetLeft ?? 0;
-  const oy = vv?.offsetTop ?? 0;
-
-  const nx = data.cursor_x ?? lastPos.x;
-  const ny = data.cursor_y ?? lastPos.y;
-  if (typeof nx === "number" && typeof ny === "number") lastPos = { x: nx, y: ny };
-
-  const x = ox + lastPos.x * vw;
-  const y = oy + lastPos.y * vh;
-  cursorEl.style.left = `${x}px`;
-  cursorEl.style.top = `${y}px`;
-  cursorEl.style.opacity = data.detected ? "1" : "0.35";
-
-  drawHand(data.detected ? data.landmarks : null);
-
-  trySwipeScroll(data);
-
-  const isPinch = data.detected && data.gesture === "pinch";
-  if (isPinch && !pinchDown) { pinchDown = true; clickAtCursor(); }
-  if (!isPinch) pinchDown = false;
-}
-</script>
-<script type="module">
-import { startClientHandTracking } from "/static/hand-client.js";
-
-function failMsg(err) {
-  return "Camera / hand tracking: " + (err && err.message ? err.message : String(err)) +
-    "\n\nAllow camera access and use HTTPS or localhost.";
-}
-
-async function bootHand() {
-  try {
-    await startClientHandTracking((data) => {
-      applyHandFrame(data);
-    });
-  } catch (err) {
-    console.error(err);
-    const name = err && err.name;
-    const denied = name === "NotAllowedError" || name === "PermissionDeniedError";
-    if (denied) {
-      await new Promise((resolve) => {
-        const go = () => {
-          document.removeEventListener("click", go);
-          document.removeEventListener("touchstart", go);
-          resolve();
-        };
-        document.addEventListener("click", go);
-        document.addEventListener("touchstart", go);
-        alert("Tap anywhere on the page to enable the camera for hand tracking.");
-      });
-      try {
-        await startClientHandTracking((data) => {
-          applyHandFrame(data);
-        });
-      } catch (e2) {
-        console.error(e2);
-        alert(failMsg(e2));
-      }
-    } else {
-      alert(failMsg(err));
-    }
-  }
-}
-
-bootHand().catch((err) => {
-  console.error(err);
-  alert(failMsg(err));
-});
 </script>
 </body>
 </html>

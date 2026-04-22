@@ -24,9 +24,31 @@ export function classifyGesture(landmarks) {
   const ringUp = ringTip.y < landmarks[13].y;
   const pinkyUp = pinkyTip.y < landmarks[17].y;
 
-  const pinchDist = dist2d(thumbTip, indexTip);
-  if (pinchDist < 0.05) {
-    return ["pinch", Math.round((1.0 - pinchDist / 0.05) * 100) / 100];
+  // Pinch variants:
+  // - thumb + index: "pinch" (backwards compatible; used as click)
+  // - thumb + middle: "pinch_mid" (optional)
+  // - thumb + ring: "pinch_ring" (used for steering / secondary actions)
+  const pinchIndexDist = dist2d(thumbTip, indexTip);
+  const pinchMiddleDist = dist2d(thumbTip, middleTip);
+  const pinchRingDist = dist2d(thumbTip, ringTip);
+  // Middle-finger pinch is typically a bit harder to "close" in camera space than index.
+  // Use slightly different thresholds to make thumb+middle reliable.
+  const TH_INDEX = 0.055;
+  const TH_MIDDLE = 0.065;
+  const TH_RING = 0.085;
+  const isIndex = pinchIndexDist < TH_INDEX;
+  const isMiddle = pinchMiddleDist < TH_MIDDLE;
+  const isRing = pinchRingDist < TH_RING;
+  if (isIndex || isMiddle || isRing) {
+    // Prefer ring pinch, then middle pinch, then index pinch (so steering gestures don't get
+    // overridden if the index happens to also be close).
+    if (isRing && (!isMiddle || pinchRingDist <= pinchMiddleDist) && (!isIndex || pinchRingDist <= pinchIndexDist)) {
+      return ["pinch_ring", Math.round((1.0 - pinchRingDist / TH_RING) * 100) / 100];
+    }
+    if (isMiddle && (!isIndex || pinchMiddleDist <= pinchIndexDist)) {
+      return ["pinch_mid", Math.round((1.0 - pinchMiddleDist / TH_MIDDLE) * 100) / 100];
+    }
+    return ["pinch", Math.round((1.0 - pinchIndexDist / TH_INDEX) * 100) / 100];
   }
   if (indexUp && !middleUp && !ringUp && !pinkyUp) return ["point", 0.95];
   if (indexUp && middleUp && ringUp && pinkyUp) return ["open", 0.95];

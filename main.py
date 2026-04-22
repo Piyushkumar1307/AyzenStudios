@@ -23,7 +23,7 @@ from sqlalchemy.exc import ProgrammingError
 from gesture_detector import GestureDetector
 from models import HandState
 from auth import create_access_token, get_current_user, hash_password, verify_password
-from auth_models import Base, EmailOtp, GameEntitlement, User
+from auth_models import Base, EmailOtp, GameEntitlement, GameScore, User
 from auth_schemas import (
     LoginRequest,
     MeResponse,
@@ -91,14 +91,21 @@ GAME_HTML = os.path.join(BASE_DIR, "static", "game.html")
 PUZZLE_HTML = os.path.join(BASE_DIR, "static", "puzzle.html")
 RUNNER_HTML = os.path.join(BASE_DIR, "static", "runner.html")
 TICTACTOE_HTML = os.path.join(BASE_DIR, "static", "tictactoe.html")
+TRAFFIC_HTML = os.path.join(BASE_DIR, "static", "traffic.html")
 LOGIN_HTML = os.path.join(BASE_DIR, "static", "login.html")
 PROFILE_HTML = os.path.join(BASE_DIR, "static", "profile.html")
+LEADERBOARD_HTML = os.path.join(BASE_DIR, "static", "leaderboard.html")
 
 # --- Store / Razorpay config ---
 PAID_GAMES = {
     "neon_pop": {"route": "/puzzle", "title": "Neon Pop", "amount_paise": 1000},       # ₹10
     "neon_runner": {"route": "/runner", "title": "Neon Runner", "amount_paise": 1000}, # ₹10
     "tictactoe": {"route": "/tictactoe", "title": "Neon Tic-Tac-Toe", "amount_paise": 1000},  # ₹10
+    "traffic": {"route": "/traffic", "title": "Traffic Rush", "amount_paise": 1500},  # ₹15
+}
+
+FREE_GAMES = {
+    "fruit_ninja": {"route": "/game", "title": "Fruit-Ninja"},
 }
 
 @app.get("/")
@@ -126,6 +133,10 @@ def runner():
 def tictactoe():
     return FileResponse(TICTACTOE_HTML)
 
+@app.get("/traffic")
+def traffic():
+    return FileResponse(TRAFFIC_HTML)
+
 @app.get("/login")
 def login_page():
     return FileResponse(LOGIN_HTML)
@@ -133,6 +144,10 @@ def login_page():
 @app.get("/profile")
 def profile_page():
     return FileResponse(PROFILE_HTML)
+
+@app.get("/leaderboard")
+def leaderboard_page():
+    return FileResponse(LEADERBOARD_HTML)
 
 app.mount(
     "/static",
@@ -450,6 +465,159 @@ def _has_game_entitlement_or_503(db: Session, user: User, game_id: str) -> bool:
 def api_entitlements(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     rows = _entitlements_for_user_or_503(db, user)
     return {"games": sorted({r.game_id for r in rows})}
+
+
+def _scores_for_game_or_503(db: Session, game_id: str) -> list[tuple[GameScore, User]]:
+    try:
+        return (
+            db.query(GameScore, User)
+            .join(User, User.id == GameScore.user_id)
+            .filter(GameScore.game_id == game_id)
+            .order_by(GameScore.best_score.desc(), GameScore.updated_at.asc(), User.name.asc())
+            .all()
+        )
+    except ProgrammingError as e:
+        # If a new table was added after the DB already existed, create it and retry.
+        if "relation \"game_scores\" does not exist" in str(e):
+            db.rollback()
+            _ensure_tables_or_503()
+            return (
+                db.query(GameScore, User)
+                .join(User, User.id == GameScore.user_id)
+                .filter(GameScore.game_id == game_id)
+                .order_by(GameScore.best_score.desc(), GameScore.updated_at.asc(), User.name.asc())
+                .all()
+            )
+        raise
+    except OperationalError:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+
+@app.get(
+    "/api/leaderboard/games",
+    dependencies=[Depends(_require_auth_tables)],
+)
+def api_leaderboard_games(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    ent = {r.game_id for r in _entitlements_for_user_or_503(db, user)}
+    games = []
+    for gid, meta in FREE_GAMES.items():
+        games.append(
+            {
+                "game_id": gid,
+                "title": meta["title"],
+                "route": meta["route"],
+                "unlocked": True,
+            }
+        )
+    for gid, meta in PAID_GAMES.items():
+        if gid == "tictactoe":
+            continue
+        games.append(
+            {
+                "game_id": gid,
+                "title": meta["title"],
+                "route": meta["route"],
+                "unlocked": gid in ent,
+            }
+        )
+    return {"games": games}
+
+
+@app.get(
+    "/api/leaderboard/{game_id}",
+    dependencies=[Depends(_require_auth_tables)],
+)
+def api_leaderboard_for_game(
+    game_id: str,
+    limit: int = 200,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    gid = (game_id or "").strip()
+    if gid not in PAID_GAMES and gid not in FREE_GAMES:
+        raise HTTPException(status_code=400, detail="Unknown game")
+
+    limit = max(1, min(int(limit or 200), 2000))
+    rows = _scores_for_game_or_503(db, gid)
+
+    entries = []
+    dense_rank = 0
+    prev_score = None
+    me = None
+    for idx, (s, u) in enumerate(rows):
+        if prev_score is None or int(s.best_score) != int(prev_score):
+            dense_rank += 1
+            prev_score = int(s.best_score)
+        row = {
+            "rank": dense_rank,
+            "user_id": str(u.id),
+            "name": u.name,
+            "score": int(s.best_score),
+            "is_me": u.id == user.id,
+        }
+        if row["is_me"]:
+            me = {"rank": dense_rank, "score": int(s.best_score)}
+        if idx < limit:
+            entries.append(row)
+
+    if me is None:
+        me = {"rank": None, "score": None}
+
+    return {
+        "game": {
+            "game_id": gid,
+            "title": (PAID_GAMES.get(gid) or FREE_GAMES.get(gid))["title"],
+        },
+        "total_players": len(rows),
+        "entries": entries,
+        "me": me,
+    }
+
+
+@app.post(
+    "/api/scores/submit",
+    dependencies=[Depends(_require_auth_tables)],
+)
+def api_submit_score(payload: dict, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    gid = (payload.get("game_id") or "").strip()
+    if gid not in PAID_GAMES and gid not in FREE_GAMES:
+        raise HTTPException(status_code=400, detail="Unknown game")
+    if gid in PAID_GAMES and not _has_game_entitlement_or_503(db, user, gid):
+        raise HTTPException(status_code=403, detail="Game locked")
+
+    try:
+        score = int(payload.get("score"))
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid score")
+    score = max(0, min(score, 2_000_000_000))
+
+    try:
+        row = db.query(GameScore).filter(GameScore.user_id == user.id, GameScore.game_id == gid).first()
+    except ProgrammingError as e:
+        if "relation \"game_scores\" does not exist" in str(e):
+            db.rollback()
+            _ensure_tables_or_503()
+            row = db.query(GameScore).filter(GameScore.user_id == user.id, GameScore.game_id == gid).first()
+        else:
+            raise
+    except OperationalError:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    if row is None:
+        row = GameScore(user_id=user.id, game_id=gid, best_score=score)
+        db.add(row)
+    else:
+        if score > int(row.best_score or 0):
+            row.best_score = score
+            db.add(row)
+
+    try:
+        db.commit()
+    except OperationalError:
+        db.rollback()
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    return {"ok": True}
 
 
 @app.post(

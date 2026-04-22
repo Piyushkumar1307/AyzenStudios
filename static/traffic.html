@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Traffic Rush — Piyush-Store</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #050510;
+    color: #e8e8f0;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  #gameCanvas {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+  }
+
+  #handCanvas {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  .hud {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    padding: max(12px, env(safe-area-inset-top, 0px)) 18px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+    pointer-events: none;
+    z-index: 10001;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.85);
+  }
+  .hud-block h2 {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #6b7280;
+    margin-bottom: 2px;
+  }
+  .hud-block .val {
+    font-size: 26px;
+    font-weight: 800;
+    color: #22d3ee;
+  }
+  .hud a {
+    pointer-events: auto;
+    font-size: 13px;
+    color: #a5b4fc;
+    text-decoration: none;
+    align-self: center;
+  }
+  .hud a:hover { text-decoration: underline; }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10002;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(5, 5, 16, 0.88);
+    backdrop-filter: blur(8px);
+    pointer-events: auto;
+    padding: 20px;
+  }
+  .overlay.hidden { display: none; }
+
+  .panel {
+    text-align: center;
+    max-width: 460px;
+    padding: 34px 28px;
+    background: linear-gradient(145deg, #12121c, #0c0c14);
+    border: 1px solid #2a2a3e;
+    border-radius: 20px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.55);
+  }
+  .panel h1 {
+    font-size: 20px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #fbbf24;
+    margin-bottom: 12px;
+  }
+  .panel p {
+    font-size: 14px;
+    color: #9ca3af;
+    line-height: 1.65;
+    margin-bottom: 10px;
+  }
+  .panel .hint {
+    margin-top: 14px;
+    font-size: 13px;
+    color: #6b7280;
+  }
+  .btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 18px;
+  }
+  .btn {
+    padding: 12px 26px;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border-radius: 12px;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.12s, filter 0.2s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    color: #0f172a;
+    background: linear-gradient(180deg, #fbbf24, #f59e0b);
+    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.28);
+  }
+  .btn-ghost {
+    color: #a5b4fc;
+    background: transparent;
+    border: 2px solid #6366f1;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+<canvas id="handCanvas"></canvas>
+
+<div class="hud">
+  <div class="hud-block">
+    <h2>Distance</h2>
+    <div class="val" id="distVal">0</div>
+  </div>
+  <div class="hud-block" style="text-align:right">
+    <h2>Speed</h2>
+    <div class="val" id="speedVal" style="color:#fbbf24;">1.0×</div>
+  </div>
+  <a href="/">← Store</a>
+</div>
+
+<div class="overlay" id="startOverlay">
+  <div class="panel">
+    <h1>Traffic Rush</h1>
+    <p>Dodge oncoming cars across <strong style="color:#fbbf24;">3 lanes</strong>. The longer you survive, the faster traffic gets.</p>
+    <p><strong style="color:#22d3ee;">Steer</strong>: move your <em>index finger</em> left / right across the screen.</p>
+    <p class="hint">Tap anywhere to allow camera. Pinch (thumb+index) to start.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnStart" type="button">Start</button>
+      <a class="btn btn-ghost" href="/">Home</a>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="gameOverOverlay">
+  <div class="panel">
+    <h1>Crash</h1>
+    <p>Distance: <strong id="finalDist">0</strong></p>
+    <p>Best: <strong id="bestDist">0</strong></p>
+    <p class="hint">Speed ramps up every few seconds. Stay centered and react fast.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnAgain" type="button">Retry</button>
+      <a class="btn btn-ghost" href="/">Home</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOKEN_KEY = "piyush_token";
+const GAME_ID = "traffic";
+
+async function ensureAccess() {
+  const t = sessionStorage.getItem(TOKEN_KEY);
+  if (!t) { window.location.href = "/login"; return false; }
+  try {
+    const res = await fetch("/api/entitlements", { headers: { Authorization: "Bearer " + t } });
+    if (!res.ok) { window.location.href = "/login"; return false; }
+    const data = await res.json();
+    const games = new Set(Array.isArray(data.games) ? data.games : []);
+    if (!games.has(GAME_ID)) {
+      alert("This game is locked. Please unlock it from the store (Home).");
+      window.location.href = "/";
+      return false;
+    }
+    return true;
+  } catch {
+    window.location.href = "/login";
+    return false;
+  }
+}
+ensureAccess();
+</script>
+
+<script>
+const HAND_CONNECTIONS = [
+  [0,1],[1,2],[2,3],[3,4],
+  [0,5],[5,6],[6,7],[7,8],
+  [5,9],[9,10],[10,11],[11,12],
+  [9,13],[13,14],[14,15],[15,16],
+  [13,17],[17,18],[18,19],[19,20],
+  [0,17]
+];
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const handCanvas = document.getElementById("handCanvas");
+const hctx = handCanvas.getContext("2d");
+
+const distVal = document.getElementById("distVal");
+const speedVal = document.getElementById("speedVal");
+const startOverlay = document.getElementById("startOverlay");
+const gameOverOverlay = document.getElementById("gameOverOverlay");
+const finalDistEl = document.getElementById("finalDist");
+const bestDistEl = document.getElementById("bestDist");
+const btnStart = document.getElementById("btnStart");
+const btnAgain = document.getElementById("btnAgain");
+
+const STORAGE_KEY = "trafficRushBest";
+
+let W = 0, H = 0, DPR = 1;
+let laneX = [0,0,0];
+let laneW = 0;
+
+let audioCtx = null;
+let bgTimer = null;
+let audioUnlocked = false;
+
+let running = false;
+let playerLane = 1;
+let playerY = 0;
+let enemies = [];
+let lastSpawnAt = 0;
+let spawnEveryMs = 820;
+let baseSpeed = 280;
+let speedMul = 1.0;
+let speedRampAt = 0;
+let distance = 0;
+let lastFrameT = 0;
+let rafId = 0;
+
+let pinchLeftDown = false;   // thumb+index pinch (fallback + start)
+let pinchRightDown = false;  // secondary pinch (fallback)
+let steerX = 0.5;            // smoothed cursor_x (0..1)
+let lastLaneAutoAt = 0;      // ms
+let handStop = null;
+
+function bestRead() {
+  try {
+    const v = localStorage.getItem(STORAGE_KEY);
+    const n = v == null ? NaN : parseInt(v, 10);
+    return Number.isFinite(n) ? n : 0;
+  } catch { return 0; }
+}
+function bestWrite(v) {
+  try {
+    const prev = bestRead();
+    if (v > prev) localStorage.setItem(STORAGE_KEY, String(v));
+  } catch { /* ignore */ }
+}
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+async function unlockAudio() {
+  initAudio();
+  if (!audioCtx) return;
+  try {
+    if (audioCtx.state === "suspended") await audioCtx.resume();
+    audioUnlocked = audioCtx.state === "running";
+    if (audioUnlocked && running) startBgm();
+  } catch {
+    // If the browser blocks it, we'll try again on the next user gesture.
+  }
+}
+function beep(freq, dur, vol = 0.07, type = "sine") {
+  if (!audioCtx) return;
+  if (audioCtx.state === "suspended") return;
+  const t = audioCtx.currentTime;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(g);
+  g.connect(audioCtx.destination);
+  o.start(t);
+  o.stop(t + dur + 0.02);
+}
+function crashSound() {
+  if (!audioCtx) return;
+  if (audioCtx.state === "suspended") return;
+  const t = audioCtx.currentTime;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = "sawtooth";
+  o.frequency.setValueAtTime(160, t);
+  o.frequency.exponentialRampToValueAtTime(60, t + 0.28);
+  g.gain.setValueAtTime(0.12, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+  o.connect(g);
+  g.connect(audioCtx.destination);
+  o.start(t);
+  o.stop(t + 0.4);
+}
+function stopBgm() {
+  if (bgTimer) { clearInterval(bgTimer); bgTimer = null; }
+}
+function startBgm() {
+  stopBgm();
+  if (!audioCtx || audioCtx.state !== "running") return;
+  const base = 110;
+  const scale = [0, 3, 5, 7, 10, 12].map(s => base * Math.pow(2, s/12));
+  let step = 0;
+  bgTimer = setInterval(() => {
+    if (!running) return;
+    const t = audioCtx.currentTime;
+    const f = scale[step % scale.length] * (0.8 + 0.25 * Math.min(2.5, speedMul));
+    step++;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = "triangle";
+    o.frequency.setValueAtTime(f, t);
+    g.gain.setValueAtTime(0.028, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.26);
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    o.start(t);
+    o.stop(t + 0.28);
+  }, 280);
+}
+
+function resize() {
+  DPR = window.devicePixelRatio || 1;
+  W = Math.floor(window.innerWidth);
+  H = Math.floor(window.innerHeight);
+  canvas.width = Math.floor(W * DPR);
+  canvas.height = Math.floor(H * DPR);
+  canvas.style.width = W + "px";
+  canvas.style.height = H + "px";
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+  handCanvas.width = Math.floor(W * DPR);
+  handCanvas.height = Math.floor(H * DPR);
+  handCanvas.style.width = W + "px";
+  handCanvas.style.height = H + "px";
+  hctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+  const roadW = Math.min(420, Math.floor(W * 0.86));
+  laneW = Math.floor((roadW - 24) / 3);
+  const left = Math.floor((W - roadW) / 2);
+  laneX = [left + 12 + laneW * 0 + 6, left + 12 + laneW * 1 + 6, left + 12 + laneW * 2 + 6];
+  const pWApprox = Math.floor(laneW * 0.66);
+  const pHApprox = Math.floor(pWApprox * 1.6);
+  playerY = Math.max(0, H - pHApprox - 44);
+}
+window.addEventListener("resize", resize);
+resize();
+
+function drawHand(landmarks) {
+  hctx.clearRect(0, 0, W, H);
+  if (!Array.isArray(landmarks) || landmarks.length !== 21) return;
+  const pts = landmarks.map(p => ({ x: p.x * W, y: p.y * H }));
+  hctx.lineWidth = 3;
+  hctx.strokeStyle = "rgba(96,165,250,0.95)";
+  hctx.beginPath();
+  for (const [a,b] of HAND_CONNECTIONS) {
+    hctx.moveTo(pts[a].x, pts[a].y);
+    hctx.lineTo(pts[b].x, pts[b].y);
+  }
+  hctx.stroke();
+  hctx.fillStyle = "rgba(231,234,240,0.95)";
+  for (const p of pts) {
+    hctx.beginPath();
+    hctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+    hctx.fill();
+  }
+}
+
+function roadRect() {
+  const roadW = laneW * 3 + 24;
+  const x = Math.floor((W - roadW) / 2);
+  return { x, y: 0, w: roadW, h: H };
+}
+
+function resetGame() {
+  cancelAnimationFrame(rafId);
+  enemies = [];
+  playerLane = 1;
+  distance = 0;
+  lastSpawnAt = 0;
+  spawnEveryMs = 940;
+  baseSpeed = 280;
+  speedMul = 1.0;
+  speedRampAt = performance.now() + 2600;
+  lastFrameT = performance.now();
+  distVal.textContent = "0";
+  speedVal.textContent = "1.0×";
+}
+
+function spawnEnemy(now) {
+  const road = roadRect();
+  const carW = Math.floor(laneW * 0.60);
+  const carH = Math.floor(carW * 1.45);
+  const spawnY = road.y - carH - 54;
+  // Bigger gaps = easier lane switching.
+  // Scale with speed so late-game doesn't become a "wall" of cars.
+  const speed = baseSpeed * speedMul;
+  const laneGap = Math.max(
+    240,
+    Math.floor(carH * 2.20),
+    Math.floor(speed * 0.70) // ~0.7s of travel
+  );
+  const globalGap = Math.max(
+    170,
+    Math.floor(carH * 1.50),
+    Math.floor(speed * 0.45) // prevent near-simultaneous multi-lane spawns
+  );
+
+  const topMostYByLane = (lane) => {
+    let best = Infinity;
+    for (const e of enemies) {
+      if (e.lane !== lane) continue;
+      if (e.y < best) best = e.y;
+    }
+    return best;
+  };
+  const topMostYAny = () => {
+    let best = Infinity;
+    for (const e of enemies) {
+      if (e.y < best) best = e.y;
+    }
+    return best;
+  };
+
+  // Global spacing: if any car is too close to the spawn line (in any lane), skip this spawn.
+  const topAny = topMostYAny();
+  if (topAny !== Infinity && (topAny - spawnY) < (carH + globalGap)) return;
+
+  const canSpawnLane = (lane) => {
+    const topY = topMostYByLane(lane);
+    if (topY === Infinity) return true;
+    return (topY - spawnY) >= (carH + laneGap);
+  };
+
+  // Pick a lane that has enough vertical gap; try a few times.
+  const candidates = [0,1,2].filter(canSpawnLane);
+  if (candidates.length === 0) return;
+  const lane = candidates[Math.floor(Math.random() * candidates.length)];
+  enemies.push({
+    lane,
+    x: laneX[lane] + (laneW - carW) / 2,
+    y: spawnY,
+    w: carW,
+    h: carH,
+    color: Math.random() < 0.5 ? "#a78bfa" : "#22d3ee",
+  });
+  lastSpawnAt = now;
+}
+
+function rectsOverlap(a, b) {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+async function submitScore(score) {
+  try {
+    const t = sessionStorage.getItem(TOKEN_KEY);
+    if (!t) return;
+    await fetch("/api/scores/submit", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + t,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ game_id: GAME_ID, score }),
+    });
+  } catch {
+    // best-effort
+  }
+}
+
+function endGame() {
+  running = false;
+  stopBgm();
+  crashSound();
+  const finalScore = Math.floor(distance);
+  bestWrite(finalScore);
+  submitScore(finalScore);
+  finalDistEl.textContent = String(finalScore);
+  bestDistEl.textContent = String(Math.max(bestRead(), finalScore));
+  gameOverOverlay.classList.remove("hidden");
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Background
+  ctx.fillStyle = "#050510";
+  ctx.fillRect(0, 0, W, H);
+
+  // Road
+  const road = roadRect();
+  ctx.fillStyle = "rgba(15,23,42,0.75)";
+  ctx.fillRect(road.x, road.y, road.w, road.h);
+  ctx.strokeStyle = "rgba(99,102,241,0.35)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(road.x, road.y, road.w, road.h);
+
+  // Lane dividers
+  ctx.strokeStyle = "rgba(148,163,184,0.22)";
+  ctx.setLineDash([12, 14]);
+  ctx.lineWidth = 3;
+  for (let i = 1; i <= 2; i++) {
+    const x = road.x + 12 + laneW * i;
+    ctx.beginPath();
+    ctx.moveTo(x, road.y);
+    ctx.lineTo(x, road.y + road.h);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // Player car
+  const pW = Math.floor(laneW * 0.66);
+  const pH = Math.floor(pW * 1.6);
+  const px = laneX[playerLane] + (laneW - pW) / 2;
+  const player = { x: px, y: playerY, w: pW, h: pH };
+  const grad = ctx.createLinearGradient(px, playerY, px, playerY + pH);
+  grad.addColorStop(0, "#fbbf24");
+  grad.addColorStop(1, "#f59e0b");
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.roundRect(player.x, player.y, player.w, player.h, 16);
+  ctx.fill();
+  ctx.fillStyle = "rgba(15,23,42,0.8)";
+  ctx.beginPath();
+  ctx.roundRect(player.x + player.w * 0.18, player.y + player.h * 0.18, player.w * 0.64, player.h * 0.24, 10);
+  ctx.fill();
+
+  // Enemies
+  for (const e of enemies) {
+    ctx.fillStyle = e.color;
+    ctx.beginPath();
+    ctx.roundRect(e.x, e.y, e.w, e.h, 16);
+    ctx.fill();
+    ctx.fillStyle = "rgba(15,23,42,0.75)";
+    ctx.beginPath();
+    ctx.roundRect(e.x + e.w * 0.18, e.y + e.h * 0.22, e.w * 0.64, e.h * 0.24, 10);
+    ctx.fill();
+  }
+
+  // Collision check (draw uses current positions)
+  for (const e of enemies) {
+    if (e.lane !== playerLane) continue;
+    if (rectsOverlap(player, e)) {
+      endGame();
+      break;
+    }
+  }
+}
+
+function tick(now) {
+  if (!running) return;
+  const dt = Math.min(0.05, Math.max(0.001, (now - lastFrameT) / 1000));
+  lastFrameT = now;
+
+  if (now >= speedRampAt) {
+    speedMul = Math.min(3.2, speedMul + 0.12);
+    spawnEveryMs = Math.max(420, spawnEveryMs * 0.97);
+    speedRampAt = now + 2400;
+    beep(220 + 70 * Math.min(10, speedMul), 0.06, 0.03, "triangle");
+  }
+
+  const speed = baseSpeed * speedMul;
+  distance += speed * dt * 0.06;
+  distVal.textContent = String(Math.floor(distance));
+  speedVal.textContent = `${speedMul.toFixed(1)}×`;
+
+  // Spawn cars
+  if (now - lastSpawnAt >= spawnEveryMs) spawnEnemy(now);
+
+  // Move cars
+  for (const e of enemies) e.y += speed * dt;
+  // Remove off-screen
+  enemies = enemies.filter((e) => e.y < H + 200);
+
+  draw();
+  rafId = requestAnimationFrame((t) => tick(t));
+}
+
+function moveLeft() {
+  const next = Math.max(0, playerLane - 1);
+  if (next !== playerLane) {
+    playerLane = next;
+    initAudio();
+    beep(520, 0.05, 0.05);
+  }
+}
+function moveRight() {
+  const next = Math.min(2, playerLane + 1);
+  if (next !== playerLane) {
+    playerLane = next;
+    initAudio();
+    beep(660, 0.05, 0.05);
+  }
+}
+
+function applyHandFrame(data) {
+  drawHand(data.detected ? data.landmarks : null);
+
+  const nowMs = performance.now();
+
+  // Primary control: steer by index finger position (cursor_x).
+  if (data.detected && typeof data.cursor_x === "number") {
+    // Smooth to reduce jitter.
+    const x = Math.max(0, Math.min(1, data.cursor_x));
+    steerX = steerX * 0.78 + x * 0.22;
+
+    const road = roadRect();
+    const px = steerX * W;
+
+    const leftEdge = road.x;
+    const rightEdge = road.x + road.w;
+    const inner = Math.max(1, rightEdge - leftEdge);
+    const rel = Math.max(0, Math.min(0.999, (px - leftEdge) / inner));
+
+    // Hysteresis: require deeper entry into the next lane to switch.
+    const dead = 0.06; // ~6% of road width
+    const b1 = 1 / 3;
+    const b2 = 2 / 3;
+
+    let desired = 1;
+    if (rel < b1 - dead) desired = 0;
+    else if (rel > b2 + dead) desired = 2;
+    else if (rel < b1 + dead || rel > b2 - dead) desired = playerLane; // hold near borders
+    else desired = 1;
+
+    // Rate-limit lane changes so tiny shakes don't spam-switch.
+    if (desired !== playerLane && nowMs - lastLaneAutoAt > 240) {
+      playerLane = desired;
+      lastLaneAutoAt = nowMs;
+      initAudio();
+      beep(desired < 1 ? 520 : 660, 0.05, 0.045);
+    }
+
+    // Start the game via pinch (browser audio/camera permission friendly).
+    const isStartPinch = data.gesture === "pinch";
+    if (isStartPinch && !running && !startOverlay.classList.contains("hidden")) onStart();
+    pinchLeftDown = isStartPinch;
+    pinchRightDown = false;
+    return;
+  }
+
+  // Fallback: pinch controls (if cursor_x isn't available for some reason)
+  const isLeft = data.detected && data.gesture === "pinch"; // thumb+index
+  const isRight = data.detected && (data.gesture === "pinch_ring" || data.gesture === "pinch_mid");
+
+  if (isLeft && !pinchLeftDown) {
+    pinchLeftDown = true;
+    moveLeft();
+    if (!running && !startOverlay.classList.contains("hidden")) onStart();
+  }
+  if (!isLeft) pinchLeftDown = false;
+
+  if (isRight && !pinchRightDown) {
+    pinchRightDown = true;
+    moveRight();
+    if (!running && !startOverlay.classList.contains("hidden")) onStart();
+  }
+  if (!isRight) pinchRightDown = false;
+}
+
+async function bootHandTracking() {
+  if (handStop) return;
+  try {
+    const { startClientHandTracking } = await import("/static/hand-client.js");
+    handStop = await startClientHandTracking(applyHandFrame);
+  } catch (err) {
+    console.error(err);
+    const name = err && err.name;
+    const denied = name === "NotAllowedError" || name === "PermissionDeniedError";
+    if (denied) {
+      await new Promise((resolve) => {
+        const go = () => {
+          document.removeEventListener("click", go);
+          document.removeEventListener("touchstart", go);
+          resolve();
+        };
+        document.addEventListener("click", go);
+        document.addEventListener("touchstart", go);
+        alert("Tap the screen to allow the camera — then you can pinch to steer.");
+      });
+      try {
+        const { startClientHandTracking } = await import("/static/hand-client.js");
+        handStop = await startClientHandTracking(applyHandFrame);
+      } catch (e2) {
+        console.error(e2);
+        alert("Camera / hand tracking: " + (e2 && e2.message ? e2.message : String(e2)));
+      }
+    } else {
+      alert("Camera / hand tracking: " + (err && err.message ? err.message : String(err)));
+    }
+  }
+}
+
+function onStart() {
+  if (running) return;
+  startOverlay.classList.add("hidden");
+  gameOverOverlay.classList.add("hidden");
+  resetGame();
+  running = true;
+  initAudio();
+  // If start is triggered by hand-gesture (not a direct user interaction),
+  // audio may remain locked. We'll start BGM once unlocked.
+  if (audioCtx && audioCtx.state === "running") {
+    audioUnlocked = true;
+    startBgm();
+  }
+  draw();
+  rafId = requestAnimationFrame((t) => { lastFrameT = t; tick(t); });
+}
+
+btnStart.addEventListener("click", async () => {
+  await unlockAudio();
+  onStart();
+});
+btnAgain.addEventListener("click", () => onStart());
+startOverlay.addEventListener("click", () => onStart());
+startOverlay.addEventListener("touchstart", (e) => { e.preventDefault(); onStart(); }, { passive: false });
+
+// Try to unlock audio on the first real user gesture (so BGM works even if the game starts via pinch).
+window.addEventListener("pointerdown", unlockAudio, { once: true });
+window.addEventListener("keydown", unlockAudio, { once: true });
+
+bootHandTracking();
+</script>
+</body>
+</html>
+

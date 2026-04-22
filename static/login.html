@@ -244,9 +244,71 @@
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
+
+    /* --- Loading overlay (login/signup/OTP) --- */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 22px;
+      background: rgba(5, 5, 12, 0.82);
+      backdrop-filter: blur(10px);
+    }
+    .loading-overlay.visible { display: flex; }
+    .loading-card {
+      width: min(420px, 92vw);
+      border-radius: 18px;
+      border: 1px solid rgba(0, 245, 255, 0.22);
+      background: linear-gradient(145deg, rgba(18, 18, 30, 0.85), rgba(10, 12, 24, 0.85));
+      box-shadow: 0 24px 90px rgba(0,0,0,0.6), 0 0 60px rgba(0, 245, 255, 0.12);
+      padding: 22px 20px;
+      text-align: center;
+    }
+    .loading-title {
+      font-size: 11px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 12px;
+    }
+    .spinner {
+      width: 62px;
+      height: 62px;
+      border-radius: 999px;
+      margin: 10px auto 14px;
+      border: 3px solid rgba(0, 245, 255, 0.15);
+      border-top-color: rgba(0, 245, 255, 0.95);
+      box-shadow: 0 0 28px rgba(0, 245, 255, 0.25);
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-msg {
+      font-size: 14px;
+      color: var(--text);
+      letter-spacing: 0.02em;
+      line-height: 1.45;
+    }
+    .loading-sub {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
   </style>
 </head>
 <body>
+  <div class="loading-overlay" id="loadingOverlay" aria-live="polite" aria-busy="true">
+    <div class="loading-card" role="status">
+      <div class="loading-title">Processing</div>
+      <div class="spinner" aria-hidden="true"></div>
+      <div class="loading-msg" id="loadingMsg">Please wait…</div>
+      <div class="loading-sub" id="loadingSub">This usually takes a moment.</div>
+    </div>
+  </div>
+
   <div class="wrap">
     <div class="head">
       <div class="brand">Piyush-Store</div>
@@ -322,6 +384,22 @@
 
   <script>
     const TOKEN_KEY = "piyush_token";
+    const loadingOverlay = document.getElementById("loadingOverlay");
+    const loadingMsg = document.getElementById("loadingMsg");
+    const loadingSub = document.getElementById("loadingSub");
+
+    let loadingCount = 0;
+    function setLoading(on, { msg = "Please wait…", sub = "This usually takes a moment." } = {}) {
+      if (on) {
+        loadingCount++;
+        loadingMsg.textContent = msg;
+        loadingSub.textContent = sub;
+        loadingOverlay.classList.add("visible");
+      } else {
+        loadingCount = Math.max(0, loadingCount - 1);
+        if (loadingCount === 0) loadingOverlay.classList.remove("visible");
+      }
+    }
 
     function setMsg(el, text, kind) {
       el.textContent = text || "";
@@ -392,6 +470,7 @@
       const btn = document.getElementById("btnLogin");
       setMsg(msg, "");
       btn.disabled = true;
+      setLoading(true, { msg: "Logging in…", sub: "Verifying your credentials." });
       try {
         const email = document.getElementById("loginEmail").value.trim();
         const password = document.getElementById("loginPassword").value;
@@ -406,6 +485,7 @@
           document.getElementById("otpBoxLogin").classList.add("visible");
         }
       } finally {
+        setLoading(false);
         btn.disabled = false;
       }
     });
@@ -416,6 +496,7 @@
       const btn = document.getElementById("btnSignup");
       setMsg(msg, "");
       btn.disabled = true;
+      setLoading(true, { msg: "Creating account…", sub: "Preparing your profile and sending an OTP." });
       try {
         const name = document.getElementById("signupName").value.trim();
         const email = document.getElementById("signupEmail").value.trim();
@@ -436,6 +517,7 @@
       } catch (err) {
         setMsg(msg, String(err && err.message ? err.message : err), "error");
       } finally {
+        setLoading(false);
         btn.disabled = false;
       }
     });
@@ -444,8 +526,10 @@
       const email = document.getElementById(emailElId).value.trim();
       const msgEl = document.getElementById(msgElId);
       setMsg(msgEl, "");
+      setLoading(true, { msg: "Sending OTP…", sub: "Check your inbox (and spam) in a moment." });
       const data = await apiOtp("/api/auth/request-email-otp", { email });
       setMsg(msgEl, data && data.detail ? data.detail : "OTP sent", "ok");
+      setLoading(false);
     }
 
     async function verifyOtp(emailElId, otpElId, msgElId) {
@@ -453,6 +537,7 @@
       const code = document.getElementById(otpElId).value.trim();
       const msgEl = document.getElementById(msgElId);
       setMsg(msgEl, "");
+      setLoading(true, { msg: "Verifying OTP…", sub: "One moment." });
       const data = await apiOtp("/api/auth/verify-email-otp", { email, code });
       if (data && data.ok) {
         setMsg(msgEl, "Verified. Now login.", "ok");
@@ -462,20 +547,37 @@
       } else {
         setMsg(msgEl, data && data.detail ? data.detail : "Invalid OTP", "error");
       }
+      setLoading(false);
     }
 
     document.getElementById("btnSendOtpLogin").addEventListener("click", async () => {
-      try { await sendOtp("loginEmail", "otpMsgLogin"); } catch (e) { setMsg(document.getElementById("otpMsgLogin"), String(e.message || e), "error"); }
+      try { await sendOtp("loginEmail", "otpMsgLogin"); }
+      catch (e) {
+        setLoading(false);
+        setMsg(document.getElementById("otpMsgLogin"), String(e.message || e), "error");
+      }
     });
     document.getElementById("btnVerifyOtpLogin").addEventListener("click", async () => {
-      try { await verifyOtp("loginEmail", "otpLogin", "otpMsgLogin"); } catch (e) { setMsg(document.getElementById("otpMsgLogin"), String(e.message || e), "error"); }
+      try { await verifyOtp("loginEmail", "otpLogin", "otpMsgLogin"); }
+      catch (e) {
+        setLoading(false);
+        setMsg(document.getElementById("otpMsgLogin"), String(e.message || e), "error");
+      }
     });
 
     document.getElementById("btnSendOtpSignup").addEventListener("click", async () => {
-      try { await sendOtp("signupEmail", "otpMsgSignup"); } catch (e) { setMsg(document.getElementById("otpMsgSignup"), String(e.message || e), "error"); }
+      try { await sendOtp("signupEmail", "otpMsgSignup"); }
+      catch (e) {
+        setLoading(false);
+        setMsg(document.getElementById("otpMsgSignup"), String(e.message || e), "error");
+      }
     });
     document.getElementById("btnVerifyOtpSignup").addEventListener("click", async () => {
-      try { await verifyOtp("signupEmail", "otpSignup", "otpMsgSignup"); } catch (e) { setMsg(document.getElementById("otpMsgSignup"), String(e.message || e), "error"); }
+      try { await verifyOtp("signupEmail", "otpSignup", "otpMsgSignup"); }
+      catch (e) {
+        setLoading(false);
+        setMsg(document.getElementById("otpMsgSignup"), String(e.message || e), "error");
+      }
     });
   </script>
 </body>

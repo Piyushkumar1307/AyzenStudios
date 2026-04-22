@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leaderboard — Piyush-Store</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root{
+      --bg: #050510;
+      --panel: rgba(12, 14, 28, 0.72);
+      --panel2: rgba(10, 12, 24, 0.55);
+      --border: rgba(0, 245, 255, 0.20);
+      --muted: #6b7280;
+      --text: #e8ecf4;
+      --glow: #00f5ff;
+      --accent: #bf5fff;
+      --warn: #fbbf24;
+    }
+
+    body{
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 22px;
+    }
+
+    body::before{
+      content:"";
+      position: fixed;
+      inset: 0;
+      pointer-events:none;
+      background:
+        radial-gradient(ellipse 70% 45% at 50% -10%, rgba(0, 245, 255, 0.14), transparent 55%),
+        radial-gradient(ellipse 55% 35% at 100% 55%, rgba(191, 95, 255, 0.10), transparent 55%),
+        repeating-linear-gradient(90deg, transparent, transparent 47px, rgba(191, 95, 255, 0.03) 47px, rgba(191, 95, 255, 0.03) 48px);
+    }
+
+    .wrap{ width: min(980px, 96vw); margin: 0 auto; }
+    .top{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .brand{
+      font-size: 12px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--glow);
+    }
+    h1{
+      margin-top: 10px;
+      font-size: 26px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #fff 0%, var(--glow) 45%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .nav a{
+      color: #a5b4fc;
+      text-decoration:none;
+      font-weight: 700;
+      font-size: 13px;
+      margin-left: 10px;
+    }
+    .nav a:hover{ text-decoration: underline; }
+
+    .card{
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 24px 70px rgba(0,0,0,0.55), 0 0 80px rgba(0, 245, 255, 0.08);
+      backdrop-filter: blur(12px);
+      overflow:hidden;
+    }
+    .cardHead{
+      padding: 16px 18px;
+      border-bottom: 1px solid rgba(0, 245, 255, 0.12);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .controls{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      flex-wrap: wrap;
+    }
+    select{
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background: linear-gradient(180deg, rgba(10, 12, 24, 0.82), rgba(10, 12, 24, 0.56));
+      color: var(--text);
+      border: 1px solid rgba(0, 245, 255, 0.22);
+      border-radius: 14px;
+      padding: 12px 44px 12px 14px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      outline: none;
+      width: min(520px, 92vw);
+      height: 46px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(148, 163, 184, 0.10);
+      cursor: pointer;
+    }
+    select:focus{
+      border-color: rgba(0, 245, 255, 0.55);
+      box-shadow: 0 0 0 3px rgba(0, 245, 255, 0.14), 0 10px 30px rgba(0,0,0,0.35);
+    }
+    .selectWrap{
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .selectChevron{
+      position: absolute;
+      right: 14px;
+      pointer-events: none;
+      opacity: 0.9;
+      color: rgba(231, 234, 240, 0.80);
+      font-size: 14px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+    }
+    .pill{
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: rgba(34, 211, 238, 0.12);
+      border: 1px solid rgba(34, 211, 238, 0.20);
+      color: var(--glow);
+    }
+    .pill.warn{
+      background: rgba(251, 191, 36, 0.12);
+      border-color: rgba(251, 191, 36, 0.22);
+      color: var(--warn);
+    }
+
+    .meRow{
+      display:flex;
+      gap: 12px;
+      align-items:center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      background: rgba(10, 12, 24, 0.50);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+      flex-wrap: wrap;
+    }
+    .meRow .big{
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--warn);
+    }
+    .meRow .muted{ color: var(--muted); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; }
+
+    table{
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td{
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+      text-align:left;
+      font-size: 13px;
+    }
+    th{
+      color: rgba(231, 234, 240, 0.78);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+    tr.me{
+      background: rgba(251, 191, 36, 0.10);
+    }
+    .right{ text-align:right; }
+    .hint{
+      padding: 14px 18px 18px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <div class="brand">Piyush-Store</div>
+        <h1>Leaderboard</h1>
+      </div>
+      <div class="nav">
+        <a href="/">Home</a>
+        <a href="/profile">Profile</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cardHead">
+        <div class="controls">
+          <div class="selectWrap">
+            <select id="gameSelect" aria-label="Select game"></select>
+            <div class="selectChevron" aria-hidden="true">▾</div>
+          </div>
+          <span class="pill" id="playersPill">Players: 0</span>
+        </div>
+        <span class="pill" id="statusPill">Loading…</span>
+      </div>
+
+      <div class="meRow">
+        <div>
+          <div class="muted">Your rank</div>
+          <div class="big" id="myRank">—</div>
+        </div>
+        <div class="right">
+          <div class="muted">Your best</div>
+          <div class="big" id="myScore">—</div>
+        </div>
+      </div>
+
+      <div style="overflow:auto; max-height: 68vh;">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:90px;">Rank</th>
+              <th>Player</th>
+              <th class="right" style="width:140px;">Score</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+
+      <div class="hint">
+        Scores update when a game submits results (best score is kept). If you don’t see yourself yet, play once and finish a run.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const TOKEN_KEY = "piyush_token";
+    const token = sessionStorage.getItem(TOKEN_KEY);
+    if (!token) window.location.href = "/login";
+
+    const sel = document.getElementById("gameSelect");
+    const rowsEl = document.getElementById("rows");
+    const statusPill = document.getElementById("statusPill");
+    const playersPill = document.getElementById("playersPill");
+    const myRankEl = document.getElementById("myRank");
+    const myScoreEl = document.getElementById("myScore");
+
+    const state = { games: [], current: null };
+
+    function setStatus(text, warn=false){
+      statusPill.textContent = text;
+      statusPill.classList.toggle("warn", !!warn);
+    }
+
+    async function api(path, opts={}){
+      const res = await fetch(path, {
+        ...opts,
+        headers: {
+          ...(opts.headers || {}),
+          Authorization: "Bearer " + token,
+          "Content-Type": "application/json",
+        }
+      });
+      if (!res.ok) {
+        if (res.status === 401) window.location.href = "/login";
+        const t = await res.text().catch(()=> "");
+        throw new Error(t || ("HTTP " + res.status));
+      }
+      return await res.json();
+    }
+
+    function renderGames(){
+      sel.innerHTML = "";
+      const ph = document.createElement("option");
+      ph.value = "";
+      ph.textContent = "Select your game";
+      ph.disabled = true;
+      ph.selected = true;
+      sel.appendChild(ph);
+      for (const g of state.games){
+        const opt = document.createElement("option");
+        opt.value = g.game_id;
+        opt.textContent = g.title + (g.unlocked ? "" : "  •  Locked");
+        sel.appendChild(opt);
+      }
+      state.current = null;
+    }
+
+    function renderBoard(data){
+      playersPill.textContent = "Players: " + (data.total_players ?? 0);
+      myRankEl.textContent = data.me?.rank ? ("#" + data.me.rank) : "—";
+      myScoreEl.textContent = (data.me?.score ?? null) != null ? String(data.me.score) : "—";
+
+      rowsEl.innerHTML = "";
+      for (const r of (data.entries || [])){
+        const tr = document.createElement("tr");
+        if (r.is_me) tr.classList.add("me");
+        tr.innerHTML = `
+          <td><strong>#${r.rank}</strong></td>
+          <td>${escapeHtml(r.name || "Unknown")}</td>
+          <td class="right"><strong>${r.score}</strong></td>
+        `;
+        rowsEl.appendChild(tr);
+      }
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, (c) => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
+      }[c]));
+    }
+
+    async function load(){
+      setStatus("Loading…");
+      const games = await api("/api/leaderboard/games");
+      state.games = Array.isArray(games.games) ? games.games : [];
+      renderGames();
+      if (!state.games.length) setStatus("No games", true);
+      else setStatus("Select a game");
+    }
+
+    async function loadBoard(gameId){
+      const g = state.games.find(x => x.game_id === gameId);
+      if (g && !g.unlocked) {
+        setStatus("Locked", true);
+      } else {
+        setStatus("Loading…");
+      }
+      const data = await api(`/api/leaderboard/${encodeURIComponent(gameId)}?limit=200`);
+      renderBoard(data);
+      const locked = g && !g.unlocked;
+      setStatus(locked ? "Locked (view only)" : "Live", locked);
+    }
+
+    sel.addEventListener("change", async () => {
+      state.current = sel.value;
+      await loadBoard(state.current);
+    });
+
+    load().catch((e) => {
+      console.error(e);
+      setStatus("Failed to load", true);
+    });
+  </script>
+</body>
+</html>
+

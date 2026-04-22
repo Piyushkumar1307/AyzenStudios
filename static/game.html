@@ -305,6 +305,9 @@
 </div>
 
 <script>
+const TOKEN_KEY = "piyush_token";
+const GAME_ID = "fruit_ninja";
+
 const HAND_CONNECTIONS = [
   [0,1],[1,2],[2,3],[3,4],
   [0,5],[5,6],[6,7],[7,8],
@@ -365,6 +368,23 @@ let lastT = 0;
 
 let audioCtx = null;
 let bgTimer = null;
+
+async function submitScore(s) {
+  try {
+    const t = sessionStorage.getItem(TOKEN_KEY);
+    if (!t) return;
+    await fetch("/api/scores/submit", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + t,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ game_id: GAME_ID, score: Math.max(0, Math.floor(s || 0)) }),
+    });
+  } catch {
+    // best-effort
+  }
+}
 
 function distPointSeg(px, py, x1, y1, x2, y2) {
   const dx = x2 - x1;
@@ -677,6 +697,7 @@ function endGame() {
   stopBackgroundMusic();
   finalScoreEl.textContent = String(score);
   gameOverOverlay.classList.add("visible");
+  submitScore(score);
 }
 
 function gameLoop(now) {
