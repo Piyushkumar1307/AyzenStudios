@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kamehameha Beam — Piyush-Store</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root{
+      --bg:#050510;
+      --text:#e8ecf4;
+      --muted:#6b7280;
+      --cyan:#22d3ee;
+      --violet:#a78bfa;
+      --amber:#fbbf24;
+    }
+    body{
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+    }
+    canvas{ position: fixed; inset: 0; width: 100vw; height: 100vh; }
+    #fx { z-index: 1; }
+    #hand { z-index: 2; pointer-events:none; opacity: 0.9; mix-blend-mode: screen; }
+
+    .hud{
+      position: fixed;
+      left: 0; right: 0; top: 0;
+      z-index: 3;
+      padding: max(12px, env(safe-area-inset-top, 0px)) 16px 10px;
+      display:flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      pointer-events: none;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.85);
+    }
+    .hud .block{ pointer-events:none; }
+    .hud .k{
+      font-size: 10px;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: rgba(148,163,184,0.8);
+      margin-bottom: 3px;
+    }
+    .hud .v{
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--cyan);
+    }
+    .hud a{
+      pointer-events:auto;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #a5b4fc;
+      text-decoration:none;
+      align-self: center;
+    }
+    .hud a:hover{ text-decoration: underline; }
+
+    .overlay{
+      position: fixed;
+      inset: 0;
+      z-index: 4;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 20px;
+      background: rgba(5,5,16,0.86);
+      backdrop-filter: blur(10px);
+    }
+    .overlay.hidden{ display:none; }
+    .panel{
+      width: min(560px, 92vw);
+      border-radius: 20px;
+      border: 1px solid rgba(34, 211, 238, 0.22);
+      background: linear-gradient(145deg, rgba(18,18,30,0.86), rgba(10,12,24,0.86));
+      box-shadow: 0 26px 90px rgba(0,0,0,0.6), 0 0 70px rgba(34,211,238,0.10);
+      padding: 28px 22px;
+      text-align:center;
+    }
+    .panel h1{
+      font-size: 16px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 10px;
+    }
+    .panel p{
+      font-size: 13px;
+      line-height: 1.65;
+      color: rgba(231,234,240,0.78);
+      margin-bottom: 10px;
+    }
+    .hint{
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-top: 10px;
+    }
+    .btnrow{
+      margin-top: 16px;
+      display:flex;
+      justify-content:center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn{
+      padding: 12px 18px;
+      border-radius: 14px;
+      border: none;
+      cursor:pointer;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 12px;
+      color: #05050c;
+      background: linear-gradient(135deg, var(--cyan), #5eead4);
+      box-shadow: 0 10px 30px rgba(34,211,238,0.16);
+    }
+    .btn:active{ transform: scale(0.98); }
+    .btn-ghost{
+      color:#a5b4fc;
+      background: transparent;
+      border: 2px solid rgba(99,102,241,0.55);
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="fx"></canvas>
+  <canvas id="hand"></canvas>
+
+  <div class="hud">
+    <div class="block">
+      <div class="k">State</div>
+      <div class="v" id="stateVal">Idle</div>
+    </div>
+    <div class="block" style="text-align:right;">
+      <div class="k">Power</div>
+      <div class="v" id="chargeVal" style="color: var(--violet);">0%</div>
+    </div>
+    <div class="block">
+      <div class="k">Score</div>
+      <div class="v" id="scoreVal" style="color: var(--amber);">0</div>
+    </div>
+    <div class="block" style="text-align:right;">
+      <div class="k">Misses</div>
+      <div class="v" id="missVal" style="color: rgba(248,113,113,0.95);">0/5</div>
+    </div>
+    <a href="/">← Store</a>
+  </div>
+
+  <div class="overlay" id="startOverlay">
+    <div class="panel">
+      <h1>Kamehameha Beam</h1>
+      <p><strong style="color:var(--cyan)">Two hands</strong>: this effect needs both hands in view.</p>
+      <p>
+        <strong style="color:var(--violet)">Charge</strong>: hold <strong>both hands open</strong><br/>
+        <strong style="color:var(--amber)">Fire</strong>: keep charge full, then <strong>pinch with both hands</strong> to shoot
+      </p>
+      <p class="hint" id="hintTxt">Tap Start to allow camera + sound. Make sure your room is well lit.</p>
+      <div class="btnrow">
+        <button class="btn" id="btnStart" type="button">Start</button>
+        <a class="btn btn-ghost" href="/">Home</a>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { classifyGesture } from "/static/hand-client.js";
+
+    const HAND_CONNECTIONS = [
+      [0,1],[1,2],[2,3],[3,4],
+      [0,5],[5,6],[6,7],[7,8],
+      [5,9],[9,10],[10,11],[11,12],
+      [9,13],[13,14],[14,15],[15,16],
+      [13,17],[17,18],[18,19],[19,20],
+      [0,17]
+    ];
+
+    const fx = document.getElementById("fx");
+    const ctx = fx.getContext("2d");
+    const hand = document.getElementById("hand");
+    const hctx = hand.getContext("2d");
+    const stateVal = document.getElementById("stateVal");
+    const chargeVal = document.getElementById("chargeVal");
+    const startOverlay = document.getElementById("startOverlay");
+    const btnStart = document.getElementById("btnStart");
+    const hintTxt = document.getElementById("hintTxt");
+    const scoreVal = document.getElementById("scoreVal");
+    const missVal = document.getElementById("missVal");
+
+    let W=0,H=0,DPR=1;
+    function resize(){
+      DPR = window.devicePixelRatio || 1;
+      W = Math.floor(window.innerWidth);
+      H = Math.floor(window.innerHeight);
+      fx.width = Math.floor(W * DPR); fx.height = Math.floor(H * DPR);
+      hand.width = Math.floor(W * DPR); hand.height = Math.floor(H * DPR);
+      fx.style.width = W+"px"; fx.style.height = H+"px";
+      hand.style.width = W+"px"; hand.style.height = H+"px";
+      ctx.setTransform(DPR,0,0,DPR,0,0);
+      hctx.setTransform(DPR,0,0,DPR,0,0);
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    // --- Audio ---
+    let audioCtx = null;
+    let audioUnlocked = false;
+    function initAudio(){ if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    async function unlockAudio(){
+      initAudio();
+      if (!audioCtx) return;
+      try {
+        if (audioCtx.state === "suspended") await audioCtx.resume();
+        audioUnlocked = audioCtx.state === "running";
+      } catch {}
+    }
+    function tone(freq, dur, vol=0.03, type="sine"){
+      if (!audioCtx || audioCtx.state !== "running") return;
+      const t = audioCtx.currentTime;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(vol, t);
+      g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t); o.stop(t + dur + 0.02);
+    }
+
+    // Background music (very light synth pad)
+    let bg = null; // { oscA, oscB, gain, lfo, lfoGain }
+    function bgMusic(on){
+      if (!audioCtx || audioCtx.state !== "running") return;
+      if (on){
+        if (bg) return;
+        const master = audioCtx.createGain();
+        master.gain.value = 0.0;
+        master.connect(audioCtx.destination);
+
+        const oscA = audioCtx.createOscillator();
+        const oscB = audioCtx.createOscillator();
+        oscA.type = "sine";
+        oscB.type = "triangle";
+        oscA.frequency.value = 110;
+        oscB.frequency.value = 165;
+
+        const gA = audioCtx.createGain();
+        const gB = audioCtx.createGain();
+        gA.gain.value = 0.28;
+        gB.gain.value = 0.18;
+
+        oscA.connect(gA); gA.connect(master);
+        oscB.connect(gB); gB.connect(master);
+
+        // LFO for gentle tremolo
+        const lfo = audioCtx.createOscillator();
+        const lfoGain = audioCtx.createGain();
+        lfo.type = "sine";
+        lfo.frequency.value = 0.12;
+        lfoGain.gain.value = 0.16;
+        lfo.connect(lfoGain);
+        lfoGain.connect(master.gain);
+
+        oscA.start(); oscB.start(); lfo.start();
+
+        bg = { oscA, oscB, gain: master, lfo, lfoGain, step: 0, nextAt: audioCtx.currentTime + 0.1 };
+      } else {
+        if (!bg) return;
+        try {
+          const t = audioCtx.currentTime;
+          bg.gain.gain.setTargetAtTime(0.0001, t, 0.08);
+          const old = bg;
+          bg = null;
+          setTimeout(() => {
+            try { old.oscA.stop(); old.oscB.stop(); old.lfo.stop(); } catch {}
+            try { old.gain.disconnect(); } catch {}
+          }, 220);
+        } catch {
+          bg = null;
+        }
+      }
+    }
+
+    function bgStep(){
+      if (!bg || !audioCtx || audioCtx.state !== "running") return;
+      const t = audioCtx.currentTime;
+      if (t < bg.nextAt) return;
+      bg.nextAt = t + 2.2;
+      // Simple repeating chord-ish progression
+      const base = [110, 98, 123, 92][bg.step % 4];
+      bg.step++;
+      bg.oscA.frequency.setTargetAtTime(base, t, 0.08);
+      bg.oscB.frequency.setTargetAtTime(base * 1.5, t, 0.08);
+      bg.gain.gain.setTargetAtTime(0.03, t, 0.15);
+    }
+
+    // Continuous beam sound (started/stopped cleanly)
+    let beamOsc = null;
+    let beamGain = null;
+    function beamSound(on, intensity){
+      if (!audioCtx || audioCtx.state !== "running") return;
+      if (on){
+        if (!beamOsc){
+          beamOsc = audioCtx.createOscillator();
+          beamGain = audioCtx.createGain();
+          beamOsc.type = "sawtooth";
+          beamOsc.frequency.value = 140;
+          beamGain.gain.value = 0.0001;
+          beamOsc.connect(beamGain);
+          beamGain.connect(audioCtx.destination);
+          beamOsc.start();
+        }
+        const t = audioCtx.currentTime;
+        const targetVol = 0.012 + 0.05 * intensity;
+        const targetFreq = 140 + 240 * intensity;
+        beamOsc.frequency.setTargetAtTime(targetFreq, t, 0.02);
+        beamGain.gain.setTargetAtTime(targetVol, t, 0.02);
+      } else {
+        if (beamOsc){
+          const t = audioCtx.currentTime;
+          beamGain.gain.setTargetAtTime(0.0001, t, 0.02);
+          // Stop after a short tail
+          const o = beamOsc;
+          beamOsc = null;
+          setTimeout(() => { try { o.stop(); o.disconnect(); } catch {} }, 120);
+          try { beamGain.disconnect(); } catch {}
+          beamGain = null;
+        }
+      }
+    }
+
+    // Charging sound (continuous while charging)
+    let chargeOsc = null;
+    let chargeGain = null;
+    function chargingSound(on, amt){
+      if (!audioCtx || audioCtx.state !== "running") return;
+      if (on){
+        if (!chargeOsc){
+          chargeOsc = audioCtx.createOscillator();
+          chargeGain = audioCtx.createGain();
+          chargeOsc.type = "sine";
+          chargeOsc.frequency.value = 280;
+          chargeGain.gain.value = 0.0001;
+          chargeOsc.connect(chargeGain);
+          chargeGain.connect(audioCtx.destination);
+          chargeOsc.start();
+        }
+        const t = audioCtx.currentTime;
+        chargeOsc.frequency.setTargetAtTime(240 + 780*amt, t, 0.04);
+        chargeGain.gain.setTargetAtTime(0.004 + 0.018*amt, t, 0.06);
+      } else {
+        if (!chargeOsc) return;
+        const t = audioCtx.currentTime;
+        chargeGain.gain.setTargetAtTime(0.0001, t, 0.06);
+        const o = chargeOsc;
+        chargeOsc = null;
+        setTimeout(() => { try { o.stop(); o.disconnect(); } catch {} }, 180);
+        try { chargeGain.disconnect(); } catch {}
+        chargeGain = null;
+      }
+    }
+
+    function hitSound(){
+      if (!audioUnlocked) return;
+      tone(920 + Math.random()*140, 0.035, 0.04, "square");
+      tone(520 + Math.random()*140, 0.06, 0.02, "triangle");
+    }
+
+    // --- Utils ---
+    function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
+    function lerp(a,b,t){ return a + (b-a)*t; }
+    function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+    function palmFromLandmarks(lm){
+      const ids = [0,5,9,13,17];
+      let sx=0, sy=0;
+      for (const i of ids){ sx += lm[i].x; sy += lm[i].y; }
+      return { x: sx/ids.length, y: sy/ids.length };
+    }
+
+    // --- Particles ---
+    const particles = [];
+    function addParticle(x,y, vx,vy, life, hue, size){
+      particles.push({x,y,vx,vy,life,ttl:life,hue,size});
+    }
+    function burst(x,y, hue, n=26){
+      for (let i=0;i<n;i++){
+        const a = Math.random()*Math.PI*2;
+        const sp = 70 + Math.random()*260;
+        addParticle(x,y, Math.cos(a)*sp, Math.sin(a)*sp, 0.45+Math.random()*0.55, hue, 1.4+Math.random()*2.9);
+      }
+    }
+
+    // --- Draw hands ---
+    function drawHands(hands){
+      hctx.clearRect(0,0,W,H);
+      if (!hands.length) return;
+      hctx.lineWidth = 3;
+      hctx.strokeStyle = "rgba(34,211,238,0.72)";
+      hctx.fillStyle = "rgba(231,234,240,0.82)";
+      for (const h of hands){
+        const pts = h.landmarks.map(p => ({ x: p.x * W, y: p.y * H }));
+        hctx.beginPath();
+        for (const [a,b] of HAND_CONNECTIONS){ hctx.moveTo(pts[a].x, pts[a].y); hctx.lineTo(pts[b].x, pts[b].y); }
+        hctx.stroke();
+        for (const p of pts){ hctx.beginPath(); hctx.arc(p.x,p.y,4,0,Math.PI*2); hctx.fill(); }
+      }
+    }
+
+    // --- Two-hand tracker (MediaPipe) ---
+    let stop = null;
+    async function startTwoHandTracking(onFrame){
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+        audio: false
+      });
+      const video = document.createElement("video");
+      video.srcObject = stream;
+      video.playsInline = true;
+      video.muted = true;
+      video.setAttribute("playsinline", "");
+      await video.play();
+
+      const { FilesetResolver, HandLandmarker } = await import("https://esm.sh/@mediapipe/tasks-vision@0.10.14");
+      const wasmPath = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
+      const fileset = await FilesetResolver.forVisionTasks(wasmPath);
+      const handLandmarker = await HandLandmarker.createFromOptions(fileset, {
+        baseOptions: {
+          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+          delegate: "CPU"
+        },
+        runningMode: "VIDEO",
+        numHands: 2
+      });
+
+      let rafId = 0;
+      const loop = () => {
+        const t = performance.now() / 1000;
+        const hands = [];
+        if (video.readyState >= 2){
+          try {
+            const result = handLandmarker.detectForVideo(video, performance.now());
+            const lms = result && result.landmarks ? result.landmarks : [];
+            for (let i=0;i<lms.length;i++){
+              const raw = Array.isArray(lms[i]) ? lms[i] : Array.from(lms[i]);
+              const arr = raw.map((p) => ({ x: p.x, y: p.y, z: p.z ?? 0 }));
+              // Mirror horizontally (selfie)
+              const landmarks = arr.map((p) => ({ x: 1 - p.x, y: p.y, z: p.z }));
+              const [gesture, confidence] = classifyGesture(landmarks);
+              const palm = palmFromLandmarks(landmarks);
+              const indexTip = landmarks[8] ? { x: landmarks[8].x, y: landmarks[8].y } : palm;
+              hands.push({ landmarks, gesture, confidence, palm, indexTip, ts: t });
+            }
+          } catch (e) {
+            // Surface detection errors without crashing the loop.
+            if (hintTxt) hintTxt.textContent = "Tracker error: " + (e && e.message ? e.message : String(e));
+          }
+          // Left/right by x position
+          hands.sort((a,b) => a.palm.x - b.palm.x);
+        }
+        onFrame({ detected: hands.length > 0, hands, timestamp: t });
+        rafId = requestAnimationFrame(loop);
+      };
+      rafId = requestAnimationFrame(loop);
+      return function stopTwo(){
+        cancelAnimationFrame(rafId);
+        stream.getTracks().forEach((tr) => tr.stop());
+        handLandmarker.close?.();
+      };
+    }
+
+    // --- Beam state machine ---
+    let running = false;
+    let lastT = performance.now();
+    let power = 0; // 0..1
+    let state = "idle"; // idle | charging | ready | firing
+    let lastReady = false;
+    let armed = false; // latched only when charge hits full (required to fire)
+
+    // --- Game state (enemies falling) ---
+    let score = 0;
+    let misses = 0;
+    const MISS_MAX = 25;
+    const enemies = []; // {x,y,r,vy,hue,hp}
+    let spawnAcc = 0;
+    let beamPath = null; // {pts:[{x,y}], radius:number}
+
+    function uiUpdate(){
+      if (scoreVal) scoreVal.textContent = String(score);
+      if (missVal) missVal.textContent = `${misses}/${MISS_MAX}`;
+    }
+
+    function resetGame(){
+      score = 0;
+      misses = 0;
+      enemies.length = 0;
+      spawnAcc = 0;
+      beamPath = null;
+      uiUpdate();
+    }
+
+    function showGameOver(){
+      running = false;
+      beamSound(false, 0);
+      chargingSound(false, 0);
+      bgMusic(false);
+      startOverlay.classList.remove("hidden");
+      if (hintTxt) hintTxt.textContent = `Game over. Score: ${score}. Tap Start to play again.`;
+      btnStart.disabled = false;
+    }
+
+    function setState(s){
+      state = s;
+      stateVal.textContent = s[0].toUpperCase() + s.slice(1);
+    }
+    function setCharge(c){
+      power = clamp(c, 0, 1);
+      chargeVal.textContent = Math.round(power * 100) + "%";
+    }
+
+    function tick(now){
+      if (!running) return;
+      const dt = Math.min(0.05, Math.max(0.001, (now - lastT) / 1000));
+      lastT = now;
+
+      // Background fade
+      ctx.fillStyle = "rgba(5,5,16,0.18)";
+      ctx.fillRect(0,0,W,H);
+
+      // Spawn enemies (ramps up slightly)
+      spawnAcc += dt;
+      const spawnEvery = Math.max(0.45, 1.15 - score * 0.006);
+      while (spawnAcc >= spawnEvery){
+        spawnAcc -= spawnEvery;
+        const r = 14 + Math.random()*14;
+        enemies.push({
+          x: r + Math.random()*(W - r*2),
+          y: -30 - Math.random()*60,
+          r,
+          vy: 90 + Math.random()*120 + score*1.1,
+          hue: Math.random()*360,
+          hp: 1,
+        });
+      }
+
+      // Update enemies + collisions
+      for (let i = enemies.length - 1; i >= 0; i--){
+        const e = enemies[i];
+        e.y += e.vy * dt;
+
+        // Check beam hit
+        if (beamPath && beamPath.pts && beamPath.pts.length > 1){
+          const rr = e.r + beamPath.radius;
+          // distance from point to polyline segments
+          let hit = false;
+          const pts = beamPath.pts;
+          for (let k=0;k<pts.length-1;k++){
+            const ax = pts[k].x, ay = pts[k].y;
+            const bx = pts[k+1].x, by = pts[k+1].y;
+            const abx = bx-ax, aby = by-ay;
+            const apx = e.x-ax, apy = e.y-ay;
+            const ab2 = abx*abx + aby*aby + 1e-6;
+            let t = (apx*abx + apy*aby)/ab2;
+            t = Math.max(0, Math.min(1, t));
+            const cx = ax + abx*t;
+            const cy = ay + aby*t;
+            const d = Math.hypot(e.x - cx, e.y - cy);
+            if (d <= rr){ hit = true; break; }
+          }
+          if (hit){
+            enemies.splice(i,1);
+            score += 10;
+            uiUpdate();
+            burst(e.x, e.y, e.hue, 26);
+            hitSound();
+            continue;
+          }
+        }
+
+        // Missed
+        if (e.y - e.r > H + 20){
+          enemies.splice(i,1);
+          misses += 1;
+          uiUpdate();
+          tone(140, 0.08, 0.02, "sawtooth");
+          if (misses >= MISS_MAX){
+            showGameOver();
+            return;
+          }
+        }
+      }
+
+      // Draw enemies
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      for (const e of enemies){
+        const g = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.r*2.6);
+        g.addColorStop(0, `hsla(${e.hue}, 95%, 60%, 0.38)`);
+        g.addColorStop(0.45, `hsla(${(e.hue+80)%360}, 95%, 60%, 0.16)`);
+        g.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(e.x, e.y, e.r*2.4, 0, Math.PI*2); ctx.fill();
+
+        ctx.fillStyle = `hsla(${e.hue}, 95%, 65%, 0.55)`;
+        ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.restore();
+
+      // Particle update
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      for (let i=particles.length-1;i>=0;i--){
+        const p = particles[i];
+        p.life -= dt;
+        if (p.life <= 0){ particles.splice(i,1); continue; }
+        p.vx *= (1 - dt*0.25);
+        p.vy *= (1 - dt*0.25);
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        const a = clamp(p.life / p.ttl, 0, 1);
+        ctx.fillStyle = `hsla(${p.hue}, 95%, 62%, ${0.55*a})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * (0.8 + 0.7*(1-a)), 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // Background music progression
+      bgStep();
+
+      requestAnimationFrame(tick);
+    }
+
+    // Current frame info
+    let current = { hands: [] };
+    let smoothed = {
+      leftPalm: { x: 0.35, y: 0.6 },
+      rightPalm: { x: 0.65, y: 0.6 },
+      leftIndex: { x: 0.45, y: 0.52 },
+      rightIndex: { x: 0.55, y: 0.52 },
+      leftPinch: false,
+      rightPinch: false,
+      leftOpen: false,
+      rightOpen: false,
+    };
+
+    function beamGradient(sx, sy, ex, ey, now, alpha){
+      const g = ctx.createLinearGradient(sx, sy, ex, ey);
+      const t = now * 0.001;
+      const h0 = (t * 80) % 360;
+      const h1 = (h0 + 80) % 360;
+      const h2 = (h0 + 160) % 360;
+      const h3 = (h0 + 240) % 360;
+      g.addColorStop(0.0, `hsla(${h0}, 95%, 60%, ${alpha})`);
+      g.addColorStop(0.33, `hsla(${h1}, 95%, 60%, ${alpha})`);
+      g.addColorStop(0.66, `hsla(${h2}, 95%, 60%, ${alpha})`);
+      g.addColorStop(1.0, `hsla(${h3}, 95%, 60%, ${alpha})`);
+      return g;
+    }
+
+    function drawBeam({ sx, sy, dx, dy, intensity, now }) {
+      // Longer beam looks more dramatic
+      const len = Math.max(W, H) * 1.6;
+      const ex = sx + dx * len;
+      const ey = sy + dy * len;
+
+      // Perpendicular for wiggle
+      const px = -dy;
+      const py = dx;
+
+      const baseW = 12 + 40 * intensity;
+      const segs = 18;
+
+      // Build a wavy centerline
+      const pts = [];
+      for (let i = 0; i <= segs; i++) {
+        const t = i / segs;
+        const wob =
+          Math.sin(now * 0.010 + t * 10.0) * (10 + 28 * intensity) +
+          Math.sin(now * 0.017 + t * 18.0) * (5 + 16 * intensity);
+        const taper = (1 - t) * 0.55 + 0.45;
+        const off = wob * taper;
+        pts.push({
+          x: lerp(sx, ex, t) + px * off,
+          y: lerp(sy, ey, t) + py * off,
+        });
+      }
+
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      // Outer glow strokes (multiple passes for bloom)
+      for (let pass = 0; pass < 3; pass++) {
+        const mul = pass === 0 ? 4.0 : pass === 1 ? 2.5 : 1.7;
+        const a = (pass === 0 ? 0.10 : pass === 1 ? 0.16 : 0.20) * (0.65 + 0.55*intensity);
+        ctx.strokeStyle = beamGradient(sx, sy, ex, ey, now, a);
+        ctx.lineWidth = baseW * mul;
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+        ctx.stroke();
+      }
+
+      // Mid
+      ctx.strokeStyle = beamGradient(sx, sy, ex, ey, now, 0.28 + 0.30*intensity);
+      ctx.lineWidth = baseW * 1.2;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.stroke();
+
+      // Core
+      // White-hot core with a subtle rainbow tint (two passes)
+      ctx.strokeStyle = `rgba(231,234,240,${0.44 + 0.34 * intensity})`;
+      ctx.lineWidth = baseW * 0.62;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.stroke();
+      ctx.strokeStyle = beamGradient(sx, sy, ex, ey, now, 0.18 + 0.18*intensity);
+      ctx.lineWidth = baseW * 0.46;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.stroke();
+
+      // Side arcs
+      for (let i = 0; i < 5; i++) {
+        const t = 0.2 + Math.random() * 0.75;
+        const p = pts[Math.floor(t * segs)];
+        const arcLen = 28 + Math.random() * 90;
+        const side = Math.random() < 0.5 ? -1 : 1;
+        const ax = p.x + px * side * arcLen;
+        const ay = p.y + py * side * arcLen;
+        ctx.strokeStyle = `rgba(191,95,255,${0.10 + 0.16 * intensity})`;
+        ctx.lineWidth = 2.0 + 2.5 * intensity;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(ax, ay);
+        ctx.stroke();
+      }
+
+      // Sparks along beam
+      for (let i = 0; i < 18; i++) {
+        const t = Math.random();
+        const idx = Math.floor(t * segs);
+        const p = pts[idx];
+        const sp = 140 + Math.random() * 560;
+        const ang = Math.atan2(dy, dx) + Math.PI + (Math.random() - 0.5) * 1.4;
+        addParticle(p.x, p.y, Math.cos(ang) * sp, Math.sin(ang) * sp, 0.22 + Math.random() * 0.22, 190 + Math.random() * 26, 1.2 + Math.random() * 2.3);
+      }
+
+      // Impact bloom at end
+      if (Math.random() < 0.35) {
+        burst(ex, ey, 195 + Math.random()*70, 20);
+        if (audioUnlocked && Math.random() < 0.18) tone(740 + Math.random() * 360, 0.03, 0.02, "triangle");
+      }
+
+      ctx.restore();
+
+      // Expose beam path for gameplay collision
+      beamPath = { pts, radius: (baseW * 0.62) * 0.55 };
+    }
+
+    function renderBeamAndCharge(now){
+      const hands = current.hands || [];
+      drawHands(hands);
+
+      const hasTwo = hands.length >= 2;
+      if (!hasTwo){
+        setState("idle");
+        setCharge(Math.max(0, power - 0.9*(1/60)));
+        beamSound(false, 0);
+        return;
+      }
+
+      const left = hands[0];
+      const right = hands[1];
+      const lp = left.palm;
+      const rp = right.palm;
+      const li = left.indexTip || left.palm;
+      const ri = right.indexTip || right.palm;
+
+      // Smooth palms
+      smoothed.leftPalm.x = smoothed.leftPalm.x*0.72 + lp.x*0.28;
+      smoothed.leftPalm.y = smoothed.leftPalm.y*0.72 + lp.y*0.28;
+      smoothed.rightPalm.x = smoothed.rightPalm.x*0.72 + rp.x*0.28;
+      smoothed.rightPalm.y = smoothed.rightPalm.y*0.72 + rp.y*0.28;
+      smoothed.leftIndex.x = smoothed.leftIndex.x*0.72 + li.x*0.28;
+      smoothed.leftIndex.y = smoothed.leftIndex.y*0.72 + li.y*0.28;
+      smoothed.rightIndex.x = smoothed.rightIndex.x*0.72 + ri.x*0.28;
+      smoothed.rightIndex.y = smoothed.rightIndex.y*0.72 + ri.y*0.28;
+
+      smoothed.leftOpen = left.gesture === "open";
+      smoothed.rightOpen = right.gesture === "open";
+      smoothed.leftPinch = left.gesture === "pinch";
+      smoothed.rightPinch = right.gesture === "pinch";
+
+      const bothOpen = smoothed.leftOpen && smoothed.rightOpen;
+      const bothPinch = smoothed.leftPinch && smoothed.rightPinch;
+
+      // Midpoint between palms
+      const mx = (smoothed.leftPalm.x + smoothed.rightPalm.x) * 0.5 * W;
+      const my = (smoothed.leftPalm.y + smoothed.rightPalm.y) * 0.5 * H;
+      const d = dist(smoothed.leftPalm, smoothed.rightPalm);
+      const handsTogether = d <= 0.26; // normalized distance; requires palms close to charge
+
+      // Aim: beam direction from midpoint -> average index tips (where the hands "point").
+      const aix = (smoothed.leftIndex.x + smoothed.rightIndex.x) * 0.5 * W;
+      const aiy = (smoothed.leftIndex.y + smoothed.rightIndex.y) * 0.5 * H;
+      let dx = aix - mx;
+      let dy = aiy - my;
+      const mag = Math.hypot(dx, dy);
+      if (mag < 12) { dx = 0; dy = -1; }
+      else { dx /= mag; dy /= mag; }
+
+      // Firing is decided first (so charging decay doesn't cancel the beam instantly).
+      const isReadyNow = power >= 0.98;
+      if (isReadyNow) armed = true;
+      const firing = armed && bothPinch;
+
+      // Charge behavior
+      if (firing){
+        // Don't decay charge while firing; keep it visually full.
+        setState("firing");
+        // Drain power while firing (beam weakens as it drains)
+        setCharge(power - (1/60) * 0.35);
+      } else if (bothOpen && handsTogether){
+        setState("charging");
+        const speed = 0.95; // simple: together + open => charge
+        setCharge(power + (1/60) * speed);
+      } else {
+        // Slow decay if you drop open-hands (so it doesn't die in ~1s)
+        setState(power >= 0.98 ? "ready" : "idle");
+        setCharge(power - (1/60) * 0.08);
+      }
+
+      // Charging SFX (only when open-hand charging and not firing)
+      chargingSound(bothOpen && handsTogether && !firing && power < 0.995, power);
+
+      const ready = power >= 0.98;
+      if (ready && !lastReady){
+        tone(1200, 0.06, 0.05, "square");
+        tone(880, 0.10, 0.03, "triangle");
+      }
+      lastReady = ready;
+      // Disarm only when power is basically empty and not actively charging/firing.
+      if (!ready && !bothOpen && !bothPinch && power <= 0.05) armed = false;
+
+      // Draw charge ball between palms
+      const r = 18 + 58 * power;
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      const g = ctx.createRadialGradient(mx, my, 0, mx, my, r*2.3);
+      g.addColorStop(0, `rgba(34,211,238,${0.16 + 0.26*power})`);
+      g.addColorStop(0.4, `rgba(56,189,248,${0.08 + 0.22*power})`);
+      g.addColorStop(1, "rgba(34,211,238,0)");
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(mx,my, r*2.15, 0, Math.PI*2); ctx.fill();
+
+      const g2 = ctx.createRadialGradient(mx, my, 0, mx, my, r);
+      g2.addColorStop(0, `rgba(231,234,240,${0.26 + 0.36*power})`);
+      g2.addColorStop(0.6, `rgba(34,211,238,${0.16 + 0.32*power})`);
+      g2.addColorStop(1, "rgba(34,211,238,0)");
+      ctx.fillStyle = g2;
+      ctx.beginPath(); ctx.arc(mx,my, r, 0, Math.PI*2); ctx.fill();
+
+      // Swirl lines
+      ctx.lineWidth = 2.2;
+      for (let i=0;i<7;i++){
+        const p = i/7;
+        const a0 = performance.now()*0.007 + p*Math.PI*2;
+        const rr = r*(0.35 + 0.62*p);
+        ctx.strokeStyle = `rgba(147,197,253,${0.16 + 0.26*power})`;
+        ctx.beginPath();
+        ctx.arc(mx + Math.cos(a0)*rr*0.18, my + Math.sin(a0)*rr*0.18, rr, a0, a0 + Math.PI*1.05);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      if (firing){
+        // Beam weakens as power drains.
+        const intensity = clamp(power, 0, 1);
+        beamSound(true, intensity);
+        drawBeam({ sx: mx, sy: my, dx, dy, intensity, now });
+        // If power drained out, stop firing & require re-charge to arm again.
+        if (power <= 0.02){
+          armed = false;
+          setState("idle");
+          beamSound(false, 0);
+          burst(mx, my, 210, 22);
+          tone(180, 0.10, 0.03, "sawtooth");
+        }
+      } else {
+        beamSound(false, 0);
+        beamPath = null;
+        if (ready) setState("ready");
+      }
+    }
+
+    let rafFx = 0;
+    function fxLoop(){
+      if (!running) return;
+      renderBeamAndCharge(performance.now());
+      rafFx = requestAnimationFrame(fxLoop);
+    }
+
+    async function boot(){
+      if (stop) return;
+      stop = await startTwoHandTracking((frame) => { current = frame; });
+    }
+
+    async function start(){
+      if (running) return;
+      btnStart.disabled = true;
+      if (hintTxt) hintTxt.textContent = "Starting camera…";
+      try {
+        await unlockAudio();
+        await boot(); // camera + mediapipe should start under user gesture
+      } catch (e) {
+        console.error(e);
+        if (hintTxt) hintTxt.textContent = "Camera failed: " + (e && e.message ? e.message : String(e));
+        btnStart.disabled = false;
+        return;
+      }
+
+      running = true;
+      startOverlay.classList.add("hidden");
+      ctx.fillStyle = "rgba(5,5,16,1)";
+      ctx.fillRect(0,0,W,H);
+      setState("idle");
+      setCharge(0);
+      resetGame();
+      bgMusic(true);
+      lastT = performance.now();
+      requestAnimationFrame(tick);
+      rafFx = requestAnimationFrame(fxLoop);
+    }
+
+    btnStart.addEventListener("click", () => { start(); });
+    startOverlay.addEventListener("click", (e) => { if (e.target === btnStart) return; start(); });
+    startOverlay.addEventListener("touchstart", (e) => { e.preventDefault(); start(); }, { passive:false });
+    window.addEventListener("pointerdown", unlockAudio, { once:true });
+    window.addEventListener("keydown", unlockAudio, { once:true });
+  </script>
+</body>
+</html>
+

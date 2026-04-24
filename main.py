@@ -116,6 +116,7 @@ LOGIN_HTML = os.path.join(BASE_DIR, "static", "login.html")
 PROFILE_HTML = os.path.join(BASE_DIR, "static", "profile.html")
 LEADERBOARD_HTML = os.path.join(BASE_DIR, "static", "leaderboard.html")
 HOLO_HTML = os.path.join(BASE_DIR, "static", "holo.html")
+KAMEHAMEHA_HTML = os.path.join(BASE_DIR, "static", "kamehameha.html")
 
 # --- Store / Razorpay config ---
 PAID_GAMES = {
@@ -131,6 +132,7 @@ FREE_GAMES = {
     # - "gesture-effect": no leaderboard
     "fruit_ninja": {"route": "/game", "title": "Fruit-Ninja", "category": "gesture-games", "leaderboard": True},
     "holo": {"route": "/holo", "title": "Holo Hand FX", "category": "gesture-effect", "leaderboard": False},
+    "kamehameha": {"route": "/kamehameha", "title": "Kamehameha Beam", "category": "gesture-effect", "leaderboard": False},
 }
 
 
@@ -197,6 +199,10 @@ def leaderboard_page():
 @app.get("/holo")
 def holo_page():
     return FileResponse(HOLO_HTML)
+
+@app.get("/kamehameha")
+def kamehameha_page():
+    return FileResponse(KAMEHAMEHA_HTML)
 
 app.mount(
     "/static",
