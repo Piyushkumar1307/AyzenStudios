@@ -115,6 +115,7 @@ TRAFFIC_HTML = os.path.join(BASE_DIR, "static", "traffic.html")
 LOGIN_HTML = os.path.join(BASE_DIR, "static", "login.html")
 PROFILE_HTML = os.path.join(BASE_DIR, "static", "profile.html")
 LEADERBOARD_HTML = os.path.join(BASE_DIR, "static", "leaderboard.html")
+HOLO_HTML = os.path.join(BASE_DIR, "static", "holo.html")
 
 # --- Store / Razorpay config ---
 PAID_GAMES = {
@@ -125,8 +126,32 @@ PAID_GAMES = {
 }
 
 FREE_GAMES = {
-    "fruit_ninja": {"route": "/game", "title": "Fruit-Ninja"},
+    # category:
+    # - "gesture-games": leaderboard enabled
+    # - "gesture-effect": no leaderboard
+    "fruit_ninja": {"route": "/game", "title": "Fruit-Ninja", "category": "gesture-games", "leaderboard": True},
+    "holo": {"route": "/holo", "title": "Holo Hand FX", "category": "gesture-effect", "leaderboard": False},
 }
+
+
+def _paid_game_meta(game_id: str) -> dict:
+    meta = PAID_GAMES[game_id]
+    return {
+        "route": meta["route"],
+        "title": meta["title"],
+        "amount_paise": meta["amount_paise"],
+        "category": "gesture-games",
+        "leaderboard": game_id != "tictactoe",
+    }
+
+
+def _game_meta_or_none(game_id: str) -> dict | None:
+    gid = (game_id or "").strip()
+    if gid in FREE_GAMES:
+        return FREE_GAMES[gid]
+    if gid in PAID_GAMES:
+        return _paid_game_meta(gid)
+    return None
 
 @app.get("/")
 def index():
@@ -168,6 +193,10 @@ def profile_page():
 @app.get("/leaderboard")
 def leaderboard_page():
     return FileResponse(LEADERBOARD_HTML)
+
+@app.get("/holo")
+def holo_page():
+    return FileResponse(HOLO_HTML)
 
 app.mount(
     "/static",
@@ -522,22 +551,32 @@ def api_leaderboard_games(user: User = Depends(get_current_user), db: Session = 
     ent = {r.game_id for r in _entitlements_for_user_or_503(db, user)}
     games = []
     for gid, meta in FREE_GAMES.items():
-        games.append(
-            {
-                "game_id": gid,
-                "title": meta["title"],
-                "route": meta["route"],
-                "unlocked": True,
-            }
-        )
-    for gid, meta in PAID_GAMES.items():
-        if gid == "tictactoe":
+        # Leaderboard page should only list gesture-games (leaderboard enabled).
+        if not bool(meta.get("leaderboard", True)):
             continue
         games.append(
             {
                 "game_id": gid,
                 "title": meta["title"],
                 "route": meta["route"],
+                "category": meta.get("category", "gesture-games"),
+                "leaderboard": bool(meta.get("leaderboard", True)),
+                "unlocked": True,
+            }
+        )
+    for gid, meta in PAID_GAMES.items():
+        if gid == "tictactoe":
+            continue
+        m = _paid_game_meta(gid)
+        if not bool(m.get("leaderboard", True)):
+            continue
+        games.append(
+            {
+                "game_id": gid,
+                "title": m["title"],
+                "route": m["route"],
+                "category": m["category"],
+                "leaderboard": bool(m["leaderboard"]),
                 "unlocked": gid in ent,
             }
         )
@@ -555,8 +594,11 @@ def api_leaderboard_for_game(
     db: Session = Depends(get_db),
 ):
     gid = (game_id or "").strip()
-    if gid not in PAID_GAMES and gid not in FREE_GAMES:
+    meta = _game_meta_or_none(gid)
+    if not meta:
         raise HTTPException(status_code=400, detail="Unknown game")
+    if not bool(meta.get("leaderboard", True)):
+        raise HTTPException(status_code=400, detail="Leaderboard not available for this category")
 
     limit = max(1, min(int(limit or 200), 2000))
     rows = _scores_for_game_or_503(db, gid)
@@ -587,7 +629,7 @@ def api_leaderboard_for_game(
     return {
         "game": {
             "game_id": gid,
-            "title": (PAID_GAMES.get(gid) or FREE_GAMES.get(gid))["title"],
+            "title": meta["title"],
         },
         "total_players": len(rows),
         "entries": entries,
@@ -601,8 +643,11 @@ def api_leaderboard_for_game(
 )
 def api_submit_score(payload: dict, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     gid = (payload.get("game_id") or "").strip()
-    if gid not in PAID_GAMES and gid not in FREE_GAMES:
+    meta = _game_meta_or_none(gid)
+    if not meta:
         raise HTTPException(status_code=400, detail="Unknown game")
+    if not bool(meta.get("leaderboard", True)):
+        raise HTTPException(status_code=400, detail="Leaderboard not available for this category")
     if gid in PAID_GAMES and not _has_game_entitlement_or_503(db, user, gid):
         raise HTTPException(status_code=403, detail="Game locked")
 

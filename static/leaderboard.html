@@ -291,6 +291,10 @@
       ph.selected = true;
       sel.appendChild(ph);
       for (const g of state.games){
+        if (!g) continue;
+        // Extra safety: leaderboard page should only show gesture-games.
+        if (g.category && g.category !== "gesture-games") continue;
+        if (g.leaderboard === false) continue;
         const opt = document.createElement("option");
         opt.value = g.game_id;
         opt.textContent = g.title + (g.unlocked ? "" : "  •  Locked");

@@ -460,6 +460,48 @@ function bestScoreWrite(s) {
   } catch { /* ignore */ }
 }
 
+let lastSubmitted = -1;
+function submitScoreBestEffort(s) {
+  try {
+    const t = sessionStorage.getItem(TOKEN_KEY);
+    if (!t) return;
+    const scoreInt = Math.max(0, Math.floor(Number(s) || 0));
+    if (scoreInt <= lastSubmitted) return;
+    lastSubmitted = scoreInt;
+
+    const body = JSON.stringify({ game_id: GAME_ID, score: scoreInt });
+    const url = "/api/scores/submit";
+
+    // Most reliable on back/home/mobile: sendBeacon
+    if (navigator.sendBeacon) {
+      const blob = new Blob([body], { type: "application/json" });
+      // Note: sendBeacon can't set headers; backend requires Authorization header.
+      // Fallback to fetch(keepalive) for authenticated submit.
+    }
+
+    fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + t,
+        "Content-Type": "application/json",
+      },
+      body,
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    // ignore
+  }
+}
+
+function submitCurrentBest() {
+  const best = Math.max(bestScoreRead(), Math.floor(score || 0));
+  if (best > 0) submitScoreBestEffort(best);
+}
+
+// Submit on leaving the page (Back/Home/app switch)
+window.addEventListener("pagehide", submitCurrentBest);
+window.addEventListener("beforeunload", submitCurrentBest);
+
 function initAudio() {
   if (audioCtx) return;
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -595,6 +637,7 @@ function endGame() {
   clearGridHighlight();
   currentTarget = -1;
   bestScoreWrite(score);
+  submitCurrentBest();
   finalScoreEl.textContent = String(score);
   bestScoreEl.textContent = String(Math.max(bestScoreRead(), score));
   gameOverOverlay.classList.add("visible");

@@ -407,6 +407,22 @@
             </button>
           </div>
         </div>
+        <div class="row">
+          <label for="signupPassword2">Confirm password</label>
+          <div class="pw-wrap">
+            <input
+              id="signupPassword2"
+              name="password2"
+              type="password"
+              placeholder="Re-enter password"
+              minlength="6"
+              required
+            />
+            <button class="pw-toggle" type="button" data-toggle-for="signupPassword2" aria-label="Show password">
+              <span class="ico" aria-hidden="true">👁</span>
+            </button>
+          </div>
+        </div>
         <div class="actions">
           <button class="btn" id="btnSignup" type="submit">Create</button>
           
@@ -564,6 +580,10 @@
         const name = document.getElementById("signupName").value.trim();
         const email = document.getElementById("signupEmail").value.trim();
         const password = document.getElementById("signupPassword").value;
+        const password2 = document.getElementById("signupPassword2").value;
+        if (password !== password2) {
+          throw new Error("Passwords do not match.");
+        }
         // Client-side validation (server also enforces).
         const ok =
           password.length >= 6 &&

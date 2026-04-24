@@ -253,6 +253,35 @@
     max-width: 200px;
   }
 
+  .filterbar{
+    display:flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items:center;
+    margin: -10px 0 22px;
+  }
+  .filterbtn{
+    padding: 10px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(99, 102, 241, 0.55);
+    background: rgba(10, 12, 24, 0.35);
+    color: #a5b4fc;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-size: 11px;
+    cursor: pointer;
+    transition: transform 0.12s, filter 0.2s, border-color 0.2s, background 0.2s;
+  }
+  .filterbtn:hover{ filter: brightness(1.06); border-color: rgba(0, 245, 255, 0.45); }
+  .filterbtn:active{ transform: scale(0.98); }
+  .filterbtn.active{
+    border-color: rgba(0, 245, 255, 0.60);
+    color: rgba(34, 211, 238, 0.95);
+    background: rgba(34, 211, 238, 0.10);
+    box-shadow: 0 0 0 3px rgba(0, 245, 255, 0.10);
+  }
+
   .game-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -520,8 +549,13 @@
 
 <main class="store-main">
   <p class="section-label">Featured titles</p>
+  <div class="filterbar" role="group" aria-label="Category filter">
+    <button class="filterbtn active" type="button" data-filter="all">All</button>
+    <button class="filterbtn" type="button" data-filter="gesture-games">Gesture games</button>
+    <button class="filterbtn" type="button" data-filter="gesture-effect">Gesture effects</button>
+  </div>
   <div class="game-grid">
-    <article class="game-card" id="game-skeleton-catch">
+    <article class="game-card" id="game-skeleton-catch" data-category="gesture-games">
       <div class="game-card-media">
         <span class="game-icon" aria-hidden="true">🍉</span>
       </div>
@@ -541,7 +575,27 @@
         <a class="play-cta" href="/game">Play now →</a>
       </div>
     </article>
-    <article class="game-card" id="game-neon-pop">
+    <article class="game-card" id="game-holo-fx" data-category="gesture-effect">
+      <div class="game-card-media" style="background: linear-gradient(145deg, rgba(34,211,238,0.14) 0%, transparent 55%), linear-gradient(225deg, rgba(167,139,250,0.16) 0%, transparent 45%), #0a0c18;">
+        <span class="game-icon" aria-hidden="true">🖐️</span>
+      </div>
+      <div class="game-card-body">
+        <div class="game-title-row">
+          <h2 class="game-title">Holo Hand FX</h2>
+          <span class="game-price">Free</span>
+        </div>
+        <p class="game-desc">
+          Sci‑fi hand effects: paint neon energy trails and switch modes with gestures (pinch/open/fist/peace).
+        </p>
+        <div class="game-tags">
+          <span class="tag alt">Sci‑Fi</span>
+          <span class="tag">Gesture</span>
+          <span class="tag alt">Effects</span>
+        </div>
+        <a class="play-cta" href="/holo">Play now →</a>
+      </div>
+    </article>
+    <article class="game-card" id="game-neon-pop" data-category="gesture-games">
       <div class="game-card-media" style="background: linear-gradient(145deg, rgba(34,211,238,0.2) 0%, transparent 50%), linear-gradient(225deg, rgba(99,102,241,0.15) 0%, transparent 45%), #0a0c18;">
         <span class="game-icon" aria-hidden="true">⚡</span>
       </div>
@@ -562,7 +616,7 @@
       </div>
     </article>
 
-    <article class="game-card" id="game-neon-runner">
+    <article class="game-card" id="game-neon-runner" data-category="gesture-games">
       <div class="game-card-media" style="background: linear-gradient(145deg, rgba(167,139,250,0.18) 0%, transparent 55%), linear-gradient(225deg, rgba(34,211,238,0.12) 0%, transparent 45%), #0a0c18;">
         <span class="game-icon" aria-hidden="true">🏃</span>
       </div>
@@ -583,7 +637,7 @@
       </div>
     </article>
 
-    <article class="game-card" id="game-tictactoe">
+    <article class="game-card" id="game-tictactoe" data-category="gesture-games">
       <div class="game-card-media" style="background: linear-gradient(145deg, rgba(34,211,238,0.15) 0%, transparent 50%), linear-gradient(225deg, rgba(167,139,250,0.2) 0%, transparent 45%), #0a0c18;">
         <span class="game-icon" aria-hidden="true">◫</span>
       </div>
@@ -604,7 +658,7 @@
       </div>
     </article>
 
-    <article class="game-card" id="game-traffic">
+    <article class="game-card" id="game-traffic" data-category="gesture-games">
       <div class="game-card-media" style="background: linear-gradient(145deg, rgba(251,191,36,0.14) 0%, transparent 55%), linear-gradient(225deg, rgba(34,211,238,0.12) 0%, transparent 45%), #0a0c18;">
         <span class="game-icon" aria-hidden="true">🚗</span>
       </div>
@@ -638,6 +692,21 @@ const PAID_GAMES = {
   tictactoe: { title: "Neon Tic-Tac-Toe", route: "/tictactoe", priceLabel: "₹10" },
   traffic: { title: "Traffic Rush", route: "/traffic", priceLabel: "₹15" },
 };
+
+// Category filter (All / Gesture games / Gesture effects)
+(() => {
+  const btns = Array.from(document.querySelectorAll("[data-filter]"));
+  const cards = Array.from(document.querySelectorAll(".game-card[data-category]"));
+  const apply = (cat) => {
+    for (const b of btns) b.classList.toggle("active", b.dataset.filter === cat);
+    for (const c of cards) {
+      const ok = cat === "all" || c.dataset.category === cat;
+      c.style.display = ok ? "" : "none";
+    }
+  };
+  btns.forEach((b) => b.addEventListener("click", () => apply(b.dataset.filter || "all")));
+  apply("all");
+})();
 
 const PAID_GAME_CARD_ID = {
   neon_pop: "game-neon-pop",

@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Holo Hand FX — Piyush-Store</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root{
+      --bg:#050510;
+      --text:#e8ecf4;
+      --muted:#6b7280;
+      --cyan:#22d3ee;
+      --violet:#a78bfa;
+      --amber:#fbbf24;
+    }
+    body{
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+    }
+    canvas{ position: fixed; inset: 0; width: 100vw; height: 100vh; }
+    #fx { z-index: 1; }
+    #hand { z-index: 2; pointer-events:none; opacity: 0.9; mix-blend-mode: screen; }
+
+    .hud{
+      position: fixed;
+      left: 0; right: 0; top: 0;
+      z-index: 3;
+      padding: max(12px, env(safe-area-inset-top, 0px)) 16px 10px;
+      display:flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      pointer-events: none;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.85);
+    }
+    .hud .block{ pointer-events:none; }
+    .hud .k{
+      font-size: 10px;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: rgba(148,163,184,0.8);
+      margin-bottom: 3px;
+    }
+    .hud .v{
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--cyan);
+    }
+    .hud a{
+      pointer-events:auto;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #a5b4fc;
+      text-decoration:none;
+      align-self: center;
+    }
+    .hud a:hover{ text-decoration: underline; }
+
+    .overlay{
+      position: fixed;
+      inset: 0;
+      z-index: 4;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 20px;
+      background: rgba(5,5,16,0.86);
+      backdrop-filter: blur(10px);
+    }
+    .overlay.hidden{ display:none; }
+    .panel{
+      width: min(520px, 92vw);
+      border-radius: 20px;
+      border: 1px solid rgba(34, 211, 238, 0.22);
+      background: linear-gradient(145deg, rgba(18,18,30,0.86), rgba(10,12,24,0.86));
+      box-shadow: 0 26px 90px rgba(0,0,0,0.6), 0 0 70px rgba(34,211,238,0.10);
+      padding: 28px 22px;
+      text-align:center;
+    }
+    .panel h1{
+      font-size: 18px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 10px;
+    }
+    .panel p{
+      font-size: 13px;
+      line-height: 1.65;
+      color: rgba(231,234,240,0.78);
+      margin-bottom: 10px;
+    }
+    .hint{
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-top: 10px;
+    }
+    .btnrow{
+      margin-top: 16px;
+      display:flex;
+      justify-content:center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn{
+      padding: 12px 18px;
+      border-radius: 14px;
+      border: none;
+      cursor:pointer;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 12px;
+      color: #05050c;
+      background: linear-gradient(135deg, var(--cyan), #5eead4);
+      box-shadow: 0 10px 30px rgba(34,211,238,0.16);
+    }
+    .btn:active{ transform: scale(0.98); }
+    .btn-ghost{
+      color:#a5b4fc;
+      background: transparent;
+      border: 2px solid rgba(99,102,241,0.55);
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="fx"></canvas>
+  <canvas id="hand"></canvas>
+
+  <div class="hud">
+    <div class="block">
+      <div class="k">Mode</div>
+      <div class="v" id="modeVal">Beam</div>
+    </div>
+    <div class="block" style="text-align:right;">
+      <div class="k">Gesture</div>
+      <div class="v" id="gestVal" style="color: var(--violet);">none</div>
+    </div>
+    <a href="/">← Store</a>
+  </div>
+
+  <div class="overlay" id="startOverlay">
+    <div class="panel">
+      <h1>Holo Hand FX</h1>
+      <p>Move your hand to paint neon energy. Different gestures morph the effect.</p>
+      <p>
+        <strong style="color:var(--cyan)">Beam</strong>: pinch (thumb+index) &nbsp;·&nbsp;
+        <strong style="color:var(--violet)">Rasengan</strong>: open hand (charge + throw) &nbsp;·&nbsp;
+        <strong style="color:var(--amber)">Pulse</strong>: fist
+      </p>
+      <p class="hint">Tip: hold open-hand to charge. Release after a fast move to throw.</p>
+      <div class="btnrow">
+        <button class="btn" id="btnStart" type="button">Start</button>
+        <a class="btn btn-ghost" href="/">Home</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const HAND_CONNECTIONS = [
+      [0,1],[1,2],[2,3],[3,4],
+      [0,5],[5,6],[6,7],[7,8],
+      [5,9],[9,10],[10,11],[11,12],
+      [9,13],[13,14],[14,15],[15,16],
+      [13,17],[17,18],[18,19],[19,20],
+      [0,17]
+    ];
+
+    const fx = document.getElementById("fx");
+    const ctx = fx.getContext("2d");
+    const hand = document.getElementById("hand");
+    const hctx = hand.getContext("2d");
+    const modeVal = document.getElementById("modeVal");
+    const gestVal = document.getElementById("gestVal");
+    const startOverlay = document.getElementById("startOverlay");
+    const btnStart = document.getElementById("btnStart");
+
+    let W=0,H=0,DPR=1;
+    function resize(){
+      DPR = window.devicePixelRatio || 1;
+      W = Math.floor(window.innerWidth);
+      H = Math.floor(window.innerHeight);
+      fx.width = Math.floor(W * DPR); fx.height = Math.floor(H * DPR);
+      hand.width = Math.floor(W * DPR); hand.height = Math.floor(H * DPR);
+      fx.style.width = W+"px"; fx.style.height = H+"px";
+      hand.style.width = W+"px"; hand.style.height = H+"px";
+      ctx.setTransform(DPR,0,0,DPR,0,0);
+      hctx.setTransform(DPR,0,0,DPR,0,0);
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    // --- Audio (sci-fi bleeps) ---
+    let audioCtx = null;
+    let audioUnlocked = false;
+    function initAudio(){ if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    async function unlockAudio(){
+      initAudio();
+      if (!audioCtx) return;
+      try {
+        if (audioCtx.state === "suspended") await audioCtx.resume();
+        audioUnlocked = audioCtx.state === "running";
+      } catch {}
+    }
+    function tone(freq, dur, vol=0.03, type="sine"){
+      if (!audioCtx || audioCtx.state !== "running") return;
+      const t = audioCtx.currentTime;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(vol, t);
+      g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t); o.stop(t + dur + 0.02);
+    }
+
+    // --- Hand drawing ---
+    function drawHand(landmarks){
+      hctx.clearRect(0,0,W,H);
+      if (!Array.isArray(landmarks) || landmarks.length !== 21) return;
+      const pts = landmarks.map(p => ({ x: p.x * W, y: p.y * H }));
+      hctx.lineWidth = 3;
+      hctx.strokeStyle = "rgba(34,211,238,0.75)";
+      hctx.beginPath();
+      for (const [a,b] of HAND_CONNECTIONS){ hctx.moveTo(pts[a].x, pts[a].y); hctx.lineTo(pts[b].x, pts[b].y); }
+      hctx.stroke();
+      hctx.fillStyle = "rgba(231,234,240,0.85)";
+      for (const p of pts){ hctx.beginPath(); hctx.arc(p.x,p.y,4,0,Math.PI*2); hctx.fill(); }
+    }
+
+    // --- FX ---
+    const particles = [];
+    function addParticle(x,y, vx,vy, life, hue, size){
+      particles.push({x,y,vx,vy,life,ttl:life,hue,size});
+    }
+    function burst(x,y, hue, n=22){
+      for (let i=0;i<n;i++){
+        const a = Math.random()*Math.PI*2;
+        const sp = 40 + Math.random()*220;
+        addParticle(x,y, Math.cos(a)*sp, Math.sin(a)*sp, 0.55+Math.random()*0.55, hue, 1.4+Math.random()*2.6);
+      }
+    }
+
+    let lastT = performance.now();
+    let running = false;
+    let mode = "beam"; // beam | rasengan | pulse | vortex
+    let lastMode = "";
+    let cursor = { x: 0.5, y: 0.55, vx: 0, vy: 0 };
+    let energy = 0.0;
+
+    // --- Rasengan state ---
+    const rasengan = {
+      state: "idle", // idle | charge
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      charge: 0, // 0..1
+      lastThrowAt: 0,
+    };
+    const rasenganShots = []; // {x,y,vx,vy,life,ttl,spin}
+    let palm = { x: 0.5, y: 0.55 };
+    let palmVel = { vx: 0, vy: 0 };
+    let lastPalm = null; // {x,y,t}
+    let openPrev = false;
+    let rasenganFullPrev = false;
+
+    // Rate-limited SFX (keep it punchy, not noisy)
+    const sfx = {
+      beamAt: 0,
+      vortexAt: 0,
+      rasenganHumAt: 0,
+      rasenganFullAt: 0,
+      pulseAt: 0,
+    };
+
+    function setMode(next){
+      mode = next;
+      modeVal.textContent = next[0].toUpperCase()+next.slice(1);
+      if (mode !== lastMode){
+        lastMode = mode;
+        if (mode === "beam") tone(740, 0.06, 0.035, "triangle");
+        else if (mode === "rasengan") tone(520, 0.08, 0.035, "sine");
+        else if (mode === "pulse") tone(240, 0.12, 0.04, "sawtooth");
+        else if (mode === "vortex") tone(620, 0.07, 0.03, "square");
+      }
+    }
+
+    function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+    function lerp(a,b,t){ return a + (b-a)*t; }
+
+    function computePalmFromLandmarks(landmarks){
+      // Palm center: average of wrist + MCPs (index/middle/ring/pinky).
+      const ids = [0,5,9,13,17];
+      let sx = 0, sy = 0;
+      for (const i of ids){ sx += landmarks[i].x; sy += landmarks[i].y; }
+      return { x: sx / ids.length, y: sy / ids.length };
+    }
+
+    function throwRasengan(nowMs){
+      // Only allow throw when fully charged.
+      if (rasengan.charge < 0.98) return;
+      const nowS = nowMs * 0.001;
+      if (nowS - rasengan.lastThrowAt < 0.25) return;
+      rasengan.lastThrowAt = nowS;
+
+      // Convert palm velocity (norm space per second) into px/s-ish velocity.
+      // Use speed clamp so it feels controllable.
+      const sp = Math.hypot(palmVel.vx, palmVel.vy);
+      const minSp = 0.45;
+      if (sp < minSp) return;
+
+      const vx = (palmVel.vx / Math.max(1e-6, sp)) * lerp(520, 980, rasengan.charge);
+      const vy = (palmVel.vy / Math.max(1e-6, sp)) * lerp(520, 980, rasengan.charge);
+
+      rasenganShots.push({
+        x: rasengan.x,
+        y: rasengan.y,
+        vx,
+        vy,
+        life: 1.25,
+        ttl: 1.25,
+        spin: (Math.random()*2-1) * 10,
+        power: 1,
+      });
+
+      burst(rasengan.x, rasengan.y, 200, 26);
+      tone(980, 0.09, 0.045, "triangle");
+      rasengan.charge = 0;
+      rasengan.state = "idle";
+    }
+
+    function tick(now){
+      if (!running) return;
+      const dt = Math.min(0.05, Math.max(0.001, (now - lastT) / 1000));
+      lastT = now;
+
+      // Background fade (motion trail)
+      ctx.fillStyle = "rgba(5,5,16,0.18)";
+      ctx.fillRect(0,0,W,H);
+
+      // Subtle grid
+      ctx.globalAlpha = 0.18;
+      ctx.strokeStyle = "rgba(167,139,250,0.20)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      const step = 42;
+      const t = now * 0.00008;
+      for (let x = (-(t*step)%step); x < W; x += step){ ctx.moveTo(x,0); ctx.lineTo(x,H); }
+      for (let y = (-(t*step*0.6)%step); y < H; y += step){ ctx.moveTo(0,y); ctx.lineTo(W,y); }
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      const x = cursor.x * W;
+      const y = cursor.y * H;
+
+      // Emit based on mode
+      if (mode === "beam"){
+        energy = Math.min(1, energy + dt * 1.2);
+        const hue = 190;
+        // Beam SFX (soft, throttled)
+        if (audioUnlocked && (now - sfx.beamAt) > 220){
+          sfx.beamAt = now;
+          tone(720 + Math.random()*70, 0.03, 0.012, "triangle");
+        }
+        for (let i=0;i<8;i++){
+          addParticle(
+            x + (Math.random()-0.5)*10,
+            y + (Math.random()-0.5)*10,
+            (Math.random()-0.5)*80,
+            -120 - Math.random()*240,
+            0.35+Math.random()*0.35,
+            hue + Math.random()*18,
+            1.2+Math.random()*2.0
+          );
+        }
+        // Beam core
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        const g = ctx.createRadialGradient(x,y,0,x,y,140);
+        g.addColorStop(0, "rgba(34,211,238,0.40)");
+        g.addColorStop(1, "rgba(34,211,238,0)");
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(x,y, 110, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
+      } else if (mode === "rasengan"){
+        // Rasengan is positioned by palm, not the cursor.
+        energy = Math.min(1, energy + dt * 0.9);
+        const rx = rasengan.x || x;
+        const ry = rasengan.y || y;
+
+        // Charge up while open-hand is held.
+        if (rasengan.state === "charge") {
+          rasengan.charge = clamp(rasengan.charge + dt * 0.65, 0, 1);
+          // Charging hum (throttled), pitch rises with charge
+          if (audioUnlocked && (now - sfx.rasenganHumAt) > 160){
+            sfx.rasenganHumAt = now;
+            const f = 360 + rasengan.charge * 520;
+            const v = 0.012 + rasengan.charge * 0.02;
+            tone(f, 0.04, v, "sine");
+          }
+          if (Math.random() < 0.55){
+            const a = now*0.01 + Math.random()*Math.PI*2;
+            const rr = 24 + 54 * rasengan.charge;
+            addParticle(
+              rx + Math.cos(a)*rr,
+              ry + Math.sin(a)*rr,
+              -Math.sin(a)*160,
+              Math.cos(a)*160,
+              0.55,
+              195 + Math.random()*24,
+              1.4 + Math.random()*1.7
+            );
+          }
+        } else {
+          // Idle shimmer (very subtle).
+          rasengan.charge = Math.max(0, rasengan.charge - dt * 1.4);
+        }
+
+        // Fully charged cue (one-shot)
+        const fullNow = rasengan.charge >= 0.98 && rasengan.state === "charge";
+        if (fullNow && !rasenganFullPrev){
+          sfx.rasenganFullAt = now;
+          tone(1200, 0.06, 0.05, "square");
+          tone(880, 0.10, 0.03, "triangle");
+        }
+        rasenganFullPrev = fullNow;
+
+        // Draw the ball (swirl + glow)
+        const baseR = 18 + 42 * rasengan.charge;
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+
+        // Outer glow
+        const g = ctx.createRadialGradient(rx, ry, 0, rx, ry, baseR * 2.2);
+        g.addColorStop(0, `rgba(34,211,238,${0.28 + 0.18*rasengan.charge})`);
+        g.addColorStop(0.35, `rgba(56,189,248,${0.16 + 0.16*rasengan.charge})`);
+        g.addColorStop(1, "rgba(34,211,238,0)");
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(rx, ry, baseR*2.1, 0, Math.PI*2); ctx.fill();
+
+        // Core
+        const g2 = ctx.createRadialGradient(rx, ry, 0, rx, ry, baseR);
+        g2.addColorStop(0, `rgba(231,234,240,${0.40 + 0.25*rasengan.charge})`);
+        g2.addColorStop(0.55, `rgba(34,211,238,${0.22 + 0.26*rasengan.charge})`);
+        g2.addColorStop(1, "rgba(34,211,238,0)");
+        ctx.fillStyle = g2;
+        ctx.beginPath(); ctx.arc(rx, ry, baseR, 0, Math.PI*2); ctx.fill();
+
+        // Swirl strokes
+        ctx.lineWidth = 2.2;
+        for (let i=0;i<6;i++){
+          const p = i/6;
+          const a0 = now*0.007 + p*Math.PI*2;
+          const rr = baseR*(0.28 + 0.62*p);
+          ctx.strokeStyle = `rgba(147,197,253,${0.25 + 0.18*rasengan.charge})`;
+          ctx.beginPath();
+          ctx.arc(rx + Math.cos(a0)*rr*0.22, ry + Math.sin(a0)*rr*0.22, rr, a0, a0 + Math.PI*1.1);
+          ctx.stroke();
+        }
+        ctx.restore();
+      } else if (mode === "pulse"){
+        energy = Math.max(0, energy - dt * 1.8);
+        // Occasional pulse ring
+        if (Math.random() < 0.10){
+          burst(x,y, 42, 18);
+          // Pulse SFX (throttled)
+          if (audioUnlocked && (now - sfx.pulseAt) > 180){
+            sfx.pulseAt = now;
+            tone(160 + Math.random()*60, 0.07, 0.035, "sawtooth");
+          }
+        }
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        const r = 70 + 40*Math.sin(now*0.007);
+        ctx.strokeStyle = "rgba(251,191,36,0.40)";
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.stroke();
+        ctx.restore();
+      } else if (mode === "vortex"){
+        energy = Math.min(1, energy + dt * 0.9);
+        const hue = 305;
+        // Vortex SFX (throttled)
+        if (audioUnlocked && (now - sfx.vortexAt) > 260){
+          sfx.vortexAt = now;
+          tone(520 + Math.random()*180, 0.03, 0.012, "square");
+        }
+        for (let i=0;i<6;i++){
+          const a = now*0.006 + i;
+          const rr = 40 + i*16;
+          addParticle(x + Math.cos(a)*rr, y + Math.sin(a)*rr, -Math.sin(a)*160, Math.cos(a)*160, 0.55, hue + i*6, 1.6);
+        }
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.strokeStyle = "rgba(191,95,255,0.35)";
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(x,y, 120, 0, Math.PI*2); ctx.stroke();
+        ctx.restore();
+      }
+
+      // Update + draw particles
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      for (let i = particles.length - 1; i >= 0; i--){
+        const p = particles[i];
+        p.life -= dt;
+        if (p.life <= 0){ particles.splice(i,1); continue; }
+        p.vx *= (1 - dt*0.35);
+        p.vy *= (1 - dt*0.35);
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        const a = Math.max(0, Math.min(1, p.life / p.ttl));
+        ctx.fillStyle = `hsla(${p.hue}, 95%, 62%, ${0.55*a})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * (0.8 + 0.7*(1-a)), 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // Update + draw thrown rasengan shots (independent of mode so throws persist)
+      if (rasenganShots.length){
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        for (let i = rasenganShots.length - 1; i >= 0; i--){
+          const s = rasenganShots[i];
+          s.life -= dt;
+          if (s.life <= 0){
+            burst(s.x, s.y, 200, 28);
+            rasenganShots.splice(i,1);
+            continue;
+          }
+          // Move
+          s.x += s.vx * dt;
+          s.y += s.vy * dt;
+
+          // Fade & slight drag
+          s.vx *= (1 - dt*0.15);
+          s.vy *= (1 - dt*0.15);
+
+          // Boundary burst
+          if (s.x < -60 || s.x > W+60 || s.y < -60 || s.y > H+60){
+            burst(clamp(s.x,0,W), clamp(s.y,0,H), 200, 32);
+            rasenganShots.splice(i,1);
+            continue;
+          }
+
+          const a = clamp(s.life / s.ttl, 0, 1);
+          const r = 16 + 32 * (s.power || 0.5);
+
+          // Trail sparks
+          if (Math.random() < 0.75){
+            const ta = Math.atan2(s.vy, s.vx) + Math.PI + (Math.random()-0.5)*0.9;
+            const sp = 120 + Math.random()*220;
+            addParticle(s.x, s.y, Math.cos(ta)*sp, Math.sin(ta)*sp, 0.35, 195+Math.random()*20, 1.6);
+          }
+
+          // Glow ball
+          const gg = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, r*2.2);
+          gg.addColorStop(0, `rgba(34,211,238,${0.30*a})`);
+          gg.addColorStop(0.45, `rgba(56,189,248,${0.18*a})`);
+          gg.addColorStop(1, "rgba(34,211,238,0)");
+          ctx.fillStyle = gg;
+          ctx.beginPath(); ctx.arc(s.x, s.y, r*2.1, 0, Math.PI*2); ctx.fill();
+
+          const gg2 = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, r);
+          gg2.addColorStop(0, `rgba(231,234,240,${0.42*a})`);
+          gg2.addColorStop(0.6, `rgba(34,211,238,${0.24*a})`);
+          gg2.addColorStop(1, "rgba(34,211,238,0)");
+          ctx.fillStyle = gg2;
+          ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, Math.PI*2); ctx.fill();
+
+          // Swirl lines
+          ctx.lineWidth = 2;
+          for (let k=0;k<4;k++){
+            const ph = (k/4)*Math.PI*2 + now*0.012*(s.spin || 1);
+            const rr = r*(0.45 + 0.22*k);
+            ctx.strokeStyle = `rgba(191,95,255,${0.14*a})`;
+            ctx.beginPath();
+            ctx.arc(s.x + Math.cos(ph)*rr*0.18, s.y + Math.sin(ph)*rr*0.18, rr, ph, ph + Math.PI*0.9);
+            ctx.stroke();
+          }
+        }
+        ctx.restore();
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    // --- Hand input ---
+    let handStop = null;
+    function applyHandFrame(data){
+      gestVal.textContent = data && data.gesture ? String(data.gesture) : "none";
+      drawHand(data.detected ? data.landmarks : null);
+
+      if (data.detected){
+        if (typeof data.cursor_x === "number") cursor.x = cursor.x*0.78 + Math.max(0, Math.min(1, data.cursor_x))*0.22;
+        if (typeof data.cursor_y === "number") cursor.y = cursor.y*0.78 + Math.max(0, Math.min(1, data.cursor_y))*0.22;
+
+        if (Array.isArray(data.landmarks) && data.landmarks.length === 21){
+          const p = computePalmFromLandmarks(data.landmarks);
+          // Smooth palm position
+          palm.x = palm.x*0.72 + p.x*0.28;
+          palm.y = palm.y*0.72 + p.y*0.28;
+
+          // Estimate palm velocity (normalized units per second).
+          const t = typeof data.timestamp === "number" ? data.timestamp : performance.now()/1000;
+          if (lastPalm){
+            const dt = Math.max(1e-3, t - lastPalm.t);
+            palmVel.vx = (palm.x - lastPalm.x) / dt;
+            palmVel.vy = (palm.y - lastPalm.y) / dt;
+          }
+          lastPalm = { x: palm.x, y: palm.y, t };
+
+          rasengan.x = palm.x * W;
+          rasengan.y = palm.y * H;
+        }
+      }
+
+      // Gesture → mode mapping
+      // pinch: beam, open: rasengan, fist: pulse, peace: vortex
+      if (data.detected){
+        if (data.gesture === "pinch") setMode("beam");
+        else if (data.gesture === "open") setMode("rasengan");
+        else if (data.gesture === "fist") setMode("pulse");
+        else if (data.gesture === "peace") setMode("vortex");
+      }
+
+      // Rasengan: open-hand hold to charge; release with speed to throw.
+      const openNow = data.detected && data.gesture === "open";
+      if (openNow && !openPrev){
+        rasengan.state = "charge";
+        rasengan.charge = Math.max(0.08, rasengan.charge);
+        tone(420, 0.06, 0.02, "sine");
+      }
+      if (openNow && rasengan.state === "charge"){
+        // keep it glued to palm (already set above)
+      }
+      if (!openNow && openPrev){
+        // attempt throw on release
+        throwRasengan(performance.now());
+        // if not thrown, dissipate quickly
+        if (rasengan.state === "charge"){
+          rasengan.state = "idle";
+          // If user releases before full charge, fade it away.
+          rasengan.charge = Math.max(0, rasengan.charge - 0.45);
+        }
+      }
+      openPrev = openNow;
+    }
+
+    async function bootHand(){
+      if (handStop) return;
+      const { startClientHandTracking } = await import("/static/hand-client.js");
+      handStop = await startClientHandTracking(applyHandFrame);
+    }
+
+    function start(){
+      if (running) return;
+      running = true;
+      startOverlay.classList.add("hidden");
+      // Seed background
+      ctx.fillStyle = "rgba(5,5,16,1)";
+      ctx.fillRect(0,0,W,H);
+      setMode("beam");
+      lastT = performance.now();
+      requestAnimationFrame(tick);
+    }
+
+    btnStart.addEventListener("click", async () => { await unlockAudio(); start(); });
+    startOverlay.addEventListener("click", async () => { await unlockAudio(); start(); });
+    startOverlay.addEventListener("touchstart", async (e) => { e.preventDefault(); await unlockAudio(); start(); }, { passive:false });
+    window.addEventListener("pointerdown", unlockAudio, { once:true });
+    window.addEventListener("keydown", unlockAudio, { once:true });
+
+    bootHand().catch((e) => {
+      console.error(e);
+      alert("Camera / hand tracking failed: " + (e && e.message ? e.message : String(e)));
+    });
+  </script>
+</body>
+</html>
+
