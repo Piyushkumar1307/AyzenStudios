@@ -117,6 +117,9 @@ PROFILE_HTML = os.path.join(BASE_DIR, "static", "profile.html")
 LEADERBOARD_HTML = os.path.join(BASE_DIR, "static", "leaderboard.html")
 HOLO_HTML = os.path.join(BASE_DIR, "static", "holo.html")
 KAMEHAMEHA_HTML = os.path.join(BASE_DIR, "static", "kamehameha.html")
+SUPPORT_HTML = os.path.join(BASE_DIR, "static", "support.html")
+TERMS_HTML = os.path.join(BASE_DIR, "static", "terms.html")
+REFUNDS_HTML = os.path.join(BASE_DIR, "static", "refunds.html")
 
 # --- Store / Razorpay config ---
 PAID_GAMES = {
@@ -203,6 +206,18 @@ def holo_page():
 @app.get("/kamehameha")
 def kamehameha_page():
     return FileResponse(KAMEHAMEHA_HTML)
+
+@app.get("/support")
+def support_page():
+    return FileResponse(SUPPORT_HTML)
+
+@app.get("/terms")
+def terms_page():
+    return FileResponse(TERMS_HTML)
+
+@app.get("/refunds")
+def refunds_page():
+    return FileResponse(REFUNDS_HTML)
 
 app.mount(
     "/static",

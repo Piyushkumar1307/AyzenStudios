@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Piyush-Store</title>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/static/favicon.svg">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -456,11 +458,47 @@
   }
 
   .footer-hint {
-    margin-top: 40px;
+    margin-top: 24px;
     text-align: center;
     font-size: 12px;
     color: var(--muted);
     letter-spacing: 0.12em;
+  }
+
+  .site-footer {
+    margin-top: 32px;
+    padding-top: 28px;
+    border-top: 1px solid rgba(0, 245, 255, 0.12);
+    text-align: center;
+  }
+
+  .site-footer-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px 6px;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .site-footer-nav a {
+    color: #94a3b8;
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: color 0.2s, background 0.2s;
+  }
+
+  .site-footer-nav a:hover {
+    color: var(--glow);
+    background: rgba(0, 245, 255, 0.08);
+  }
+
+  .site-footer-sep {
+    color: rgba(107, 114, 128, 0.5);
+    user-select: none;
   }
 
   /* --- Loading overlay (payments) --- */
@@ -700,6 +738,15 @@
     </article>
   </div>
   <p class="footer-hint">Tip: unlock premium games to play instantly.</p>
+  <footer class="site-footer" role="contentinfo">
+    <nav class="site-footer-nav" aria-label="Legal and support">
+      <a href="/support">Support</a>
+      <span class="site-footer-sep" aria-hidden="true">·</span>
+      <a href="/terms">Terms &amp; conditions</a>
+      <span class="site-footer-sep" aria-hidden="true">·</span>
+      <a href="/refunds">Refunds &amp; cancellation</a>
+    </nav>
+  </footer>
 </main>
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terms &amp; Conditions — Piyush-Store</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #05050c;
+      --panel: rgba(12, 14, 28, 0.72);
+      --border: rgba(0, 245, 255, 0.22);
+      --glow: #00f5ff;
+      --accent: #bf5fff;
+      --text: #e8ecf4;
+      --muted: #6b7280;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 45% at 50% -10%, rgba(0, 245, 255, 0.14), transparent 55%),
+        radial-gradient(ellipse 55% 35% at 100% 55%, rgba(191, 95, 255, 0.10), transparent 55%),
+        repeating-linear-gradient(0deg, transparent, transparent 47px, rgba(0, 245, 255, 0.04) 47px, rgba(0, 245, 255, 0.04) 48px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .doc-shell { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; max-width: 760px; margin: 0 auto; width: 100%; padding: 24px 20px 48px; }
+    .doc-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(0, 245, 255, 0.15);
+      margin-bottom: 24px;
+    }
+    .back {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #a5b4fc;
+      text-decoration: none;
+      border: 1px solid rgba(99, 102, 241, 0.45);
+      padding: 10px 14px;
+      border-radius: 12px;
+      transition: border-color 0.2s, filter 0.2s;
+    }
+    .back:hover { filter: brightness(1.08); border-color: rgba(0, 245, 255, 0.45); }
+    .subnav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .subnav a { color: var(--muted); text-decoration: none; }
+    .subnav a:hover { color: var(--glow); }
+    .subnav .here { color: var(--glow); font-weight: 700; }
+    .doc-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px 24px 32px;
+      box-shadow: 0 24px 70px rgba(0,0,0,0.45), 0 0 60px rgba(0, 245, 255, 0.06);
+      backdrop-filter: blur(12px);
+    }
+    h1 {
+      font-size: clamp(26px, 4vw, 34px);
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 0%, var(--glow) 45%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 8px;
+    }
+    .meta { font-size: 12px; color: var(--muted); letter-spacing: 0.08em; margin-bottom: 28px; }
+    h2 {
+      font-size: 14px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin: 28px 0 12px;
+    }
+    h2:first-of-type { margin-top: 0; }
+    p, li { font-size: 15px; line-height: 1.65; color: #cbd5e1; }
+    p { margin-bottom: 14px; }
+    ul { margin: 0 0 14px 1.1rem; }
+    li { margin-bottom: 8px; }
+    a.inline { color: #67e8f9; text-decoration: none; border-bottom: 1px solid rgba(103, 232, 249, 0.35); }
+    a.inline:hover { border-bottom-color: rgba(103, 232, 249, 0.8); }
+  </style>
+</head>
+<body>
+  <div class="doc-shell">
+    <div class="doc-top">
+      <a class="back" href="/">← Store</a>
+      <nav class="subnav" aria-label="Policies">
+        <a href="/support">Support</a>
+        <span class="here">Terms</span>
+        <a href="/refunds">Refunds</a>
+      </nav>
+    </div>
+    <article class="doc-card">
+      <h1>Terms &amp; Conditions</h1>
+      <p class="meta">Last updated: April 26, 2026. By using Piyush-Store (“we”, “us”, “the service”), you agree to these terms.</p>
+
+      <h2>1. The service</h2>
+      <p>
+        Piyush-Store provides browser-based games and related features. Availability may depend on your device, browser, camera or permissions, and network.
+        We may update, change, or discontinue parts of the service with reasonable notice where practicable.
+      </p>
+
+      <h2>2. Eligibility &amp; accounts</h2>
+      <p>
+        You must provide accurate registration information and keep your credentials confidential.
+        You are responsible for activity under your account. Notify us promptly at
+        <a class="inline" href="mailto:sonu788380@gmail.com">sonu788380@gmail.com</a> if you suspect unauthorized use.
+      </p>
+
+      <h2>3. Acceptable use</h2>
+      <p>You agree not to misuse the service, including attempting to break security, disrupt other users, scrape or overload our systems, or use the service for unlawful purposes.</p>
+
+      <h2>4. Purchases &amp; digital content</h2>
+      <p>
+        Some games or features may require a one-time purchase. Prices and currencies are shown at checkout.
+        When a payment is completed successfully, you receive a personal license to access the unlocked content in line with our
+        <a class="inline" href="/refunds">refund and cancellation</a> policy. You do not receive ownership of our software, art, or trademarks.
+      </p>
+
+      <h2>5. Leaderboards &amp; scores</h2>
+      <p>Where leaderboards or scores are offered, we may store and display your display name and results. We may remove entries that appear fraudulent or abusive.</p>
+
+      <h2>6. Disclaimers</h2>
+      <p>
+        The service is provided on an “as is” and “as available” basis to the maximum extent permitted by law.
+        We do not warrant uninterrupted or error-free operation. Use of camera-based controls is at your own discretion and in a safe environment.
+      </p>
+
+      <h2>7. Limitation of liability</h2>
+      <p>
+        To the maximum extent permitted by law, we are not liable for indirect, incidental, or consequential damages, or for loss of data or profits, arising from your use of the service.
+      </p>
+
+      <h2>8. Governing law</h2>
+      <p>These terms are governed by the laws of India, without regard to conflict-of-law rules, unless mandatory consumer protection laws in your country provide otherwise.</p>
+
+      <h2>9. Contact</h2>
+      <p>Questions about these terms: <a class="inline" href="/support">Support</a> or <a class="inline" href="mailto:sonu788380@gmail.com">sonu788380@gmail.com</a>.</p>
+    </article>
+  </div>
+</body>
+</html>

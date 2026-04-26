@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Refunds &amp; Cancellation — Piyush-Store</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #05050c;
+      --panel: rgba(12, 14, 28, 0.72);
+      --border: rgba(0, 245, 255, 0.22);
+      --glow: #00f5ff;
+      --accent: #bf5fff;
+      --text: #e8ecf4;
+      --muted: #6b7280;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 45% at 50% -10%, rgba(0, 245, 255, 0.14), transparent 55%),
+        radial-gradient(ellipse 55% 35% at 100% 55%, rgba(191, 95, 255, 0.10), transparent 55%),
+        repeating-linear-gradient(0deg, transparent, transparent 47px, rgba(0, 245, 255, 0.04) 47px, rgba(0, 245, 255, 0.04) 48px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .doc-shell { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; max-width: 760px; margin: 0 auto; width: 100%; padding: 24px 20px 48px; }
+    .doc-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(0, 245, 255, 0.15);
+      margin-bottom: 24px;
+    }
+    .back {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #a5b4fc;
+      text-decoration: none;
+      border: 1px solid rgba(99, 102, 241, 0.45);
+      padding: 10px 14px;
+      border-radius: 12px;
+      transition: border-color 0.2s, filter 0.2s;
+    }
+    .back:hover { filter: brightness(1.08); border-color: rgba(0, 245, 255, 0.45); }
+    .subnav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .subnav a { color: var(--muted); text-decoration: none; }
+    .subnav a:hover { color: var(--glow); }
+    .subnav .here { color: var(--glow); font-weight: 700; }
+    .doc-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px 24px 32px;
+      box-shadow: 0 24px 70px rgba(0,0,0,0.45), 0 0 60px rgba(0, 245, 255, 0.06);
+      backdrop-filter: blur(12px);
+    }
+    h1 {
+      font-size: clamp(26px, 4vw, 34px);
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 0%, var(--glow) 45%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 8px;
+    }
+    .meta { font-size: 12px; color: var(--muted); letter-spacing: 0.08em; margin-bottom: 28px; }
+    h2 {
+      font-size: 14px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin: 28px 0 12px;
+    }
+    h2:first-of-type { margin-top: 0; }
+    p, li { font-size: 15px; line-height: 1.65; color: #cbd5e1; }
+    p { margin-bottom: 14px; }
+    ul { margin: 0 0 14px 1.1rem; }
+    li { margin-bottom: 8px; }
+    a.inline { color: #67e8f9; text-decoration: none; border-bottom: 1px solid rgba(103, 232, 249, 0.35); }
+    a.inline:hover { border-bottom-color: rgba(103, 232, 249, 0.8); }
+  </style>
+</head>
+<body>
+  <div class="doc-shell">
+    <div class="doc-top">
+      <a class="back" href="/">← Store</a>
+      <nav class="subnav" aria-label="Policies">
+        <a href="/support">Support</a>
+        <a href="/terms">Terms</a>
+        <span class="here">Refunds</span>
+      </nav>
+    </div>
+    <article class="doc-card">
+      <h1>Refund &amp; Cancellation policy</h1>
+      <p class="meta">Last updated: April 26, 2026. This policy applies to purchases made on Piyush-Store for premium game unlocks and related digital access.</p>
+
+      <h2>1. Nature of the product</h2>
+      <p>
+        Premium purchases grant immediate or near-immediate access to digital content in your browser after successful payment and verification.
+        By completing checkout, you request instant fulfilment of that digital access.
+      </p>
+
+      <h2>2. Cancellation before payment</h2>
+      <p>
+        You may cancel at any time before you confirm payment with your bank or payment provider (for example, by closing the checkout window or abandoning the flow).
+        No charges apply until the payment is successfully completed.
+      </p>
+
+      <h2>3. After successful unlock</h2>
+      <p>
+        Once your payment is captured and the game unlock is applied to your account, the purchase is generally final and
+        <strong>not refundable</strong>, except where required by applicable law or as described in section 4.
+        This is consistent with many digital-goods and in-app purchase practices because access cannot be “returned”.
+      </p>
+
+      <h2>4. Eligible problems</h2>
+      <p>We may offer a refund or account credit, at our discretion, in situations such as:</p>
+      <ul>
+        <li>You were charged but access was not granted after a successful payment, and the issue is not resolved within a reasonable time.</li>
+        <li>Duplicate charges for the same game unlock in error.</li>
+        <li>Technical failure on our side that prevented any meaningful use of the purchased access, and we cannot restore access after support.</li>
+      </ul>
+      <p>
+        Refunds are not guaranteed for change of mind, accidental purchase after confirmation, or device or browser compatibility you did not verify.
+      </p>
+
+      <h2>5. How to request help</h2>
+      <p>
+        Contact us at
+        <a class="inline" href="mailto:sonu788380@gmail.com">sonu788380@gmail.com</a>
+        from your registered email where possible, within <strong>14 days</strong> of the transaction.
+        Include the game name, date and time of purchase, and any receipt or reference shown by your payment method.
+        See also our <a class="inline" href="/support">Support</a> page.
+      </p>
+
+      <h2>6. Payment provider &amp; chargebacks</h2>
+      <p>
+        Payments may be processed by a third party (for example, Razorpay or your card issuer). If you open a chargeback or dispute, we may be limited in how we can assist until that process concludes.
+        Please contact us first so we can often resolve the issue faster.
+      </p>
+
+      <h2>7. Changes</h2>
+      <p>We may update this policy. The “Last updated” date at the top will change when we do. Continued use of the store after changes means you accept the updated policy.</p>
+
+      <h2>8. Contact</h2>
+      <p>
+        <a class="inline" href="/support">Support</a>
+        ·
+        <a class="inline" href="/terms">Terms &amp; Conditions</a>
+      </p>
+    </article>
+  </div>
+</body>
+</html>
