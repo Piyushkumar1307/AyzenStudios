@@ -122,18 +122,21 @@ TERMS_HTML = os.path.join(BASE_DIR, "static", "terms.html")
 REFUNDS_HTML = os.path.join(BASE_DIR, "static", "refunds.html")
 
 # --- Store / Razorpay config ---
-PAID_GAMES = {
-    "neon_pop": {"route": "/puzzle", "title": "Neon Pop", "amount_paise": 1000},       # ₹10
-    "neon_runner": {"route": "/runner", "title": "Neon Runner", "amount_paise": 1000}, # ₹10
-    "tictactoe": {"route": "/tictactoe", "title": "Neon Tic-Tac-Toe", "amount_paise": 1000},  # ₹10
-    "traffic": {"route": "/traffic", "title": "Traffic Rush", "amount_paise": 1500},  # ₹15
-}
+PAID_GAMES: dict[str, dict] = {}
+
+# If set, skip all entitlement checks (dev / demo mode).
+# This ensures UI and gameplay consistently show all games as unlocked.
+UNLOCK_ALL_GAMES = os.environ.get("UNLOCK_ALL_GAMES", "1").strip().lower() in ("1", "true", "yes")
 
 FREE_GAMES = {
     # category:
     # - "gesture-games": leaderboard enabled
     # - "gesture-effect": no leaderboard
     "fruit_ninja": {"route": "/game", "title": "Fruit-Ninja", "category": "gesture-games", "leaderboard": True},
+    "neon_pop": {"route": "/puzzle", "title": "Neon Pop", "category": "gesture-games", "leaderboard": True},
+    "neon_runner": {"route": "/runner", "title": "Neon Runner", "category": "gesture-games", "leaderboard": True},
+    "tictactoe": {"route": "/tictactoe", "title": "Neon Tic-Tac-Toe", "category": "gesture-games", "leaderboard": False},
+    "traffic": {"route": "/traffic", "title": "Traffic Rush", "category": "gesture-games", "leaderboard": True},
     "holo": {"route": "/holo", "title": "Holo Hand FX", "category": "gesture-effect", "leaderboard": False},
     "kamehameha": {"route": "/kamehameha", "title": "Kamehameha Beam", "category": "gesture-effect", "leaderboard": False},
 }
@@ -534,8 +537,13 @@ def _has_game_entitlement_or_503(db: Session, user: User, game_id: str) -> bool:
     dependencies=[Depends(_require_auth_tables)],
 )
 def api_entitlements(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Free games should always be playable (no purchase / entitlement required).
+    free = set(FREE_GAMES.keys())
+    if UNLOCK_ALL_GAMES:
+        return {"games": sorted(free | set(PAID_GAMES.keys()))}
     rows = _entitlements_for_user_or_503(db, user)
-    return {"games": sorted({r.game_id for r in rows})}
+    paid = {r.game_id for r in rows}
+    return {"games": sorted(free | paid)}
 
 
 def _scores_for_game_or_503(db: Session, game_id: str) -> list[tuple[GameScore, User]]:
@@ -569,7 +577,7 @@ def _scores_for_game_or_503(db: Session, game_id: str) -> list[tuple[GameScore, 
     dependencies=[Depends(_require_auth_tables)],
 )
 def api_leaderboard_games(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    ent = {r.game_id for r in _entitlements_for_user_or_503(db, user)}
+    ent = set(PAID_GAMES.keys()) if UNLOCK_ALL_GAMES else {r.game_id for r in _entitlements_for_user_or_503(db, user)}
     games = []
     for gid, meta in FREE_GAMES.items():
         # Leaderboard page should only list gesture-games (leaderboard enabled).
@@ -669,7 +677,7 @@ def api_submit_score(payload: dict, user: User = Depends(get_current_user), db: 
         raise HTTPException(status_code=400, detail="Unknown game")
     if not bool(meta.get("leaderboard", True)):
         raise HTTPException(status_code=400, detail="Leaderboard not available for this category")
-    if gid in PAID_GAMES and not _has_game_entitlement_or_503(db, user, gid):
+    if (not UNLOCK_ALL_GAMES) and gid in PAID_GAMES and not _has_game_entitlement_or_503(db, user, gid):
         raise HTTPException(status_code=403, detail="Game locked")
 
     try:
@@ -717,6 +725,9 @@ def api_create_order(payload: dict, user: User = Depends(get_current_user), db: 
     game_id = (payload.get("game_id") or "").strip()
     if game_id not in PAID_GAMES:
         raise HTTPException(status_code=400, detail="Unknown game")
+
+    if UNLOCK_ALL_GAMES:
+        return {"already_unlocked": True, "game_id": game_id}
 
     if _has_game_entitlement_or_503(db, user, game_id):
         return {"already_unlocked": True, "game_id": game_id}

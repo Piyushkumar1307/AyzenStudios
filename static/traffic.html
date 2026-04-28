@@ -164,8 +164,8 @@
   <div class="panel">
     <h1>Traffic Rush</h1>
     <p>Dodge oncoming cars across <strong style="color:#fbbf24;">3 lanes</strong>. The longer you survive, the faster traffic gets.</p>
-    <p><strong style="color:#22d3ee;">Steer</strong>: move your <em>index finger</em> left / right across the screen.</p>
-    <p class="hint">Tap anywhere to allow camera. Pinch (thumb+index) to start.</p>
+    <p><strong style="color:#22d3ee;">Steer</strong>: <em>pinch with your left hand</em> to move left, <em>pinch with your right hand</em> to move right.</p>
+    <p class="hint">Tap anywhere to allow camera + sound. Pinch to start.</p>
     <div class="btn-row">
       <button class="btn btn-primary" id="btnStart" type="button">Start</button>
       <a class="btn btn-ghost" href="/">Home</a>
@@ -245,6 +245,7 @@ let laneW = 0;
 let audioCtx = null;
 let bgTimer = null;
 let audioUnlocked = false;
+let engine = null;
 
 let running = false;
 let playerLane = 1;
@@ -261,6 +262,7 @@ let rafId = 0;
 
 let pinchLeftDown = false;   // thumb+index pinch (fallback + start)
 let pinchRightDown = false;  // secondary pinch (fallback)
+let pinchByHand = { Left: false, Right: false, unknown: false };
 let steerX = 0.5;            // smoothed cursor_x (0..1)
 let lastLaneAutoAt = 0;      // ms
 let handStop = null;
@@ -327,29 +329,86 @@ function crashSound() {
 }
 function stopBgm() {
   if (bgTimer) { clearInterval(bgTimer); bgTimer = null; }
+  if (engine) {
+    try { engine.stop(); } catch { /* ignore */ }
+    engine = null;
+  }
 }
 function startBgm() {
   stopBgm();
   if (!audioCtx || audioCtx.state !== "running") return;
-  const base = 110;
-  const scale = [0, 3, 5, 7, 10, 12].map(s => base * Math.pow(2, s/12));
-  let step = 0;
-  bgTimer = setInterval(() => {
-    if (!running) return;
-    const t = audioCtx.currentTime;
-    const f = scale[step % scale.length] * (0.8 + 0.25 * Math.min(2.5, speedMul));
-    step++;
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.type = "triangle";
-    o.frequency.setValueAtTime(f, t);
-    g.gain.setValueAtTime(0.028, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.26);
-    o.connect(g);
-    g.connect(audioCtx.destination);
-    o.start(t);
-    o.stop(t + 0.28);
-  }, 280);
+  // Engine-style loop (no external audio files needed).
+  const makeEngine = () => {
+    const out = audioCtx.createGain();
+    out.gain.value = 0.0;
+    out.connect(audioCtx.destination);
+
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = 520;
+    filter.Q.value = 0.9;
+    filter.connect(out);
+
+    // "Engine" = a saw + square layered, then filtered.
+    const o1 = audioCtx.createOscillator();
+    const o2 = audioCtx.createOscillator();
+    o1.type = "sawtooth";
+    o2.type = "square";
+
+    const g1 = audioCtx.createGain();
+    const g2 = audioCtx.createGain();
+    g1.gain.value = 0.06;
+    g2.gain.value = 0.02;
+
+    o1.connect(g1); g1.connect(filter);
+    o2.connect(g2); g2.connect(filter);
+
+    // Gentle "vibration" LFO on filter cutoff.
+    const lfo = audioCtx.createOscillator();
+    const lfoGain = audioCtx.createGain();
+    lfo.type = "sine";
+    lfo.frequency.value = 7.5;
+    lfoGain.gain.value = 90;
+    lfo.connect(lfoGain);
+    lfoGain.connect(filter.frequency);
+
+    const start = () => {
+      const t = audioCtx.currentTime;
+      out.gain.cancelScheduledValues(t);
+      out.gain.setValueAtTime(0.0001, t);
+      out.gain.exponentialRampToValueAtTime(0.06, t + 0.35);
+      o1.start(t);
+      o2.start(t);
+      lfo.start(t);
+    };
+
+    const setSpeed = (mul) => {
+      const t = audioCtx.currentTime;
+      // Map speedMul ~ [1..3.2] to an RPM-ish freq range.
+      const rpm = 95 + 70 * Math.min(3.2, Math.max(1.0, mul));
+      o1.frequency.setTargetAtTime(rpm, t, 0.06);
+      o2.frequency.setTargetAtTime(rpm * 0.5, t, 0.06);
+      filter.frequency.setTargetAtTime(420 + 160 * Math.min(3.2, mul), t, 0.08);
+    };
+
+    const stop = () => {
+      const t = audioCtx.currentTime;
+      out.gain.cancelScheduledValues(t);
+      out.gain.setValueAtTime(Math.max(0.0001, out.gain.value), t);
+      out.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+      try { o1.stop(t + 0.22); } catch {}
+      try { o2.stop(t + 0.22); } catch {}
+      try { lfo.stop(t + 0.22); } catch {}
+      try { o1.disconnect(); o2.disconnect(); lfo.disconnect(); } catch {}
+      try { g1.disconnect(); g2.disconnect(); filter.disconnect(); out.disconnect(); } catch {}
+    };
+
+    return { start, stop, setSpeed };
+  };
+
+  engine = makeEngine();
+  engine.start();
+  engine.setSpeed(speedMul);
 }
 
 function resize() {
@@ -379,19 +438,35 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-function drawHand(landmarks) {
+function drawHands(hands) {
   hctx.clearRect(0, 0, W, H);
-  if (!Array.isArray(landmarks) || landmarks.length !== 21) return;
+  if (!Array.isArray(hands) || hands.length === 0) return;
+  for (const h of hands) {
+    if (!h || !h.detected) continue;
+    if (!Array.isArray(h.landmarks) || h.landmarks.length !== 21) continue;
+    const handName = (h.hand === "Left" || h.hand === "Right") ? h.hand : "unknown";
+    const stroke =
+      handName === "Left" ? "rgba(34,211,238,0.95)" :
+      handName === "Right" ? "rgba(167,139,250,0.95)" :
+      "rgba(96,165,250,0.95)";
+    const fill =
+      handName === "Left" ? "rgba(125,211,252,0.95)" :
+      handName === "Right" ? "rgba(216,180,254,0.95)" :
+      "rgba(231,234,240,0.95)";
+    drawSingleHand(h.landmarks, stroke, fill);
+  }
+}
+function drawSingleHand(landmarks, strokeStyle, fillStyle) {
   const pts = landmarks.map(p => ({ x: p.x * W, y: p.y * H }));
   hctx.lineWidth = 3;
-  hctx.strokeStyle = "rgba(96,165,250,0.95)";
+  hctx.strokeStyle = strokeStyle;
   hctx.beginPath();
   for (const [a,b] of HAND_CONNECTIONS) {
     hctx.moveTo(pts[a].x, pts[a].y);
     hctx.lineTo(pts[b].x, pts[b].y);
   }
   hctx.stroke();
-  hctx.fillStyle = "rgba(231,234,240,0.95)";
+  hctx.fillStyle = fillStyle;
   for (const p of pts) {
     hctx.beginPath();
     hctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
@@ -546,28 +621,13 @@ function draw() {
   const pH = Math.floor(pW * 1.6);
   const px = laneX[playerLane] + (laneW - pW) / 2;
   const player = { x: px, y: playerY, w: pW, h: pH };
-  const grad = ctx.createLinearGradient(px, playerY, px, playerY + pH);
-  grad.addColorStop(0, "#fbbf24");
-  grad.addColorStop(1, "#f59e0b");
-  ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.roundRect(player.x, player.y, player.w, player.h, 16);
-  ctx.fill();
-  ctx.fillStyle = "rgba(15,23,42,0.8)";
-  ctx.beginPath();
-  ctx.roundRect(player.x + player.w * 0.18, player.y + player.h * 0.18, player.w * 0.64, player.h * 0.24, 10);
-  ctx.fill();
+  drawCar(player, { bodyTop: "#fbbf24", bodyBottom: "#f59e0b", glass: "rgba(15,23,42,0.78)", isPlayer: true });
 
   // Enemies
   for (const e of enemies) {
-    ctx.fillStyle = e.color;
-    ctx.beginPath();
-    ctx.roundRect(e.x, e.y, e.w, e.h, 16);
-    ctx.fill();
-    ctx.fillStyle = "rgba(15,23,42,0.75)";
-    ctx.beginPath();
-    ctx.roundRect(e.x + e.w * 0.18, e.y + e.h * 0.22, e.w * 0.64, e.h * 0.24, 10);
-    ctx.fill();
+    const bodyTop = e.color;
+    const bodyBottom = shade(e.color, -18);
+    drawCar(e, { bodyTop, bodyBottom, glass: "rgba(15,23,42,0.72)", isPlayer: false });
   }
 
   // Collision check (draw uses current positions)
@@ -593,6 +653,7 @@ function tick(now) {
   }
 
   const speed = baseSpeed * speedMul;
+  if (engine) engine.setSpeed(speedMul);
   distance += speed * dt * 0.06;
   distVal.textContent = String(Math.floor(distance));
   speedVal.textContent = `${speedMul.toFixed(1)}×`;
@@ -627,11 +688,46 @@ function moveRight() {
 }
 
 function applyHandFrame(data) {
-  drawHand(data.detected ? data.landmarks : null);
+  // Prefer multi-hand payload when available.
+  const hands = Array.isArray(data?.hands) && data.hands.length ? data.hands : null;
+  const primary = hands ? hands[0] : data;
+  if (hands) drawHands(hands);
+  else drawHands(primary && primary.detected ? [primary] : []);
 
   const nowMs = performance.now();
 
-  // Primary control: steer by index finger position (cursor_x).
+  // If we have handedness-aware hands, use pinches for lane changes:
+  // - Left hand pinch => moveLeft()
+  // - Right hand pinch => moveRight()
+  // Also allow any pinch to start.
+  if (hands) {
+    let anyPinch = false;
+    const seen = { Left: false, Right: false, unknown: false };
+
+    for (const h of hands) {
+      const handName = (h && (h.hand === "Left" || h.hand === "Right")) ? h.hand : "unknown";
+      const isPinch = h && h.detected && typeof h.gesture === "string" && h.gesture.startsWith("pinch");
+      seen[handName] = true;
+      if (isPinch) anyPinch = true;
+
+      if (isPinch && !pinchByHand[handName]) {
+        pinchByHand[handName] = true;
+        if (handName === "Left") moveLeft();
+        else if (handName === "Right") moveRight();
+      }
+      if (!isPinch) pinchByHand[handName] = false;
+    }
+
+    // Reset states for hands not present in this frame.
+    for (const k of ["Left", "Right", "unknown"]) {
+      if (!seen[k]) pinchByHand[k] = false;
+    }
+
+    if (anyPinch && !running && !startOverlay.classList.contains("hidden")) onStart();
+    return;
+  }
+
+  // Single-hand mode: primary control = steer by index finger position (cursor_x).
   if (data.detected && typeof data.cursor_x === "number") {
     // Smooth to reduce jitter.
     const x = Math.max(0, Math.min(1, data.cursor_x));
@@ -689,6 +785,96 @@ function applyHandFrame(data) {
     if (!running && !startOverlay.classList.contains("hidden")) onStart();
   }
   if (!isRight) pinchRightDown = false;
+}
+
+function clamp01(n) { return Math.max(0, Math.min(1, n)); }
+function hexToRgb(hex) {
+  const h = String(hex || "").replace("#", "").trim();
+  if (h.length === 3) {
+    const r = parseInt(h[0] + h[0], 16), g = parseInt(h[1] + h[1], 16), b = parseInt(h[2] + h[2], 16);
+    return { r, g, b };
+  }
+  if (h.length === 6) {
+    const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+    return { r, g, b };
+  }
+  return null;
+}
+function shade(hex, amt) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  const r = Math.max(0, Math.min(255, rgb.r + amt));
+  const g = Math.max(0, Math.min(255, rgb.g + amt));
+  const b = Math.max(0, Math.min(255, rgb.b + amt));
+  return `rgb(${r},${g},${b})`;
+}
+function drawCar(rect, opts) {
+  const { x, y, w, h } = rect;
+  const bodyTop = opts.bodyTop || "#fbbf24";
+  const bodyBottom = opts.bodyBottom || shade(bodyTop, -18);
+  const glass = opts.glass || "rgba(15,23,42,0.75)";
+  const isPlayer = !!opts.isPlayer;
+
+  ctx.save();
+
+  // Shadow
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.beginPath();
+  ctx.ellipse(x + w / 2, y + h * 0.78, w * 0.46, h * 0.11, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  const r = Math.max(10, Math.floor(Math.min(w, h) * 0.14));
+  const grad = ctx.createLinearGradient(x, y, x, y + h);
+  grad.addColorStop(0, bodyTop);
+  grad.addColorStop(1, bodyBottom);
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, r);
+  ctx.fill();
+
+  // Side contour
+  ctx.strokeStyle = "rgba(255,255,255,0.16)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(x + w * 0.06, y + h * 0.06, w * 0.88, h * 0.88, r - 3);
+  ctx.stroke();
+
+  // Windshield / roof
+  ctx.fillStyle = glass;
+  ctx.beginPath();
+  ctx.roundRect(x + w * 0.18, y + h * 0.18, w * 0.64, h * 0.26, r * 0.6);
+  ctx.fill();
+
+  // Hood highlight
+  ctx.fillStyle = "rgba(255,255,255,0.10)";
+  ctx.beginPath();
+  ctx.roundRect(x + w * 0.22, y + h * 0.50, w * 0.16, h * 0.34, r * 0.5);
+  ctx.fill();
+
+  // Wheels
+  const wheelW = w * 0.16;
+  const wheelH = h * 0.18;
+  ctx.fillStyle = "rgba(3,7,18,0.95)";
+  ctx.beginPath();
+  ctx.roundRect(x - wheelW * 0.25, y + h * 0.22, wheelW, wheelH, 6);
+  ctx.roundRect(x + w - wheelW * 0.75, y + h * 0.22, wheelW, wheelH, 6);
+  ctx.roundRect(x - wheelW * 0.25, y + h * 0.62, wheelW, wheelH, 6);
+  ctx.roundRect(x + w - wheelW * 0.75, y + h * 0.62, wheelW, wheelH, 6);
+  ctx.fill();
+
+  // Lights (player at bottom => headlights at top of player; enemies => headlights at bottom)
+  const lightsAtTop = isPlayer;
+  const ly = lightsAtTop ? (y + h * 0.06) : (y + h * 0.88);
+  const lh = h * 0.07;
+  const lw = w * 0.16;
+  ctx.fillStyle = lightsAtTop ? "rgba(255,255,255,0.75)" : "rgba(248,113,113,0.80)";
+  ctx.beginPath();
+  ctx.roundRect(x + w * 0.14, ly, lw, lh, 6);
+  ctx.roundRect(x + w * (1 - 0.14) - lw, ly, lw, lh, 6);
+  ctx.fill();
+
+  ctx.restore();
 }
 
 async function bootHandTracking() {

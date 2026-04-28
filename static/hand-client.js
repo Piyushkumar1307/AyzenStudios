@@ -71,6 +71,15 @@ function normalizedLandmarksFromResult(lm) {
  *   cursor_y: number;
  *   landmarks: Array<{x:number,y:number,z:number}> | null;
  *   hand: string;
+ *   hands?: Array<{
+ *     detected: true;
+ *     gesture: string;
+ *     confidence: number;
+ *     cursor_x: number;
+ *     cursor_y: number;
+ *     landmarks: Array<{x:number,y:number,z:number}>;
+ *     hand: "Left" | "Right" | "unknown";
+ *   }>;
  *   timestamp: number;
  * }) => void} onFrame
  */
@@ -106,7 +115,7 @@ export async function startClientHandTracking(onFrame) {
       delegate: "CPU"
     },
     runningMode: "VIDEO",
-    numHands: 1
+    numHands: 2
   });
 
   let rafId = 0;
@@ -120,30 +129,55 @@ export async function startClientHandTracking(onFrame) {
       cursor_y: 0.5,
       landmarks: null,
       hand: "none",
+      hands: [],
       timestamp: t
     };
 
     if (video.readyState >= 2) {
       const result = handLandmarker.detectForVideo(video, performance.now());
       if (result.landmarks && result.landmarks.length > 0) {
-        const raw = result.landmarks[0];
-        const arr = normalizedLandmarksFromResult(raw);
-        // Mirror horizontally so motion matches a front-facing / selfie view (same as server flip).
-        const landmarks = arr.map((p) => ({
-          x: 1 - p.x,
-          y: p.y,
-          z: p.z
-        }));
-        const [gesture, confidence] = classifyGesture(landmarks);
-        const indexTip = landmarks[8];
+        const hands = [];
+
+        for (let i = 0; i < result.landmarks.length; i++) {
+          const raw = result.landmarks[i];
+          const arr = normalizedLandmarksFromResult(raw);
+          // Mirror horizontally so motion matches a front-facing / selfie view (same as server flip).
+          const landmarks = arr.map((p) => ({
+            x: 1 - p.x,
+            y: p.y,
+            z: p.z
+          }));
+
+          const [gesture, confidence] = classifyGesture(landmarks);
+          const indexTip = landmarks[8];
+
+          let handed = "unknown";
+          const h = result.handednesses?.[i]?.[0];
+          const name = h?.categoryName || h?.displayName;
+          if (name === "Left" || name === "Right") handed = name;
+
+          hands.push({
+            detected: true,
+            gesture,
+            confidence,
+            cursor_x: indexTip.x,
+            cursor_y: indexTip.y,
+            landmarks,
+            hand: handed
+          });
+        }
+
+        // Backward-compatible "primary" fields: pick the first detected hand.
+        const primary = hands[0];
         payload = {
           detected: true,
-          gesture,
-          confidence,
-          cursor_x: indexTip.x,
-          cursor_y: indexTip.y,
-          landmarks,
-          hand: "unknown",
+          gesture: primary.gesture,
+          confidence: primary.confidence,
+          cursor_x: primary.cursor_x,
+          cursor_y: primary.cursor_y,
+          landmarks: primary.landmarks,
+          hand: primary.hand,
+          hands,
           timestamp: t
         };
       }

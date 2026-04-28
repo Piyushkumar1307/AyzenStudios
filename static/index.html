@@ -660,7 +660,7 @@
       <div class="game-card-body">
         <div class="game-title-row">
           <h2 class="game-title">Neon Pop</h2>
-          <span class="game-price" data-price-for="neon_pop">₹10</span>
+          <span class="game-price">Free</span>
         </div>
         <p class="game-desc">
           Simple reflex game: one tile glows — pinch it before the timer runs out. Chain hits for streak bonuses and beat your best score.
@@ -670,7 +670,7 @@
           <span class="tag">Gesture</span>
           <span class="tag alt">Casual</span>
         </div>
-        <a class="play-cta" href="#" data-game-link="neon_pop" data-route="/puzzle">Checking access…</a>
+        <a class="play-cta" href="/puzzle">Play now →</a>
       </div>
     </article>
 
@@ -681,7 +681,7 @@
       <div class="game-card-body">
         <div class="game-title-row">
           <h2 class="game-title">Neon Runner</h2>
-          <span class="game-price" data-price-for="neon_runner">₹10</span>
+          <span class="game-price">Free</span>
         </div>
         <p class="game-desc">
           Endless runner: pinch to jump over obstacles and collect coins. Speed ramps up as you survive.
@@ -691,7 +691,7 @@
           <span class="tag">Gesture</span>
           <span class="tag alt">Endless</span>
         </div>
-        <a class="play-cta" href="#" data-game-link="neon_runner" data-route="/runner">Checking access…</a>
+        <a class="play-cta" href="/runner">Play now →</a>
       </div>
     </article>
 
@@ -702,7 +702,7 @@
       <div class="game-card-body">
         <div class="game-title-row">
           <h2 class="game-title">Neon Tic-Tac-Toe</h2>
-          <span class="game-price" data-price-for="tictactoe">₹10</span>
+          <span class="game-price">Free</span>
         </div>
         <p class="game-desc">
           Choose X or O, then face an AI that levels up every match. Pinch the grid; ambient neon loop keeps the pace.
@@ -712,7 +712,7 @@
           <span class="tag">Gesture</span>
           <span class="tag alt">AI</span>
         </div>
-        <a class="play-cta" href="#" data-game-link="tictactoe" data-route="/tictactoe">Checking access…</a>
+        <a class="play-cta" href="/tictactoe">Play now →</a>
       </div>
     </article>
 
@@ -723,7 +723,7 @@
       <div class="game-card-body">
         <div class="game-title-row">
           <h2 class="game-title">Traffic Rush</h2>
-          <span class="game-price" data-price-for="traffic">₹15</span>
+          <span class="game-price">Free</span>
         </div>
         <p class="game-desc">
           Three-lane rush hour: dodge oncoming cars as speed ramps up. Steer by moving your index finger left/right (pinch to start).
@@ -733,11 +733,11 @@
           <span class="tag">Gesture</span>
           <span class="tag alt">Reflex</span>
         </div>
-        <a class="play-cta" href="#" data-game-link="traffic" data-route="/traffic">Checking access…</a>
+        <a class="play-cta" href="/traffic">Play now →</a>
       </div>
     </article>
   </div>
-  <p class="footer-hint">Tip: unlock premium games to play instantly.</p>
+  <p class="footer-hint">Tip: allow camera access for gesture controls.</p>
   <footer class="site-footer" role="contentinfo">
     <nav class="site-footer-nav" aria-label="Legal and support">
       <a href="/support">Support</a>
@@ -749,16 +749,10 @@
   </footer>
 </main>
 
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
 const TOKEN_KEY = "piyush_token";
 const ENT_KEY = "piyush_entitlements_v1";
-const PAID_GAMES = {
-  neon_pop: { title: "Neon Pop", route: "/puzzle", priceLabel: "₹10" },
-  neon_runner: { title: "Neon Runner", route: "/runner", priceLabel: "₹10" },
-  tictactoe: { title: "Neon Tic-Tac-Toe", route: "/tictactoe", priceLabel: "₹10" },
-  traffic: { title: "Traffic Rush", route: "/traffic", priceLabel: "₹15" },
-};
+const PAID_GAMES = {};
 
 // Category filter (All / Gesture games / Gesture effects)
 (() => {
@@ -775,12 +769,7 @@ const PAID_GAMES = {
   apply("all");
 })();
 
-const PAID_GAME_CARD_ID = {
-  neon_pop: "game-neon-pop",
-  neon_runner: "game-neon-runner",
-  tictactoe: "game-tictactoe",
-  traffic: "game-traffic",
-};
+const PAID_GAME_CARD_ID = {};
 
 const loadingOverlay = document.getElementById("loadingOverlay");
 const loadingMsg = document.getElementById("loadingMsg");
@@ -1033,19 +1022,9 @@ function wirePaidGameLinks() {
 }
 
 (async () => {
+  // Keep auth for profiles/leaderboards, but all games are currently free.
   const me = await requireAuth();
   if (!me) return;
-  // Smooth UX: default to locked immediately, but use cached entitlements instantly.
-  // Also disable paid links until we finish the server check, to avoid "click fast → later locked".
-  setPaidLinksEnabled(false);
-  wirePaidGameLinks();
-
-  const cached = entitlementsRead();
-  applyLockUI(cached, { isLoading: true });
-
-  const games = await refreshEntitlements();
-  applyLockUI(games, { isLoading: false });
-  setPaidLinksEnabled(true);
 })();
 </script>
 </body>
