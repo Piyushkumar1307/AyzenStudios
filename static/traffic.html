@@ -13,134 +13,38 @@
     height: 100vh;
     overflow: hidden;
   }
-
-  #gameCanvas {
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 1;
-  }
-
-  #handCanvas {
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100vh;
-    pointer-events: none;
-    z-index: 9999;
-  }
-
+  #gameCanvas { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 1; }
+  #handCanvas { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; }
   .hud {
     position: fixed;
-    left: 0;
-    right: 0;
-    top: 0;
+    left: 0; right: 0; top: 0;
     padding: max(12px, env(safe-area-inset-top, 0px)) 18px 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 12px;
-    pointer-events: none;
-    z-index: 10001;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.85);
+    display: flex; justify-content: space-between; align-items: flex-start;
+    z-index: 10001; text-shadow: 0 2px 10px rgba(0,0,0,0.85); pointer-events: none;
   }
-  .hud-block h2 {
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: #6b7280;
-    margin-bottom: 2px;
-  }
-  .hud-block .val {
-    font-size: 26px;
-    font-weight: 800;
-    color: #22d3ee;
-  }
-  .hud a {
-    pointer-events: auto;
-    font-size: 13px;
-    color: #a5b4fc;
-    text-decoration: none;
-    align-self: center;
-  }
-  .hud a:hover { text-decoration: underline; }
-
+  .hud-block h2 { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #6b7280; }
+  .hud-block .val { font-size: 26px; font-weight: 800; color: #22d3ee; }
+  .hud a { pointer-events: auto; font-size: 13px; color: #a5b4fc; text-decoration: none; align-self: center; }
   .overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 10002;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(5, 5, 16, 0.88);
-    backdrop-filter: blur(8px);
-    pointer-events: auto;
-    padding: 20px;
+    position: fixed; inset: 0; z-index: 10002;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(5, 5, 16, 0.88); backdrop-filter: blur(8px); padding: 20px;
   }
   .overlay.hidden { display: none; }
-
   .panel {
-    text-align: center;
-    max-width: 460px;
-    padding: 34px 28px;
+    text-align: center; max-width: 460px; padding: 34px 28px;
     background: linear-gradient(145deg, #12121c, #0c0c14);
-    border: 1px solid #2a2a3e;
-    border-radius: 20px;
-    box-shadow: 0 24px 80px rgba(0,0,0,0.55);
+    border: 1px solid #2a2a3e; border-radius: 20px;
   }
-  .panel h1 {
-    font-size: 20px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    color: #fbbf24;
-    margin-bottom: 12px;
-  }
-  .panel p {
-    font-size: 14px;
-    color: #9ca3af;
-    line-height: 1.65;
-    margin-bottom: 10px;
-  }
-  .panel .hint {
-    margin-top: 14px;
-    font-size: 13px;
-    color: #6b7280;
-  }
-  .btn-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    justify-content: center;
-    margin-top: 18px;
-  }
+  .panel h1 { font-size: 20px; letter-spacing: 4px; text-transform: uppercase; color: #fbbf24; margin-bottom: 12px; }
+  .panel p { font-size: 14px; color: #9ca3af; line-height: 1.6; margin-bottom: 10px; }
+  .btn-row { display: flex; gap: 12px; justify-content: center; margin-top: 18px; }
   .btn {
-    padding: 12px 26px;
-    font-size: 14px;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    border-radius: 12px;
-    cursor: pointer;
-    border: none;
-    transition: transform 0.12s, filter 0.2s;
+    padding: 12px 26px; font-size: 14px; font-weight: 800; border-radius: 12px;
+    cursor: pointer; border: none; text-transform: uppercase;
   }
-  .btn:active { transform: scale(0.97); }
-  .btn-primary {
-    color: #0f172a;
-    background: linear-gradient(180deg, #fbbf24, #f59e0b);
-    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.28);
-  }
-  .btn-ghost {
-    color: #a5b4fc;
-    background: transparent;
-    border: 2px solid #6366f1;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
+  .btn-primary { color: #0f172a; background: #fbbf24; }
+  .btn-ghost { color: #a5b4fc; background: transparent; border: 2px solid #6366f1; text-decoration: none; display: flex; align-items: center; }
 </style>
 </head>
 <body>
@@ -163,12 +67,10 @@
 <div class="overlay" id="startOverlay">
   <div class="panel">
     <h1>Traffic Rush</h1>
-    <p>Dodge oncoming cars across <strong style="color:#fbbf24;">3 lanes</strong>. The longer you survive, the faster traffic gets.</p>
-    <p><strong style="color:#22d3ee;">Steer</strong>: <em>pinch with your left hand</em> to move left, <em>pinch with your right hand</em> to move right.</p>
-    <p class="hint">Tap anywhere to allow camera + sound. Pinch to start.</p>
+    <p>Dodge cars. The longer you survive, the faster traffic gets.</p>
+    <p><strong>Steer</strong>: Pinch left hand to move left, pinch right hand to move right.</p>
     <div class="btn-row">
-      <button class="btn btn-primary" id="btnStart" type="button">Start</button>
-      <a class="btn btn-ghost" href="/">Home</a>
+      <button class="btn btn-primary" id="btnStart">Start</button>
     </div>
   </div>
 </div>
@@ -177,51 +79,13 @@
   <div class="panel">
     <h1>Crash</h1>
     <p>Distance: <strong id="finalDist">0</strong></p>
-    <p>Best: <strong id="bestDist">0</strong></p>
-    <p class="hint">Speed ramps up every few seconds. Stay centered and react fast.</p>
     <div class="btn-row">
-      <button class="btn btn-primary" id="btnAgain" type="button">Retry</button>
-      <a class="btn btn-ghost" href="/">Home</a>
+      <button class="btn btn-primary" id="btnAgain">Retry</button>
     </div>
   </div>
 </div>
 
 <script>
-const TOKEN_KEY = "piyush_token";
-const GAME_ID = "traffic";
-
-async function ensureAccess() {
-  const t = sessionStorage.getItem(TOKEN_KEY);
-  if (!t) { window.location.href = "/login"; return false; }
-  try {
-    const res = await fetch("/api/entitlements", { headers: { Authorization: "Bearer " + t } });
-    if (!res.ok) { window.location.href = "/login"; return false; }
-    const data = await res.json();
-    const games = new Set(Array.isArray(data.games) ? data.games : []);
-    if (!games.has(GAME_ID)) {
-      alert("This game is locked. Please unlock it from the store (Home).");
-      window.location.href = "/";
-      return false;
-    }
-    return true;
-  } catch {
-    window.location.href = "/login";
-    return false;
-  }
-}
-ensureAccess();
-</script>
-
-<script>
-const HAND_CONNECTIONS = [
-  [0,1],[1,2],[2,3],[3,4],
-  [0,5],[5,6],[6,7],[7,8],
-  [5,9],[9,10],[10,11],[11,12],
-  [9,13],[13,14],[14,15],[15,16],
-  [13,17],[17,18],[18,19],[19,20],
-  [0,17]
-];
-
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const handCanvas = document.getElementById("handCanvas");
@@ -232,715 +96,160 @@ const speedVal = document.getElementById("speedVal");
 const startOverlay = document.getElementById("startOverlay");
 const gameOverOverlay = document.getElementById("gameOverOverlay");
 const finalDistEl = document.getElementById("finalDist");
-const bestDistEl = document.getElementById("bestDist");
 const btnStart = document.getElementById("btnStart");
 const btnAgain = document.getElementById("btnAgain");
 
-const STORAGE_KEY = "trafficRushBest";
-
-let W = 0, H = 0, DPR = 1;
-let laneX = [0,0,0];
-let laneW = 0;
-
-let audioCtx = null;
-let bgTimer = null;
-let audioUnlocked = false;
-let engine = null;
-
+let W, H, DPR, laneX, laneW, playerY;
 let running = false;
 let playerLane = 1;
-let playerY = 0;
 let enemies = [];
 let lastSpawnAt = 0;
-let spawnEveryMs = 820;
-let baseSpeed = 280;
+let spawnEveryMs = 1200; // Increased starting gap
+let baseSpeed = 250;     // Balanced base speed
 let speedMul = 1.0;
 let speedRampAt = 0;
 let distance = 0;
 let lastFrameT = 0;
-let rafId = 0;
-
-let pinchLeftDown = false;   // thumb+index pinch (fallback + start)
-let pinchRightDown = false;  // secondary pinch (fallback)
-let pinchByHand = { Left: false, Right: false, unknown: false };
-let steerX = 0.5;            // smoothed cursor_x (0..1)
-let lastLaneAutoAt = 0;      // ms
-let handStop = null;
-
-function bestRead() {
-  try {
-    const v = localStorage.getItem(STORAGE_KEY);
-    const n = v == null ? NaN : parseInt(v, 10);
-    return Number.isFinite(n) ? n : 0;
-  } catch { return 0; }
-}
-function bestWrite(v) {
-  try {
-    const prev = bestRead();
-    if (v > prev) localStorage.setItem(STORAGE_KEY, String(v));
-  } catch { /* ignore */ }
-}
-
-function initAudio() {
-  if (audioCtx) return;
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-}
-async function unlockAudio() {
-  initAudio();
-  if (!audioCtx) return;
-  try {
-    if (audioCtx.state === "suspended") await audioCtx.resume();
-    audioUnlocked = audioCtx.state === "running";
-    if (audioUnlocked && running) startBgm();
-  } catch {
-    // If the browser blocks it, we'll try again on the next user gesture.
-  }
-}
-function beep(freq, dur, vol = 0.07, type = "sine") {
-  if (!audioCtx) return;
-  if (audioCtx.state === "suspended") return;
-  const t = audioCtx.currentTime;
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  o.type = type;
-  o.frequency.setValueAtTime(freq, t);
-  g.gain.setValueAtTime(vol, t);
-  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-  o.connect(g);
-  g.connect(audioCtx.destination);
-  o.start(t);
-  o.stop(t + dur + 0.02);
-}
-function crashSound() {
-  if (!audioCtx) return;
-  if (audioCtx.state === "suspended") return;
-  const t = audioCtx.currentTime;
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  o.type = "sawtooth";
-  o.frequency.setValueAtTime(160, t);
-  o.frequency.exponentialRampToValueAtTime(60, t + 0.28);
-  g.gain.setValueAtTime(0.12, t);
-  g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
-  o.connect(g);
-  g.connect(audioCtx.destination);
-  o.start(t);
-  o.stop(t + 0.4);
-}
-function stopBgm() {
-  if (bgTimer) { clearInterval(bgTimer); bgTimer = null; }
-  if (engine) {
-    try { engine.stop(); } catch { /* ignore */ }
-    engine = null;
-  }
-}
-function startBgm() {
-  stopBgm();
-  if (!audioCtx || audioCtx.state !== "running") return;
-  // Engine-style loop (no external audio files needed).
-  const makeEngine = () => {
-    const out = audioCtx.createGain();
-    out.gain.value = 0.0;
-    out.connect(audioCtx.destination);
-
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.value = 520;
-    filter.Q.value = 0.9;
-    filter.connect(out);
-
-    // "Engine" = a saw + square layered, then filtered.
-    const o1 = audioCtx.createOscillator();
-    const o2 = audioCtx.createOscillator();
-    o1.type = "sawtooth";
-    o2.type = "square";
-
-    const g1 = audioCtx.createGain();
-    const g2 = audioCtx.createGain();
-    g1.gain.value = 0.06;
-    g2.gain.value = 0.02;
-
-    o1.connect(g1); g1.connect(filter);
-    o2.connect(g2); g2.connect(filter);
-
-    // Gentle "vibration" LFO on filter cutoff.
-    const lfo = audioCtx.createOscillator();
-    const lfoGain = audioCtx.createGain();
-    lfo.type = "sine";
-    lfo.frequency.value = 7.5;
-    lfoGain.gain.value = 90;
-    lfo.connect(lfoGain);
-    lfoGain.connect(filter.frequency);
-
-    const start = () => {
-      const t = audioCtx.currentTime;
-      out.gain.cancelScheduledValues(t);
-      out.gain.setValueAtTime(0.0001, t);
-      out.gain.exponentialRampToValueAtTime(0.06, t + 0.35);
-      o1.start(t);
-      o2.start(t);
-      lfo.start(t);
-    };
-
-    const setSpeed = (mul) => {
-      const t = audioCtx.currentTime;
-      // Map speedMul ~ [1..3.2] to an RPM-ish freq range.
-      const rpm = 95 + 70 * Math.min(3.2, Math.max(1.0, mul));
-      o1.frequency.setTargetAtTime(rpm, t, 0.06);
-      o2.frequency.setTargetAtTime(rpm * 0.5, t, 0.06);
-      filter.frequency.setTargetAtTime(420 + 160 * Math.min(3.2, mul), t, 0.08);
-    };
-
-    const stop = () => {
-      const t = audioCtx.currentTime;
-      out.gain.cancelScheduledValues(t);
-      out.gain.setValueAtTime(Math.max(0.0001, out.gain.value), t);
-      out.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
-      try { o1.stop(t + 0.22); } catch {}
-      try { o2.stop(t + 0.22); } catch {}
-      try { lfo.stop(t + 0.22); } catch {}
-      try { o1.disconnect(); o2.disconnect(); lfo.disconnect(); } catch {}
-      try { g1.disconnect(); g2.disconnect(); filter.disconnect(); out.disconnect(); } catch {}
-    };
-
-    return { start, stop, setSpeed };
-  };
-
-  engine = makeEngine();
-  engine.start();
-  engine.setSpeed(speedMul);
-}
 
 function resize() {
   DPR = window.devicePixelRatio || 1;
-  W = Math.floor(window.innerWidth);
-  H = Math.floor(window.innerHeight);
-  canvas.width = Math.floor(W * DPR);
-  canvas.height = Math.floor(H * DPR);
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W * DPR;
+  canvas.height = H * DPR;
   canvas.style.width = W + "px";
   canvas.style.height = H + "px";
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 
-  handCanvas.width = Math.floor(W * DPR);
-  handCanvas.height = Math.floor(H * DPR);
+  handCanvas.width = W * DPR;
+  handCanvas.height = H * DPR;
   handCanvas.style.width = W + "px";
   handCanvas.style.height = H + "px";
   hctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 
-  const roadW = Math.min(420, Math.floor(W * 0.86));
-  laneW = Math.floor((roadW - 24) / 3);
-  const left = Math.floor((W - roadW) / 2);
-  laneX = [left + 12 + laneW * 0 + 6, left + 12 + laneW * 1 + 6, left + 12 + laneW * 2 + 6];
-  const pWApprox = Math.floor(laneW * 0.66);
-  const pHApprox = Math.floor(pWApprox * 1.6);
-  playerY = Math.max(0, H - pHApprox - 44);
-}
-window.addEventListener("resize", resize);
-resize();
-
-function drawHands(hands) {
-  hctx.clearRect(0, 0, W, H);
-  if (!Array.isArray(hands) || hands.length === 0) return;
-  for (const h of hands) {
-    if (!h || !h.detected) continue;
-    if (!Array.isArray(h.landmarks) || h.landmarks.length !== 21) continue;
-    const handName = (h.hand === "Left" || h.hand === "Right") ? h.hand : "unknown";
-    const stroke =
-      handName === "Left" ? "rgba(34,211,238,0.95)" :
-      handName === "Right" ? "rgba(167,139,250,0.95)" :
-      "rgba(96,165,250,0.95)";
-    const fill =
-      handName === "Left" ? "rgba(125,211,252,0.95)" :
-      handName === "Right" ? "rgba(216,180,254,0.95)" :
-      "rgba(231,234,240,0.95)";
-    drawSingleHand(h.landmarks, stroke, fill);
-  }
-}
-function drawSingleHand(landmarks, strokeStyle, fillStyle) {
-  const pts = landmarks.map(p => ({ x: p.x * W, y: p.y * H }));
-  hctx.lineWidth = 3;
-  hctx.strokeStyle = strokeStyle;
-  hctx.beginPath();
-  for (const [a,b] of HAND_CONNECTIONS) {
-    hctx.moveTo(pts[a].x, pts[a].y);
-    hctx.lineTo(pts[b].x, pts[b].y);
-  }
-  hctx.stroke();
-  hctx.fillStyle = fillStyle;
-  for (const p of pts) {
-    hctx.beginPath();
-    hctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
-    hctx.fill();
-  }
-}
-
-function roadRect() {
-  const roadW = laneW * 3 + 24;
-  const x = Math.floor((W - roadW) / 2);
-  return { x, y: 0, w: roadW, h: H };
-}
-
-function resetGame() {
-  cancelAnimationFrame(rafId);
-  enemies = [];
-  playerLane = 1;
-  distance = 0;
-  lastSpawnAt = 0;
-  spawnEveryMs = 940;
-  baseSpeed = 280;
-  speedMul = 1.0;
-  speedRampAt = performance.now() + 2600;
-  lastFrameT = performance.now();
-  distVal.textContent = "0";
-  speedVal.textContent = "1.0×";
+  const roadW = Math.min(420, W * 0.85);
+  laneW = (roadW - 24) / 3;
+  const left = (W - roadW) / 2;
+  laneX = [left + 18, left + 18 + laneW, left + 18 + laneW * 2];
+  
+  // Adjusted Car Dimensions
+  const carW = laneW * 0.55; 
+  const carH = carW * 1.5;
+  playerY = H - carH - 80;
 }
 
 function spawnEnemy(now) {
-  const road = roadRect();
-  const carW = Math.floor(laneW * 0.60);
-  const carH = Math.floor(carW * 1.45);
-  const spawnY = road.y - carH - 54;
-  // Bigger gaps = easier lane switching.
-  // Scale with speed so late-game doesn't become a "wall" of cars.
+  const carW = laneW * 0.55;
+  const carH = carW * 1.5;
   const speed = baseSpeed * speedMul;
-  const laneGap = Math.max(
-    240,
-    Math.floor(carH * 2.20),
-    Math.floor(speed * 0.70) // ~0.7s of travel
-  );
-  const globalGap = Math.max(
-    170,
-    Math.floor(carH * 1.50),
-    Math.floor(speed * 0.45) // prevent near-simultaneous multi-lane spawns
-  );
+  
+  // Logic: Ensure a minimum 1.2-second gap based on current speed
+  const minGapPixels = speed * 1.2; 
+  const verticalThreshold = carH + minGapPixels;
 
-  const topMostYByLane = (lane) => {
-    let best = Infinity;
-    for (const e of enemies) {
-      if (e.lane !== lane) continue;
-      if (e.y < best) best = e.y;
-    }
-    return best;
-  };
-  const topMostYAny = () => {
-    let best = Infinity;
-    for (const e of enemies) {
-      if (e.y < best) best = e.y;
-    }
-    return best;
+  const getTopY = (lane) => {
+    let top = Infinity;
+    enemies.forEach(e => { if(e.lane === lane && e.y < top) top = e.y; });
+    return top;
   };
 
-  // Global spacing: if any car is too close to the spawn line (in any lane), skip this spawn.
-  const topAny = topMostYAny();
-  if (topAny !== Infinity && (topAny - spawnY) < (carH + globalGap)) return;
-
-  const canSpawnLane = (lane) => {
-    const topY = topMostYByLane(lane);
-    if (topY === Infinity) return true;
-    return (topY - spawnY) >= (carH + laneGap);
+  const globalTop = () => {
+    let top = Infinity;
+    enemies.forEach(e => { if(e.y < top) top = e.y; });
+    return top;
   };
 
-  // Pick a lane that has enough vertical gap; try a few times.
-  const candidates = [0,1,2].filter(canSpawnLane);
-  if (candidates.length === 0) return;
-  const lane = candidates[Math.floor(Math.random() * candidates.length)];
+  // Prevent "Wall of Cars" (all lanes filled at once)
+  if (globalTop() < 150) return; 
+
+  const possibleLanes = [0, 1, 2].filter(l => getTopY(l) > verticalThreshold);
+  if (possibleLanes.length === 0) return;
+
+  const lane = possibleLanes[Math.floor(Math.random() * possibleLanes.length)];
   enemies.push({
     lane,
     x: laneX[lane] + (laneW - carW) / 2,
-    y: spawnY,
-    w: carW,
-    h: carH,
-    color: Math.random() < 0.5 ? "#a78bfa" : "#22d3ee",
+    y: -carH - 50,
+    w: carW, h: carH,
+    color: Math.random() > 0.5 ? "#a78bfa" : "#22d3ee"
   });
   lastSpawnAt = now;
 }
 
-function rectsOverlap(a, b) {
-  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+function drawCar(rect, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(rect.x, rect.y, rect.w, rect.h, 8);
+  ctx.fill();
+  // Windshield
+  ctx.fillStyle = "rgba(0,0,0,0.3)";
+  ctx.fillRect(rect.x + rect.w*0.2, rect.y + rect.h*0.2, rect.w*0.6, rect.h*0.2);
 }
 
-async function submitScore(score) {
-  try {
-    const t = sessionStorage.getItem(TOKEN_KEY);
-    if (!t) return;
-    await fetch("/api/scores/submit", {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + t,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ game_id: GAME_ID, score }),
-    });
-  } catch {
-    // best-effort
-  }
-}
-
-function endGame() {
-  running = false;
-  stopBgm();
-  crashSound();
-  const finalScore = Math.floor(distance);
-  bestWrite(finalScore);
-  submitScore(finalScore);
-  finalDistEl.textContent = String(finalScore);
-  bestDistEl.textContent = String(Math.max(bestRead(), finalScore));
-  gameOverOverlay.classList.remove("hidden");
-}
-
-function draw() {
-  ctx.clearRect(0, 0, W, H);
-
-  // Background
-  ctx.fillStyle = "#050510";
-  ctx.fillRect(0, 0, W, H);
-
-  // Road
-  const road = roadRect();
-  ctx.fillStyle = "rgba(15,23,42,0.75)";
-  ctx.fillRect(road.x, road.y, road.w, road.h);
-  ctx.strokeStyle = "rgba(99,102,241,0.35)";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(road.x, road.y, road.w, road.h);
-
-  // Lane dividers
-  ctx.strokeStyle = "rgba(148,163,184,0.22)";
-  ctx.setLineDash([12, 14]);
-  ctx.lineWidth = 3;
-  for (let i = 1; i <= 2; i++) {
-    const x = road.x + 12 + laneW * i;
-    ctx.beginPath();
-    ctx.moveTo(x, road.y);
-    ctx.lineTo(x, road.y + road.h);
-    ctx.stroke();
-  }
-  ctx.setLineDash([]);
-
-  // Player car
-  const pW = Math.floor(laneW * 0.66);
-  const pH = Math.floor(pW * 1.6);
-  const px = laneX[playerLane] + (laneW - pW) / 2;
-  const player = { x: px, y: playerY, w: pW, h: pH };
-  drawCar(player, { bodyTop: "#fbbf24", bodyBottom: "#f59e0b", glass: "rgba(15,23,42,0.78)", isPlayer: true });
-
-  // Enemies
-  for (const e of enemies) {
-    const bodyTop = e.color;
-    const bodyBottom = shade(e.color, -18);
-    drawCar(e, { bodyTop, bodyBottom, glass: "rgba(15,23,42,0.72)", isPlayer: false });
-  }
-
-  // Collision check (draw uses current positions)
-  for (const e of enemies) {
-    if (e.lane !== playerLane) continue;
-    if (rectsOverlap(player, e)) {
-      endGame();
-      break;
-    }
-  }
-}
-
-function tick(now) {
+function update(now) {
   if (!running) return;
-  const dt = Math.min(0.05, Math.max(0.001, (now - lastFrameT) / 1000));
+  const dt = (now - lastFrameT) / 1000;
   lastFrameT = now;
 
-  if (now >= speedRampAt) {
-    speedMul = Math.min(3.2, speedMul + 0.12);
-    spawnEveryMs = Math.max(420, spawnEveryMs * 0.97);
-    speedRampAt = now + 2400;
-    beep(220 + 70 * Math.min(10, speedMul), 0.06, 0.03, "triangle");
+  if (now > speedRampAt) {
+    speedMul = Math.min(3.5, speedMul + 0.1);
+    spawnEveryMs = Math.max(600, spawnEveryMs * 0.98);
+    speedRampAt = now + 3000;
   }
 
-  const speed = baseSpeed * speedMul;
-  if (engine) engine.setSpeed(speedMul);
-  distance += speed * dt * 0.06;
-  distVal.textContent = String(Math.floor(distance));
-  speedVal.textContent = `${speedMul.toFixed(1)}×`;
+  distance += baseSpeed * speedMul * dt * 0.1;
+  distVal.textContent = Math.floor(distance);
+  speedVal.textContent = speedMul.toFixed(1) + "×";
 
-  // Spawn cars
-  if (now - lastSpawnAt >= spawnEveryMs) spawnEnemy(now);
+  if (now - lastSpawnAt > spawnEveryMs) spawnEnemy(now);
 
-  // Move cars
-  for (const e of enemies) e.y += speed * dt;
-  // Remove off-screen
-  enemies = enemies.filter((e) => e.y < H + 200);
+  ctx.clearRect(0, 0, W, H);
+  // Road
+  const roadW = laneW * 3 + 24;
+  ctx.fillStyle = "#1e293b";
+  ctx.fillRect((W - roadW)/2, 0, roadW, H);
 
-  draw();
-  rafId = requestAnimationFrame((t) => tick(t));
-}
+  // Player
+  const pW = laneW * 0.55;
+  const pH = pW * 1.5;
+  const player = { x: laneX[playerLane] + (laneW - pW)/2, y: playerY, w: pW, h: pH };
+  drawCar(player, "#fbbf24");
 
-function moveLeft() {
-  const next = Math.max(0, playerLane - 1);
-  if (next !== playerLane) {
-    playerLane = next;
-    initAudio();
-    beep(520, 0.05, 0.05);
-  }
-}
-function moveRight() {
-  const next = Math.min(2, playerLane + 1);
-  if (next !== playerLane) {
-    playerLane = next;
-    initAudio();
-    beep(660, 0.05, 0.05);
-  }
-}
-
-function applyHandFrame(data) {
-  // Prefer multi-hand payload when available.
-  const hands = Array.isArray(data?.hands) && data.hands.length ? data.hands : null;
-  const primary = hands ? hands[0] : data;
-  if (hands) drawHands(hands);
-  else drawHands(primary && primary.detected ? [primary] : []);
-
-  const nowMs = performance.now();
-
-  // If we have handedness-aware hands, use pinches for lane changes:
-  // - Left hand pinch => moveLeft()
-  // - Right hand pinch => moveRight()
-  // Also allow any pinch to start.
-  if (hands) {
-    let anyPinch = false;
-    const seen = { Left: false, Right: false, unknown: false };
-
-    for (const h of hands) {
-      const handName = (h && (h.hand === "Left" || h.hand === "Right")) ? h.hand : "unknown";
-      const isPinch = h && h.detected && typeof h.gesture === "string" && h.gesture.startsWith("pinch");
-      seen[handName] = true;
-      if (isPinch) anyPinch = true;
-
-      if (isPinch && !pinchByHand[handName]) {
-        pinchByHand[handName] = true;
-        if (handName === "Left") moveLeft();
-        else if (handName === "Right") moveRight();
-      }
-      if (!isPinch) pinchByHand[handName] = false;
+  // Enemies
+  enemies.forEach((e, i) => {
+    e.y += baseSpeed * speedMul * dt;
+    drawCar(e, e.color);
+    
+    // Collision
+    if (e.lane === playerLane && e.y + e.h > player.y && e.y < player.y + player.h) {
+      running = false;
+      gameOverOverlay.classList.remove("hidden");
+      finalDistEl.textContent = Math.floor(distance);
     }
+  });
+  enemies = enemies.filter(e => e.y < H);
 
-    // Reset states for hands not present in this frame.
-    for (const k of ["Left", "Right", "unknown"]) {
-      if (!seen[k]) pinchByHand[k] = false;
-    }
-
-    if (anyPinch && !running && !startOverlay.classList.contains("hidden")) onStart();
-    return;
-  }
-
-  // Single-hand mode: primary control = steer by index finger position (cursor_x).
-  if (data.detected && typeof data.cursor_x === "number") {
-    // Smooth to reduce jitter.
-    const x = Math.max(0, Math.min(1, data.cursor_x));
-    steerX = steerX * 0.78 + x * 0.22;
-
-    const road = roadRect();
-    const px = steerX * W;
-
-    const leftEdge = road.x;
-    const rightEdge = road.x + road.w;
-    const inner = Math.max(1, rightEdge - leftEdge);
-    const rel = Math.max(0, Math.min(0.999, (px - leftEdge) / inner));
-
-    // Hysteresis: require deeper entry into the next lane to switch.
-    const dead = 0.06; // ~6% of road width
-    const b1 = 1 / 3;
-    const b2 = 2 / 3;
-
-    let desired = 1;
-    if (rel < b1 - dead) desired = 0;
-    else if (rel > b2 + dead) desired = 2;
-    else if (rel < b1 + dead || rel > b2 - dead) desired = playerLane; // hold near borders
-    else desired = 1;
-
-    // Rate-limit lane changes so tiny shakes don't spam-switch.
-    if (desired !== playerLane && nowMs - lastLaneAutoAt > 240) {
-      playerLane = desired;
-      lastLaneAutoAt = nowMs;
-      initAudio();
-      beep(desired < 1 ? 520 : 660, 0.05, 0.045);
-    }
-
-    // Start the game via pinch (browser audio/camera permission friendly).
-    const isStartPinch = data.gesture === "pinch";
-    if (isStartPinch && !running && !startOverlay.classList.contains("hidden")) onStart();
-    pinchLeftDown = isStartPinch;
-    pinchRightDown = false;
-    return;
-  }
-
-  // Fallback: pinch controls (if cursor_x isn't available for some reason)
-  const isLeft = data.detected && data.gesture === "pinch"; // thumb+index
-  const isRight = data.detected && (data.gesture === "pinch_ring" || data.gesture === "pinch_mid");
-
-  if (isLeft && !pinchLeftDown) {
-    pinchLeftDown = true;
-    moveLeft();
-    if (!running && !startOverlay.classList.contains("hidden")) onStart();
-  }
-  if (!isLeft) pinchLeftDown = false;
-
-  if (isRight && !pinchRightDown) {
-    pinchRightDown = true;
-    moveRight();
-    if (!running && !startOverlay.classList.contains("hidden")) onStart();
-  }
-  if (!isRight) pinchRightDown = false;
+  requestAnimationFrame(update);
 }
 
-function clamp01(n) { return Math.max(0, Math.min(1, n)); }
-function hexToRgb(hex) {
-  const h = String(hex || "").replace("#", "").trim();
-  if (h.length === 3) {
-    const r = parseInt(h[0] + h[0], 16), g = parseInt(h[1] + h[1], 16), b = parseInt(h[2] + h[2], 16);
-    return { r, g, b };
-  }
-  if (h.length === 6) {
-    const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
-    return { r, g, b };
-  }
-  return null;
-}
-function shade(hex, amt) {
-  const rgb = hexToRgb(hex);
-  if (!rgb) return hex;
-  const r = Math.max(0, Math.min(255, rgb.r + amt));
-  const g = Math.max(0, Math.min(255, rgb.g + amt));
-  const b = Math.max(0, Math.min(255, rgb.b + amt));
-  return `rgb(${r},${g},${b})`;
-}
-function drawCar(rect, opts) {
-  const { x, y, w, h } = rect;
-  const bodyTop = opts.bodyTop || "#fbbf24";
-  const bodyBottom = opts.bodyBottom || shade(bodyTop, -18);
-  const glass = opts.glass || "rgba(15,23,42,0.75)";
-  const isPlayer = !!opts.isPlayer;
-
-  ctx.save();
-
-  // Shadow
-  ctx.fillStyle = "rgba(0,0,0,0.35)";
-  ctx.beginPath();
-  ctx.ellipse(x + w / 2, y + h * 0.78, w * 0.46, h * 0.11, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Body
-  const r = Math.max(10, Math.floor(Math.min(w, h) * 0.14));
-  const grad = ctx.createLinearGradient(x, y, x, y + h);
-  grad.addColorStop(0, bodyTop);
-  grad.addColorStop(1, bodyBottom);
-  ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.roundRect(x, y, w, h, r);
-  ctx.fill();
-
-  // Side contour
-  ctx.strokeStyle = "rgba(255,255,255,0.16)";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.roundRect(x + w * 0.06, y + h * 0.06, w * 0.88, h * 0.88, r - 3);
-  ctx.stroke();
-
-  // Windshield / roof
-  ctx.fillStyle = glass;
-  ctx.beginPath();
-  ctx.roundRect(x + w * 0.18, y + h * 0.18, w * 0.64, h * 0.26, r * 0.6);
-  ctx.fill();
-
-  // Hood highlight
-  ctx.fillStyle = "rgba(255,255,255,0.10)";
-  ctx.beginPath();
-  ctx.roundRect(x + w * 0.22, y + h * 0.50, w * 0.16, h * 0.34, r * 0.5);
-  ctx.fill();
-
-  // Wheels
-  const wheelW = w * 0.16;
-  const wheelH = h * 0.18;
-  ctx.fillStyle = "rgba(3,7,18,0.95)";
-  ctx.beginPath();
-  ctx.roundRect(x - wheelW * 0.25, y + h * 0.22, wheelW, wheelH, 6);
-  ctx.roundRect(x + w - wheelW * 0.75, y + h * 0.22, wheelW, wheelH, 6);
-  ctx.roundRect(x - wheelW * 0.25, y + h * 0.62, wheelW, wheelH, 6);
-  ctx.roundRect(x + w - wheelW * 0.75, y + h * 0.62, wheelW, wheelH, 6);
-  ctx.fill();
-
-  // Lights (player at bottom => headlights at top of player; enemies => headlights at bottom)
-  const lightsAtTop = isPlayer;
-  const ly = lightsAtTop ? (y + h * 0.06) : (y + h * 0.88);
-  const lh = h * 0.07;
-  const lw = w * 0.16;
-  ctx.fillStyle = lightsAtTop ? "rgba(255,255,255,0.75)" : "rgba(248,113,113,0.80)";
-  ctx.beginPath();
-  ctx.roundRect(x + w * 0.14, ly, lw, lh, 6);
-  ctx.roundRect(x + w * (1 - 0.14) - lw, ly, lw, lh, 6);
-  ctx.fill();
-
-  ctx.restore();
-}
-
-async function bootHandTracking() {
-  if (handStop) return;
-  try {
-    const { startClientHandTracking } = await import("/static/hand-client.js");
-    handStop = await startClientHandTracking(applyHandFrame);
-  } catch (err) {
-    console.error(err);
-    const name = err && err.name;
-    const denied = name === "NotAllowedError" || name === "PermissionDeniedError";
-    if (denied) {
-      await new Promise((resolve) => {
-        const go = () => {
-          document.removeEventListener("click", go);
-          document.removeEventListener("touchstart", go);
-          resolve();
-        };
-        document.addEventListener("click", go);
-        document.addEventListener("touchstart", go);
-        alert("Tap the screen to allow the camera — then you can pinch to steer.");
-      });
-      try {
-        const { startClientHandTracking } = await import("/static/hand-client.js");
-        handStop = await startClientHandTracking(applyHandFrame);
-      } catch (e2) {
-        console.error(e2);
-        alert("Camera / hand tracking: " + (e2 && e2.message ? e2.message : String(e2)));
-      }
-    } else {
-      alert("Camera / hand tracking: " + (err && err.message ? err.message : String(err)));
-    }
-  }
-}
-
-function onStart() {
-  if (running) return;
+function start() {
+  running = true;
+  distance = 0;
+  speedMul = 1.0;
+  enemies = [];
+  playerLane = 1;
+  lastSpawnAt = performance.now();
+  speedRampAt = performance.now() + 3000;
+  lastFrameT = performance.now();
   startOverlay.classList.add("hidden");
   gameOverOverlay.classList.add("hidden");
-  resetGame();
-  running = true;
-  initAudio();
-  // If start is triggered by hand-gesture (not a direct user interaction),
-  // audio may remain locked. We'll start BGM once unlocked.
-  if (audioCtx && audioCtx.state === "running") {
-    audioUnlocked = true;
-    startBgm();
-  }
-  draw();
-  rafId = requestAnimationFrame((t) => { lastFrameT = t; tick(t); });
+  requestAnimationFrame(update);
 }
 
-btnStart.addEventListener("click", async () => {
-  await unlockAudio();
-  onStart();
-});
-btnAgain.addEventListener("click", () => onStart());
-startOverlay.addEventListener("click", () => onStart());
-startOverlay.addEventListener("touchstart", (e) => { e.preventDefault(); onStart(); }, { passive: false });
-
-// Try to unlock audio on the first real user gesture (so BGM works even if the game starts via pinch).
-window.addEventListener("pointerdown", unlockAudio, { once: true });
-window.addEventListener("keydown", unlockAudio, { once: true });
-
-bootHandTracking();
+btnStart.onclick = start;
+btnAgain.onclick = start;
+window.onresize = resize;
+resize();
 </script>
 </body>
 </html>
-

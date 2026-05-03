@@ -1,12 +1,16 @@
 import os
+from pathlib import Path
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 try:
-    # Load local `.env` for dev runs (uvicorn doesn't auto-load it).
+    # Load local `.env` relative to this file, so it works no matter
+    # which directory uvicorn is launched from.
     from dotenv import load_dotenv
 
+    _here = Path(__file__).resolve().parent
+    load_dotenv(dotenv_path=_here / ".env")
     load_dotenv()
 except Exception:
     # In some deployments python-dotenv may be absent; rely on real env vars.
@@ -43,4 +47,3 @@ def get_db():
         yield db
     finally:
         db.close()
-

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Temple Lean Run — Piyush-Store</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #060b16;
+    color: #e5e7eb;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+  }
+  #gameCanvas, #handCanvas { position: fixed; inset: 0; width: 100vw; height: 100vh; }
+  #gameCanvas { z-index: 1; }
+  #handCanvas { z-index: 20; pointer-events: none; }
+
+  .hud {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 30;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: max(12px, env(safe-area-inset-top, 0px)) 16px 8px;
+    pointer-events: none;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  }
+  .hud-block h2 { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #94a3b8; margin-bottom: 2px; }
+  .hud-block .val { font-size: 24px; font-weight: 800; color: #67e8f9; }
+  .hud a { pointer-events: auto; color: #bfdbfe; text-decoration: none; font-size: 13px; }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(4, 8, 18, 0.82);
+    backdrop-filter: blur(6px);
+    padding: 16px;
+  }
+  .overlay.hidden { display: none; }
+  .panel {
+    width: min(470px, 96vw);
+    border-radius: 18px;
+    border: 1px solid rgba(125, 211, 252, 0.2);
+    background: linear-gradient(160deg, rgba(10,15,30,0.92), rgba(8,18,30,0.92));
+    box-shadow: 0 24px 80px rgba(0,0,0,0.48);
+    padding: 30px 22px;
+    text-align: center;
+  }
+  .panel h1 { font-size: 22px; letter-spacing: 3px; text-transform: uppercase; color: #67e8f9; margin-bottom: 10px; }
+  .panel p { font-size: 14px; line-height: 1.65; color: #cbd5e1; margin-bottom: 8px; }
+  .hint { font-size: 13px; color: #93c5fd; margin-top: 10px; }
+  .actions { margin-top: 16px; display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
+  .btn {
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+  }
+  .btn-primary { color: #082f49; background: linear-gradient(180deg, #67e8f9, #22d3ee); }
+  .btn-ghost { text-decoration: none; color: #c4b5fd; background: transparent; border: 2px solid #6366f1; display: inline-flex; align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<canvas id="handCanvas"></canvas>
+
+<div class="hud">
+  <div class="hud-block"><h2>Distance</h2><div class="val" id="distVal">0</div></div>
+  <div class="hud-block" style="text-align:right"><h2>Best</h2><div class="val" id="bestVal">0</div></div>
+  <a href="/">← Store</a>
+</div>
+
+<div class="overlay" id="startOverlay">
+  <div class="panel">
+    <h1>Temple Lean Run</h1>
+    <p>Endless temple track with <strong>3 lanes</strong>.</p>
+    <p><strong style="color:#67e8f9">Lean left</strong> with your torso to move left lane, <strong style="color:#fda4af">lean right</strong> to move right lane.</p>
+    <p class="hint">Tap Start for camera. Keep hips centered and tilt shoulders side to side.</p>
+    <div class="actions">
+      <button class="btn btn-primary" id="btnStart" type="button">Start</button>
+      <a class="btn btn-ghost" href="/">Home</a>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="gameOverOverlay">
+  <div class="panel">
+    <h1>You Crashed</h1>
+    <p>Distance: <strong id="finalDist">0</strong></p>
+    <p>Best: <strong id="finalBest">0</strong></p>
+    <div class="actions">
+      <button class="btn btn-primary" id="btnAgain" type="button">Retry</button>
+      <a class="btn btn-ghost" href="/">Home</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOKEN_KEY = "piyush_token";
+const GAME_ID = "temple_lean_run";
+async function ensureAccess() {
+  const t = sessionStorage.getItem(TOKEN_KEY);
+  if (!t) { window.location.href = "/login"; return false; }
+  try {
+    const res = await fetch("/api/entitlements", { headers: { Authorization: "Bearer " + t } });
+    if (!res.ok) { window.location.href = "/login"; return false; }
+    const data = await res.json();
+    const games = new Set(Array.isArray(data.games) ? data.games : []);
+    if (!games.has(GAME_ID)) {
+      alert("This game is locked. Please unlock it from the store (Home).");
+      window.location.href = "/";
+      return false;
+    }
+    return true;
+  } catch {
+    window.location.href = "/login";
+    return false;
+  }
+}
+ensureAccess();
+</script>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const handCanvas = document.getElementById("handCanvas");
+const hctx = handCanvas.getContext("2d");
+const distVal = document.getElementById("distVal");
+const bestVal = document.getElementById("bestVal");
+const finalDist = document.getElementById("finalDist");
+const finalBest = document.getElementById("finalBest");
+const startOverlay = document.getElementById("startOverlay");
+const gameOverOverlay = document.getElementById("gameOverOverlay");
+const btnStart = document.getElementById("btnStart");
+const btnAgain = document.getElementById("btnAgain");
+
+const BEST_KEY = "templeLeanBest";
+let W=0,H=0,DPR=1;
+let lanes = [0,0,0];
+let laneW = 0;
+let groundY = 0;
+let playerLane = 1;
+let playerX = 0;
+let playerY = 0;
+let dist = 0;
+let speed = 340;
+let running = false;
+let obstacles = [];
+let spawnMs = 760;
+let nextSpawnAt = 0;
+let lastT = 0;
+let rafId = 0;
+let poseStop = null;
+let pose = { detected:false, landmarks:null };
+let lean = 0;
+let nextLaneSwitchAt = 0;
+
+function bestRead(){ try { return parseInt(localStorage.getItem(BEST_KEY)||"0", 10) || 0; } catch { return 0; } }
+function bestWrite(v){ try { if (v > bestRead()) localStorage.setItem(BEST_KEY, String(v)); } catch {} }
+async function submitScore(v) {
+  const t = sessionStorage.getItem(TOKEN_KEY);
+  if (!t || !Number.isFinite(v) || v <= 0) return;
+  try {
+    await fetch("/api/score", {
+      method:"POST",
+      headers:{"Content-Type":"application/json", "Authorization":"Bearer " + t},
+      body: JSON.stringify({ game_id: GAME_ID, score: Math.floor(v) })
+    });
+  } catch {}
+}
+
+function resize(){
+  DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  W = window.innerWidth; H = window.innerHeight;
+  groundY = H * 0.84;
+  canvas.width = Math.floor(W * DPR); canvas.height = Math.floor(H * DPR);
+  handCanvas.width = Math.floor(W * DPR); handCanvas.height = Math.floor(H * DPR);
+  canvas.style.width = handCanvas.style.width = W + "px";
+  canvas.style.height = handCanvas.style.height = H + "px";
+  ctx.setTransform(DPR,0,0,DPR,0,0); hctx.setTransform(DPR,0,0,DPR,0,0);
+  laneW = Math.min(170, W * 0.22);
+  const center = W * 0.5;
+  lanes = [center - laneW, center, center + laneW];
+  playerY = groundY - 48;
+  playerX = lanes[playerLane];
+}
+
+function resetGame(){
+  dist = 0;
+  speed = 340;
+  spawnMs = 760;
+  obstacles = [];
+  playerLane = 1;
+  playerX = lanes[playerLane];
+  nextSpawnAt = performance.now() + 650;
+  nextLaneSwitchAt = 0;
+  lean = 0;
+  distVal.textContent = "0";
+  bestVal.textContent = String(bestRead());
+}
+
+function spawnObstacle(){
+  const lane = Math.floor(Math.random() * 3);
+  const h = 48 + Math.random() * 44;
+  obstacles.push({ lane, x: lanes[lane], y: -h - 18, w: laneW * 0.42, h });
+}
+
+function estimateLeanFromPose(){
+  if (!pose.detected || !pose.landmarks || pose.landmarks.length < 25) return 0;
+  const lm = pose.landmarks;
+  const lShoulder = lm[11];
+  const rShoulder = lm[12];
+  const lHip = lm[23];
+  const rHip = lm[24];
+  if (!lShoulder || !rShoulder || !lHip || !rHip) return 0;
+
+  const shoulderMidX = (lShoulder.x + rShoulder.x) * 0.5;
+  const shoulderMidY = (lShoulder.y + rShoulder.y) * 0.5;
+  const hipMidX = (lHip.x + rHip.x) * 0.5;
+  const hipMidY = (lHip.y + rHip.y) * 0.5;
+
+  const dx = shoulderMidX - hipMidX;
+  const dy = Math.max(0.05, Math.abs(shoulderMidY - hipMidY));
+  const torsoTilt = dx / dy; // +right, -left
+  return Math.max(-1, Math.min(1, torsoTilt * 1.8));
+}
+
+function updateLeanControl(now){
+  const targetLean = estimateLeanFromPose();
+  lean = lean * 0.84 + targetLean * 0.16;
+
+  if (now < nextLaneSwitchAt) return;
+  const TH = 0.24;
+  if (lean <= -TH && playerLane > 0) {
+    playerLane -= 1;
+    nextLaneSwitchAt = now + 240;
+  } else if (lean >= TH && playerLane < 2) {
+    playerLane += 1;
+    nextLaneSwitchAt = now + 240;
+  }
+}
+
+function update(dt, now){
+  updateLeanControl(now);
+  playerX += (lanes[playerLane] - playerX) * Math.min(1, dt * 11);
+
+  if (now >= nextSpawnAt) {
+    spawnObstacle();
+    nextSpawnAt = now + Math.max(360, spawnMs);
+    spawnMs *= 0.988;
+  }
+
+  speed += dt * 8.5;
+  dist += dt * (speed * 0.08);
+  distVal.textContent = String(Math.floor(dist));
+
+  for (const ob of obstacles) ob.y += speed * dt;
+  obstacles = obstacles.filter(ob => ob.y < H + 120);
+
+  const px = playerX - 20;
+  const py = playerY - 24;
+  const pw = 40;
+  const ph = 48;
+  for (const ob of obstacles) {
+    const ox = ob.x - ob.w / 2;
+    const oy = ob.y;
+    if (px < ox + ob.w && px + pw > ox && py < oy + ob.h && py + ph > oy) {
+      gameOver();
+      return;
+    }
+  }
+}
+
+function draw(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0, "#0b1f3a");
+  g.addColorStop(0.45, "#0b1324");
+  g.addColorStop(1, "#1e293b");
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,W,H);
+
+  ctx.fillStyle = "#334155";
+  ctx.fillRect(0, groundY, W, H-groundY);
+
+  ctx.strokeStyle = "rgba(148,163,184,0.35)";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([12, 12]);
+  for (let i = 0; i < lanes.length; i++) {
+    ctx.beginPath();
+    ctx.moveTo(lanes[i], 0);
+    ctx.lineTo(lanes[i], H);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  for (const ob of obstacles) {
+    const ox = ob.x - ob.w / 2;
+    const grad = ctx.createLinearGradient(ox, ob.y, ox + ob.w, ob.y + ob.h);
+    grad.addColorStop(0, "#7f1d1d");
+    grad.addColorStop(1, "#ef4444");
+    ctx.fillStyle = grad;
+    ctx.fillRect(ox, ob.y, ob.w, ob.h);
+  }
+
+  ctx.fillStyle = "#22d3ee";
+  ctx.fillRect(playerX - 20, playerY - 24, 40, 48);
+  ctx.fillStyle = "#0f172a";
+  ctx.fillRect(playerX - 9, playerY - 10, 6, 6);
+  ctx.fillRect(playerX + 3, playerY - 10, 6, 6);
+
+  ctx.fillStyle = "rgba(103,232,249,0.85)";
+  const meterX = 16;
+  const meterY = H - 54;
+  ctx.fillRect(meterX, meterY, 180, 8);
+  ctx.fillStyle = "#fbbf24";
+  ctx.fillRect(meterX + 90, meterY - 6, Math.max(-90, Math.min(90, lean * 90)), 20);
+  ctx.fillStyle = "#e2e8f0";
+  ctx.font = "12px 'Segoe UI', sans-serif";
+  ctx.fillText("Lean Meter", meterX, meterY - 10);
+}
+
+function drawHands(){
+  hctx.clearRect(0,0,W,H);
+  if (!pose.detected || !pose.landmarks) return;
+  const lm = pose.landmarks;
+  const POSE_CONNECTIONS = [
+    [11,12],[11,13],[13,15],[12,14],[14,16],
+    [11,23],[12,24],[23,24],[23,25],[24,26],[25,27],[26,28]
+  ];
+  hctx.strokeStyle = "#67e8f9";
+  hctx.lineWidth = 2;
+  for (const [a,b] of POSE_CONNECTIONS) {
+    const p = lm[a], q = lm[b];
+    if (!p || !q) continue;
+    hctx.beginPath(); hctx.moveTo(p.x * W, p.y * H); hctx.lineTo(q.x * W, q.y * H); hctx.stroke();
+  }
+}
+
+function tick(ts){
+  const dt = Math.min(0.033, (ts - (lastT || ts)) / 1000);
+  lastT = ts;
+  if (running) update(dt, ts);
+  draw();
+  drawHands();
+  if (running) rafId = requestAnimationFrame(tick);
+}
+
+function gameOver(){
+  if (!running) return;
+  running = false;
+  cancelAnimationFrame(rafId);
+  const score = Math.floor(dist);
+  bestWrite(score);
+  submitScore(score);
+  finalDist.textContent = String(score);
+  finalBest.textContent = String(bestRead());
+  bestVal.textContent = String(bestRead());
+  gameOverOverlay.classList.remove("hidden");
+}
+
+function applyPoseFrame(data){
+  if (!data || !data.detected) {
+    pose.detected = false;
+    pose.landmarks = null;
+    return;
+  }
+  pose.detected = true;
+  pose.landmarks = Array.isArray(data.landmarks) ? data.landmarks : null;
+}
+
+async function ensurePose(){
+  if (poseStop) return;
+
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+    audio: false
+  });
+  const video = document.createElement("video");
+  video.srcObject = stream;
+  video.playsInline = true;
+  video.muted = true;
+  await video.play();
+
+  const { FilesetResolver, PoseLandmarker } = await import("https://esm.sh/@mediapipe/tasks-vision@0.10.14");
+  const fileset = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+  );
+  const poseLandmarker = await PoseLandmarker.createFromOptions(fileset, {
+    baseOptions: {
+      modelAssetPath:
+        "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+      delegate: "CPU"
+    },
+    runningMode: "VIDEO",
+    numPoses: 1
+  });
+
+  let raf = 0;
+  const loop = () => {
+    let payload = { detected: false, landmarks: null };
+    if (video.readyState >= 2) {
+      const result = poseLandmarker.detectForVideo(video, performance.now());
+      if (result.landmarks && result.landmarks.length > 0) {
+        const raw = result.landmarks[0];
+        const landmarks = raw.map((p) => ({ x: 1 - p.x, y: p.y, z: p.z ?? 0 }));
+        payload = { detected: true, landmarks };
+      }
+    }
+    applyPoseFrame(payload);
+    raf = requestAnimationFrame(loop);
+  };
+  raf = requestAnimationFrame(loop);
+
+  poseStop = () => {
+    cancelAnimationFrame(raf);
+    stream.getTracks().forEach((tr) => tr.stop());
+    poseLandmarker.close?.();
+  };
+}
+
+function startRun(){
+  resetGame();
+  gameOverOverlay.classList.add("hidden");
+  startOverlay.classList.add("hidden");
+  running = true;
+  lastT = 0;
+  cancelAnimationFrame(rafId);
+  rafId = requestAnimationFrame(tick);
+}
+
+btnStart.addEventListener("click", async () => { await ensurePose(); startRun(); });
+btnAgain.addEventListener("click", async () => { await ensurePose(); startRun(); });
+window.addEventListener("resize", resize);
+window.addEventListener("beforeunload", () => { if (poseStop) poseStop(); });
+
+resize();
+resetGame();
+draw();
+</script>
+</body>
+</html>

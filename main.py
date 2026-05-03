@@ -112,14 +112,17 @@ PUZZLE_HTML = os.path.join(BASE_DIR, "static", "puzzle.html")
 RUNNER_HTML = os.path.join(BASE_DIR, "static", "runner.html")
 TICTACTOE_HTML = os.path.join(BASE_DIR, "static", "tictactoe.html")
 TRAFFIC_HTML = os.path.join(BASE_DIR, "static", "traffic.html")
+TEMPLE_RUN_HTML = os.path.join(BASE_DIR, "static", "temple-run.html")
 LOGIN_HTML = os.path.join(BASE_DIR, "static", "login.html")
 PROFILE_HTML = os.path.join(BASE_DIR, "static", "profile.html")
 LEADERBOARD_HTML = os.path.join(BASE_DIR, "static", "leaderboard.html")
 HOLO_HTML = os.path.join(BASE_DIR, "static", "holo.html")
 KAMEHAMEHA_HTML = os.path.join(BASE_DIR, "static", "kamehameha.html")
+SLINGSHOT_HTML = os.path.join(BASE_DIR, "static", "slingshot.html")
 SUPPORT_HTML = os.path.join(BASE_DIR, "static", "support.html")
 TERMS_HTML = os.path.join(BASE_DIR, "static", "terms.html")
 REFUNDS_HTML = os.path.join(BASE_DIR, "static", "refunds.html")
+PRIVACY_HTML = os.path.join(BASE_DIR, "static", "privacy.html")
 
 # --- Store / Razorpay config ---
 PAID_GAMES: dict[str, dict] = {}
@@ -137,6 +140,8 @@ FREE_GAMES = {
     "neon_runner": {"route": "/runner", "title": "Neon Runner", "category": "gesture-games", "leaderboard": True},
     "tictactoe": {"route": "/tictactoe", "title": "Neon Tic-Tac-Toe", "category": "gesture-games", "leaderboard": False},
     "traffic": {"route": "/traffic", "title": "Traffic Rush", "category": "gesture-games", "leaderboard": True},
+    "temple_lean_run": {"route": "/temple-run", "title": "Temple Lean Run", "category": "gesture-games", "leaderboard": True},
+    "sky_sling_birds": {"route": "/slingshot", "title": "Sky Sling Birds", "category": "gesture-games", "leaderboard": True},
     "holo": {"route": "/holo", "title": "Holo Hand FX", "category": "gesture-effect", "leaderboard": False},
     "kamehameha": {"route": "/kamehameha", "title": "Kamehameha Beam", "category": "gesture-effect", "leaderboard": False},
 }
@@ -190,6 +195,10 @@ def tictactoe():
 def traffic():
     return FileResponse(TRAFFIC_HTML)
 
+@app.get("/temple-run")
+def temple_run():
+    return FileResponse(TEMPLE_RUN_HTML)
+
 @app.get("/login")
 def login_page():
     return FileResponse(LOGIN_HTML)
@@ -210,6 +219,10 @@ def holo_page():
 def kamehameha_page():
     return FileResponse(KAMEHAMEHA_HTML)
 
+@app.get("/slingshot")
+def slingshot_page():
+    return FileResponse(SLINGSHOT_HTML)
+
 @app.get("/support")
 def support_page():
     return FileResponse(SUPPORT_HTML)
@@ -221,6 +234,10 @@ def terms_page():
 @app.get("/refunds")
 def refunds_page():
     return FileResponse(REFUNDS_HTML)
+
+@app.get("/privacy")
+def privacy_page():
+    return FileResponse(PRIVACY_HTML)
 
 app.mount(
     "/static",

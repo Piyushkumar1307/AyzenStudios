@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sky Sling Birds — Piyush-Store</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: radial-gradient(circle at 20% 10%, #1f355f 0%, #0a1224 45%, #050813 100%);
+    color: #e8e8f0;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+  }
+  #gameCanvas, #handCanvas {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+  }
+  #gameCanvas { z-index: 1; }
+  #handCanvas { z-index: 30; pointer-events: none; }
+
+  .hud {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 60;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: max(12px, env(safe-area-inset-top, 0px)) 16px 8px;
+    pointer-events: none;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.85);
+  }
+  .hud-block h2 {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #9ca3af;
+    margin-bottom: 2px;
+  }
+  .hud-block .val {
+    font-size: 26px;
+    font-weight: 800;
+    color: #fde68a;
+  }
+  .hud a {
+    pointer-events: auto;
+    color: #bae6fd;
+    font-size: 13px;
+    text-decoration: none;
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(3, 6, 14, 0.82);
+    backdrop-filter: blur(6px);
+    padding: 18px;
+  }
+  .overlay.hidden { display: none; }
+
+  .panel {
+    width: min(480px, 96vw);
+    padding: 28px 22px;
+    border-radius: 20px;
+    border: 1px solid rgba(186,230,253,0.2);
+    background: linear-gradient(160deg, rgba(17,24,39,0.9), rgba(10,17,32,0.9));
+    box-shadow: 0 24px 70px rgba(0,0,0,0.48);
+    text-align: center;
+  }
+  .panel h1 {
+    font-size: 22px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #fcd34d;
+    margin-bottom: 10px;
+  }
+  .panel p {
+    font-size: 14px;
+    line-height: 1.65;
+    color: #cbd5e1;
+    margin-bottom: 8px;
+  }
+  .hint { color: #93c5fd; font-size: 13px; margin-top: 10px; }
+
+  .btn-row {
+    margin-top: 14px;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .btn {
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .btn-primary {
+    background: linear-gradient(180deg, #fcd34d, #f59e0b);
+    color: #111827;
+  }
+  .btn-ghost {
+    text-decoration: none;
+    border: 2px solid #60a5fa;
+    color: #bfdbfe;
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<canvas id="handCanvas"></canvas>
+
+<div class="hud">
+  <div class="hud-block">
+    <h2>Score</h2>
+    <div class="val" id="scoreVal">0</div>
+  </div>
+  <div class="hud-block" style="text-align:right">
+    <h2>Birds Left</h2>
+    <div class="val" id="birdsVal">3</div>
+  </div>
+  <a href="/">← Store</a>
+</div>
+
+<div class="overlay" id="startOverlay">
+  <div class="panel">
+    <h1>Sky Sling Birds</h1>
+    <p>Use <strong>pinch</strong> to grab the bird on the sling, pull back, and release to launch.</p>
+    <p>Break blocks and hit targets. You get <strong>3 birds</strong> total.</p>
+    <p class="hint">Tap start to allow camera + audio. Pinch + drag to aim.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnStart" type="button">Start</button>
+      <a class="btn btn-ghost" href="/">Home</a>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="gameOverOverlay">
+  <div class="panel">
+    <h1>Round Over</h1>
+    <p>Final Score: <strong id="finalScore">0</strong></p>
+    <p>Best Score: <strong id="bestScore">0</strong></p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnAgain" type="button">Play Again</button>
+      <a class="btn btn-ghost" href="/">Home</a>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="levelLoaderOverlay">
+  <div class="panel">
+    <h1 id="levelLoaderTitle">Level 2</h1>
+    <p>Building a tougher structure...</p>
+    <p class="hint">Get ready for the next launch.</p>
+  </div>
+</div>
+
+<script>
+const TOKEN_KEY = "piyush_token";
+const GAME_ID = "sky_sling_birds";
+async function ensureAccess() {
+  const t = sessionStorage.getItem(TOKEN_KEY);
+  if (!t) { window.location.href = "/login"; return false; }
+  try {
+    const res = await fetch("/api/entitlements", { headers: { Authorization: "Bearer " + t } });
+    if (!res.ok) { window.location.href = "/login"; return false; }
+    const data = await res.json();
+    const games = new Set(Array.isArray(data.games) ? data.games : []);
+    if (!games.has(GAME_ID)) {
+      alert("This game is locked. Please unlock it from the store (Home).");
+      window.location.href = "/";
+      return false;
+    }
+    return true;
+  } catch {
+    window.location.href = "/login";
+    return false;
+  }
+}
+ensureAccess();
+</script>
+
+<script>
+const HAND_CONNECTIONS = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const handCanvas = document.getElementById("handCanvas");
+const hctx = handCanvas.getContext("2d");
+
+const scoreVal = document.getElementById("scoreVal");
+const birdsVal = document.getElementById("birdsVal");
+const startOverlay = document.getElementById("startOverlay");
+const gameOverOverlay = document.getElementById("gameOverOverlay");
+const finalScore = document.getElementById("finalScore");
+const bestScore = document.getElementById("bestScore");
+const btnStart = document.getElementById("btnStart");
+const btnAgain = document.getElementById("btnAgain");
+const levelLoaderOverlay = document.getElementById("levelLoaderOverlay");
+const levelLoaderTitle = document.getElementById("levelLoaderTitle");
+
+const BEST_KEY = "skySlingBest";
+const submittedScores = new Set();
+let W=0,H=0,DPR=1,ground=0;
+let rafId = 0;
+let running = false;
+let handStop = null;
+let lastT = 0;
+
+let sling = { x: 0, y: 0, maxPull: 170 };
+let birds = [];
+let currentBird = null;
+let pigs = [];
+let blocks = [];
+let particles = [];
+let score = 0;
+let level = 1;
+let levelTransitionUntil = 0;
+let levelLoading = false;
+
+let hand = { detected:false, pinch:false, x:0.5, y:0.5, landmarks:null };
+let pinchPrev = false;
+let dragging = false;
+let controlCooldownUntil = 0;
+
+let audioCtx = null;
+let audioUnlocked = false;
+let bgTimer = null;
+
+function initAudio(){ if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
+async function unlockAudio(){ initAudio(); if (!audioCtx) return; if (audioCtx.state === "suspended") await audioCtx.resume(); audioUnlocked = audioCtx.state === "running"; if (audioUnlocked) startBgm(); }
+function tone(freq, dur=0.12, vol=0.07, type="sine"){
+  if (!audioCtx || audioCtx.state !== "running") return;
+  const t = audioCtx.currentTime;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + dur + 0.02);
+}
+function thud(intensity){ tone(130 + intensity*80, 0.18, 0.08 + intensity*0.05, "triangle"); }
+function pop(){ tone(620, 0.12, 0.10, "square"); tone(860, 0.08, 0.07, "sine"); }
+function slingSound(){ tone(300, 0.05, 0.08, "sawtooth"); }
+function launchSound(power){ tone(210 + power * 190, 0.16, 0.12, "triangle"); }
+function stopBgm(){ if (bgTimer) { clearInterval(bgTimer); bgTimer = null; } }
+function startBgm(){
+  if (!audioUnlocked || bgTimer) return;
+  const notes = [220, 262, 294, 330, 294, 262];
+  let i = 0;
+  bgTimer = setInterval(() => {
+    tone(notes[i % notes.length], 0.22, 0.025, "sine");
+    i += 1;
+  }, 520);
+}
+
+function bestRead(){ try { return parseInt(localStorage.getItem(BEST_KEY) || "0", 10) || 0; } catch { return 0; } }
+function bestWrite(v){ try { if (v > bestRead()) localStorage.setItem(BEST_KEY, String(v)); } catch {} }
+async function submitScore(v) {
+  if (submittedScores.has(v)) return;
+  const t = sessionStorage.getItem(TOKEN_KEY);
+  if (!t || !Number.isFinite(v) || v <= 0) return;
+  submittedScores.add(v);
+  try {
+    await fetch("/api/score", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + t
+      },
+      body: JSON.stringify({ game_id: GAME_ID, score: Math.floor(v) })
+    });
+  } catch {
+    // Best-effort upload; ignore network issues.
+  }
+}
+
+function resize(){
+  DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  W = window.innerWidth; H = window.innerHeight; ground = H * 0.86;
+  canvas.width = Math.floor(W * DPR); canvas.height = Math.floor(H * DPR);
+  handCanvas.width = Math.floor(W * DPR); handCanvas.height = Math.floor(H * DPR);
+  canvas.style.width = handCanvas.style.width = W + "px";
+  canvas.style.height = handCanvas.style.height = H + "px";
+  ctx.setTransform(DPR,0,0,DPR,0,0); hctx.setTransform(DPR,0,0,DPR,0,0);
+  sling.x = Math.max(110, W * 0.18);
+  sling.y = Math.min(ground - 110, H * 0.64);
+}
+
+function spawnLevel(levelNo, keepScore=false){
+  const pigCount = Math.min(3 + Math.floor((levelNo - 1) * 0.8), 7);
+  const towerCols = Math.min(2 + Math.floor((levelNo - 1) / 2), 4);
+  const towerRows = Math.min(2 + Math.floor((levelNo - 1) / 3), 4);
+  const hpBoost = Math.min(3, Math.floor((levelNo - 1) / 2));
+
+  birds = [0,1,2].map((i) => ({ x: sling.x, y: sling.y, vx:0, vy:0, r:18, launched:false, active: i===0, rest:0, removed:false }));
+  currentBird = birds[0];
+  const baseX = Math.min(W * 0.82, W * (0.72 + Math.min(0.14, levelNo * 0.01)));
+  const spacingX = Math.max(28, Math.min(40, W * 0.035));
+  const rowH = 58;
+  pigs = [];
+  for (let i = 0; i < pigCount; i++) {
+    const col = i % towerCols;
+    const row = Math.floor(i / towerCols);
+    pigs.push({
+      x: baseX - (towerCols - 1) * spacingX * 0.5 + col * spacingX,
+      y: ground - 28 - row * rowH,
+      r: 19 + ((i + levelNo) % 2),
+      alive: true, vx: 0, vy: 0
+    });
+  }
+
+  blocks = [];
+  for (let row = 0; row < towerRows; row++) {
+    const y = ground - 55 - row * 48;
+    for (let col = 0; col < towerCols; col++) {
+      const x = baseX - (towerCols - 1) * spacingX * 0.5 + col * spacingX;
+      blocks.push({ x, y, w: 16, h: 46, hp: 2 + hpBoost, vx: 0, vy: 0 });
+    }
+    blocks.push({ x: baseX, y: y - 28, w: spacingX * towerCols + 24, h: 12, hp: 3 + hpBoost, vx: 0, vy: 0 });
+  }
+  particles = [];
+  if (!keepScore) score = 0;
+  levelTransitionUntil = performance.now() + 900;
+  updateHud();
+}
+
+function updateHud(){
+  scoreVal.textContent = String(score) + " · L" + level;
+  const left = birds.filter(b => !b.removed && !b.launched).length;
+  birdsVal.textContent = String(Math.max(0, left));
+}
+
+function showLevelLoader(nextLevel) {
+  levelLoaderTitle.textContent = "Level " + nextLevel;
+  levelLoaderOverlay.classList.remove("hidden");
+}
+
+function hideLevelLoader() {
+  levelLoaderOverlay.classList.add("hidden");
+}
+
+function drawBg(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,"#1e3a8a"); g.addColorStop(0.55,"#0f172a"); g.addColorStop(1,"#2b2f36");
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = "#334155"; ctx.fillRect(0,ground,W,H-ground);
+  ctx.fillStyle = "rgba(255,255,255,0.08)";
+  for (let i=0;i<6;i++) ctx.fillRect(i*180 + (Date.now()*0.02 % 180), H*0.14 + (i%2)*26, 66, 14);
+}
+
+function drawSling(){
+  const bx = (dragging && currentBird && !currentBird.launched) ? currentBird.x : sling.x;
+  const by = (dragging && currentBird && !currentBird.launched) ? currentBird.y : sling.y - 2;
+  ctx.strokeStyle = "#7c2d12"; ctx.lineWidth = 8; ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(sling.x-14, sling.y-42); ctx.lineTo(bx, by); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(sling.x+14, sling.y-42); ctx.lineTo(bx, by); ctx.stroke();
+  ctx.fillStyle = "#78350f"; ctx.fillRect(sling.x-11, sling.y-48, 22, 90);
+}
+
+function drawBird(b){
+  if (b.removed) return;
+  ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+  ctx.fillStyle = "#ef4444"; ctx.fill();
+  ctx.fillStyle = "#111827";
+  ctx.beginPath(); ctx.arc(b.x-6,b.y-4,3,0,Math.PI*2); ctx.arc(b.x+6,b.y-4,3,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = "#f59e0b";
+  ctx.beginPath(); ctx.moveTo(b.x+4,b.y+3); ctx.lineTo(b.x+18,b.y+7); ctx.lineTo(b.x+4,b.y+10); ctx.closePath(); ctx.fill();
+}
+
+function drawPig(p){
+  if (!p.alive) return;
+  ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+  ctx.fillStyle = "#84cc16"; ctx.fill();
+  ctx.fillStyle = "#1f2937"; ctx.beginPath(); ctx.arc(p.x-5,p.y-4,2.5,0,Math.PI*2); ctx.arc(p.x+5,p.y-4,2.5,0,Math.PI*2); ctx.fill();
+}
+
+function drawBlock(b){
+  ctx.fillStyle = b.hp >= 2 ? "#a16207" : "#d97706";
+  ctx.fillRect(b.x-b.w/2,b.y-b.h/2,b.w,b.h);
+}
+
+function emit(x,y,cnt,col){ for(let i=0;i<cnt;i++) particles.push({x,y,vx:(Math.random()-0.5)*220,vy:(Math.random()-0.6)*220,life:0.6+Math.random()*0.45,col}); }
+
+function stepPhysics(dt){
+  const g = 720;
+  for (const b of birds) {
+    if (b.removed || !b.launched) continue;
+    b.vy += g*dt;
+    b.vx *= 0.996;
+    b.vy *= 0.997;
+    b.x += b.vx*dt;
+    b.y += b.vy*dt;
+    if (b.y + b.r > ground) {
+      b.y = ground - b.r;
+      if (Math.abs(b.vy) > 90) thud(Math.min(1, Math.abs(b.vy)/500));
+      b.vy *= -0.35;
+      b.vx *= 0.8;
+      if (Math.abs(b.vx) < 20 && Math.abs(b.vy) < 20) b.rest += dt;
+    }
+    if (b.x < -80 || b.x > W + 80 || b.y > H + 120) b.rest = 2;
+
+    for (const block of blocks) {
+      if (block.hp <= 0) continue;
+      const nx = Math.max(block.x - block.w/2, Math.min(b.x, block.x + block.w/2));
+      const ny = Math.max(block.y - block.h/2, Math.min(b.y, block.y + block.h/2));
+      const dx = b.x - nx, dy = b.y - ny;
+      const d2 = dx*dx + dy*dy;
+      if (d2 < b.r*b.r) {
+        const speed = Math.hypot(b.vx, b.vy);
+        block.hp = 0;
+        b.vx *= -0.42; b.vy *= -0.36;
+        score += 15;
+        emit(nx,ny,12,"#f59e0b");
+        thud(Math.min(1, speed/700));
+      }
+    }
+
+    for (const p of pigs) {
+      if (!p.alive) continue;
+      const dx = p.x - b.x, dy = p.y - b.y;
+      const d = Math.hypot(dx,dy);
+      if (d < p.r + b.r) {
+        p.alive = false;
+        score += 130;
+        emit(p.x,p.y,22,"#84cc16");
+        pop();
+        b.vx *= 0.74; b.vy *= 0.74;
+      }
+    }
+  }
+
+  blocks = blocks.filter(b => {
+    if (b.hp > 0) return true;
+    score += 50;
+    emit(b.x,b.y,14,"#fbbf24");
+    return false;
+  });
+
+  for (const p of particles) {
+    p.vy += 520*dt;
+    p.x += p.vx*dt;
+    p.y += p.vy*dt;
+    p.life -= dt;
+  }
+  particles = particles.filter(p => p.life > 0);
+}
+
+function drawParticles(){
+  for (const p of particles) {
+    ctx.globalAlpha = Math.max(0, p.life);
+    ctx.fillStyle = p.col;
+    ctx.fillRect(p.x, p.y, 3, 3);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function handWorld(){ return { x: hand.x * W, y: hand.y * H }; }
+
+function launchCurrentBird(){
+  if (!currentBird) return;
+  const dx = sling.x - currentBird.x;
+  const dy = sling.y - currentBird.y;
+  const power = Math.min(1, Math.hypot(dx,dy) / sling.maxPull);
+  currentBird.vx = dx * 8.8;
+  currentBird.vy = dy * 8.8;
+  currentBird.launched = true;
+  dragging = false;
+  controlCooldownUntil = performance.now() + 260;
+  launchSound(power);
+}
+
+function primeNextBird(){
+  const idx = birds.findIndex(b => b === currentBird);
+  if (idx >= 0 && idx < birds.length-1) {
+    if (currentBird) {
+      currentBird.removed = true;
+      currentBird.active = false;
+      currentBird.launched = false;
+      currentBird.vx = 0;
+      currentBird.vy = 0;
+    }
+    const next = birds[idx+1];
+    if (!next.launched) {
+      next.active = true;
+      next.x = sling.x; next.y = sling.y; next.vx = 0; next.vy = 0;
+      currentBird = next;
+      return;
+    }
+  }
+  currentBird = null;
+}
+
+function updateControl(){
+  if (!currentBird || currentBird.launched) return;
+  if (performance.now() < controlCooldownUntil) {
+    pinchPrev = hand.pinch;
+    return;
+  }
+  const hp = handWorld();
+  const cx = W * 0.5;
+  const cy = H * 0.5;
+
+  if (hand.pinch && !pinchPrev) {
+    dragging = true;
+    slingSound();
+  }
+  if (dragging && hand.pinch) {
+    let dx = hp.x - cx;
+    let dy = hp.y - cy;
+    const pull = Math.hypot(dx,dy);
+    if (pull > sling.maxPull) {
+      const k = sling.maxPull / pull;
+      dx *= k; dy *= k;
+    }
+    currentBird.x = sling.x + dx;
+    currentBird.y = sling.y + dy;
+  }
+  if (dragging && !hand.pinch && pinchPrev) {
+    launchCurrentBird();
+  }
+  pinchPrev = hand.pinch;
+}
+
+function drawHUDHints(){
+  if (!currentBird || currentBird.launched) return;
+  ctx.beginPath(); ctx.arc(sling.x, sling.y, sling.maxPull, 0, Math.PI*2); ctx.strokeStyle = "rgba(251,191,36,0.28)"; ctx.lineWidth = 1.5; ctx.stroke();
+  if (!dragging) return;
+  const dx = sling.x - currentBird.x;
+  const dy = sling.y - currentBird.y;
+  const vx = dx * 8.8;
+  const vy = dy * 8.8;
+  ctx.strokeStyle = "rgba(186,230,253,0.75)";
+  ctx.setLineDash([6, 6]);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i <= 24; i++) {
+    const t = i * 0.06;
+    const tx = currentBird.x + vx * t;
+    const ty = currentBird.y + vy * t + 0.5 * 720 * t * t;
+    if (i === 0) ctx.moveTo(tx, ty);
+    else ctx.lineTo(tx, ty);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function updateRoundFlow(dt){
+  if (!running) return;
+  if (performance.now() < levelTransitionUntil) return;
+  if (levelLoading) {
+    levelLoading = false;
+    hideLevelLoader();
+  }
+  const pigsLeft = pigs.some(p => p.alive);
+  if (!pigsLeft) {
+    score += 240 + level * 40;
+    level += 1;
+    showLevelLoader(level);
+    levelLoading = true;
+    spawnLevel(level, true);
+    return;
+  }
+
+  if (currentBird && currentBird.launched && currentBird.rest > 1.1) {
+    primeNextBird();
+  }
+
+  const allUsed = birds.every(b => b.removed || b.launched);
+  const allSleeping = birds.filter(b => b.launched && !b.removed).every(b => b.rest > 1.0);
+  if (allUsed && allSleeping && pigsLeft) gameOver(false);
+  updateHud();
+}
+
+function gameOver(win){
+  if (!running) return;
+  running = false;
+  cancelAnimationFrame(rafId);
+  bestWrite(score);
+  submitScore(score);
+  finalScore.textContent = String(score) + (win ? " (Victory)" : "");
+  bestScore.textContent = String(bestRead());
+  gameOverOverlay.classList.remove("hidden");
+  hideLevelLoader();
+  stopBgm();
+}
+
+function drawScene(){
+  drawBg();
+  if (performance.now() < levelTransitionUntil) {
+    ctx.fillStyle = "rgba(2, 6, 16, 0.45)";
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#fde68a";
+    ctx.font = "800 38px 'Segoe UI', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("Level " + level, W * 0.5, H * 0.22);
+  }
+  drawHUDHints();
+  for (const b of blocks) drawBlock(b);
+  for (const p of pigs) drawPig(p);
+  drawSling();
+  for (const b of birds) if (b.active || b.launched) drawBird(b);
+  drawParticles();
+}
+
+function drawHands(){
+  hctx.clearRect(0,0,W,H);
+  if (!hand.detected || !hand.landmarks) return;
+  const lm = hand.landmarks;
+  hctx.strokeStyle = hand.pinch ? "#22d3ee" : "#93c5fd";
+  hctx.lineWidth = 2;
+  for (const [a,b] of HAND_CONNECTIONS) {
+    const p = lm[a], q = lm[b];
+    hctx.beginPath(); hctx.moveTo(p.x*W,p.y*H); hctx.lineTo(q.x*W,q.y*H); hctx.stroke();
+  }
+  const hp = handWorld();
+  hctx.fillStyle = hand.pinch ? "#fbbf24" : "#60a5fa";
+  hctx.beginPath(); hctx.arc(hp.x,hp.y,10,0,Math.PI*2); hctx.fill();
+}
+
+function loop(ts){
+  const dt = Math.min(0.033, (ts - (lastT || ts)) / 1000);
+  lastT = ts;
+
+  if (running) {
+    updateControl();
+    stepPhysics(dt);
+    updateRoundFlow(dt);
+  }
+
+  drawScene();
+  drawHands();
+  if (running) rafId = requestAnimationFrame(loop);
+}
+
+function resetRound(){
+  level = 1;
+  spawnLevel(level, false);
+  gameOverOverlay.classList.add("hidden");
+  startOverlay.classList.add("hidden");
+  hideLevelLoader();
+  levelLoading = false;
+  pinchPrev = false;
+  dragging = false;
+  controlCooldownUntil = performance.now() + 700;
+  running = true;
+  lastT = 0;
+  startBgm();
+  cancelAnimationFrame(rafId);
+  rafId = requestAnimationFrame(loop);
+}
+
+function applyHandFrame(data){
+  if (!data || !data.detected) {
+    hand.detected = false;
+    hand.pinch = false;
+    hand.landmarks = null;
+    return;
+  }
+  hand.detected = true;
+  hand.x = Math.max(0, Math.min(1, data.cursor_x ?? 0.5));
+  hand.y = Math.max(0, Math.min(1, data.cursor_y ?? 0.5));
+  hand.pinch = (data.gesture === "pinch" || data.gesture === "pinch_mid" || data.gesture === "pinch_ring");
+  hand.landmarks = Array.isArray(data.landmarks) ? data.landmarks : null;
+}
+
+async function startHandTracking(){
+  const { startClientHandTracking } = await import("/static/hand-client.js");
+  handStop = await startClientHandTracking(applyHandFrame);
+}
+
+btnStart.addEventListener("click", async () => {
+  await unlockAudio();
+  if (!handStop) await startHandTracking();
+  resetRound();
+});
+btnAgain.addEventListener("click", async () => {
+  await unlockAudio();
+  resetRound();
+});
+
+window.addEventListener("resize", () => { resize(); if (!running && currentBird && !currentBird.launched) { currentBird.x = sling.x; currentBird.y = sling.y; } });
+window.addEventListener("beforeunload", () => { stopBgm(); if (handStop) handStop(); });
+
+resize();
+spawnLevel(level, false);
+bestScore.textContent = String(bestRead());
+updateHud();
+</script>
+</body>
+</html>
