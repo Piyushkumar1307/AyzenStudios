@@ -174,6 +174,19 @@ def index_alt():
     """Same page as `/` — some people expect `/index` in the URL bar."""
     return FileResponse(INDEX_HTML)
 
+
+@app.get("/marketplace")
+def marketplace():
+    """Game store / marketplace (same HTML as home page in this build)."""
+    return FileResponse(INDEX_HTML)
+
+
+@app.get("/store")
+def store_alias():
+    """Back-compat alias for the marketplace."""
+    return FileResponse(INDEX_HTML)
+
+
 @app.get("/game")
 def game():
     return FileResponse(GAME_HTML)
