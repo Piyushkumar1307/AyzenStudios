@@ -398,10 +398,9 @@
               id="signupPassword"
               name="password"
               type="password"
-              placeholder="Min 6 chars (Aa1!)"
+              placeholder="Min 6 chars (e.g. Aa1234)"
               minlength="6"
-              pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{6,}"
-              title="Min 6 characters, with 1 uppercase, 1 lowercase, 1 number, and 1 symbol."
+              title="At least 6 characters, with 1 uppercase letter, 1 lowercase letter, and 1 number. (Symbols optional.)"
               required
             />
             <button class="pw-toggle" type="button" data-toggle-for="signupPassword" aria-label="Show password">
@@ -591,10 +590,9 @@
           password.length >= 6 &&
           /[a-z]/.test(password) &&
           /[A-Z]/.test(password) &&
-          /\d/.test(password) &&
-          /[^A-Za-z0-9]/.test(password);
+          /\d/.test(password);
         if (!ok) {
-          throw new Error("Password must be 6+ chars with 1 uppercase, 1 lowercase, 1 number, and 1 symbol.");
+          throw new Error("Password must be 6+ characters with 1 uppercase, 1 lowercase, and 1 number.");
         }
         // Register now sends OTP and asks user to verify.
         const res = await fetch("/api/auth/register", {

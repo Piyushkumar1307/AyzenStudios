@@ -39,8 +39,8 @@ from db import engine, get_db
 def _validate_password_or_400(pw: str) -> None:
     """
     Require:
-    - min 6 chars
-    - 1 uppercase, 1 lowercase, 1 digit, 1 symbol
+    - min 6 characters
+    - 1 uppercase, 1 lowercase, 1 digit
     """
     s = (pw or "").strip()
     if len(s) < 6:
@@ -48,11 +48,10 @@ def _validate_password_or_400(pw: str) -> None:
     has_upper = any("A" <= c <= "Z" for c in s)
     has_lower = any("a" <= c <= "z" for c in s)
     has_digit = any("0" <= c <= "9" for c in s)
-    has_symbol = any(not c.isalnum() for c in s)
-    if not (has_upper and has_lower and has_digit and has_symbol):
+    if not (has_upper and has_lower and has_digit):
         raise HTTPException(
             status_code=400,
-            detail="Password must include 1 uppercase, 1 lowercase, 1 number, and 1 symbol",
+            detail="Password must include 1 uppercase letter, 1 lowercase letter, and 1 number",
         )
 
 # --- Global detector instance ---

@@ -305,6 +305,11 @@
     display: block;
   }
 
+  /* Keep card in DOM for scripts / future toggle; hide from marketplace grid only */
+  .game-card.store-hidden-on-index {
+    display: none !important;
+  }
+
   .game-card:hover {
     border-color: rgba(0, 245, 255, 0.45);
     box-shadow:
@@ -613,7 +618,7 @@
         <a class="play-cta" href="/game">Play now →</a>
       </div>
     </article>
-    <article class="game-card" id="game-holo-fx" data-category="gesture-effect">
+    <article class="game-card store-hidden-on-index" id="game-holo-fx" data-category="gesture-effect">
       <div class="game-card-media" style="background: linear-gradient(145deg, rgba(34,211,238,0.14) 0%, transparent 55%), linear-gradient(225deg, rgba(167,139,250,0.16) 0%, transparent 45%), #0a0c18;">
         <span class="game-icon" aria-hidden="true">🖐️</span>
       </div>
@@ -758,7 +763,7 @@
       </div>
     </article>
 
-    <article class="game-card" id="game-temple-lean-run" data-category="gesture-games">
+    <article class="game-card store-hidden-on-index" id="game-temple-lean-run" data-category="gesture-games">
       <div class="game-card-media" style="background: linear-gradient(145deg, rgba(56,189,248,0.18) 0%, transparent 55%), linear-gradient(225deg, rgba(244,114,182,0.12) 0%, transparent 45%), #0a0c18;">
         <span class="game-icon" aria-hidden="true">🏛️</span>
       </div>
