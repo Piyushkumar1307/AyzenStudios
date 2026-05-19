@@ -1,9 +1,6 @@
-<<<<<<< HEAD
-# Game-Store
-=======
-# HandGesture Web Navigation
+# spookystudios — HandGesture Web Navigation
 
-**Piyush-Store** — a gesture-driven web game storefront built with **FastAPI**, **PostgreSQL**, and **Razorpay**. Users sign up with email, verify via OTP, then browse free and paid games. Premium titles unlock per user as **entitlements** stored in the database; payments go through **Razorpay Checkout** with **server-side signature verification**.
+**spookystudios** — a gesture-driven web game storefront built with **FastAPI**, **PostgreSQL**, and **Razorpay**. Users sign up with email, verify via OTP, then browse free and paid games. Premium titles unlock per user as **entitlements** stored in the database; payments go through **Razorpay Checkout** with **server-side signature verification**.
 
 | Gesture | Action        |
 |--------|----------------|
@@ -74,7 +71,8 @@ Copy `.env.example` to `.env` and fill in real values (never commit `.env`):
 | `JWT_EXPIRES_MINUTES` | No | Default ~7 days if omitted. |
 | `RAZORPAY_KEY_ID` | Yes for paywall | e.g. `rzp_test_...` |
 | `RAZORPAY_KEY_SECRET` | Yes for paywall | **Server only** — never expose to the client. |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM` (and optional `SMTP_TLS`) | **Yes** for signup | Registration calls `POST /api/auth/register`, which emails a 6-digit OTP. Without SMTP, the API returns **500** (`SMTP not configured…`). |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM` (and optional `SMTP_TLS`) | **Yes** for signup + contact | Registration OTP and the home page **contact form** (`POST /api/contact`). Without SMTP, APIs return **500** / **503**. |
+| `CONTACT_EMAIL` | No (falls back to `SMTP_FROM`) | Inbox that receives contact form messages. |
 
 Optional **runtime** (see `main.py`):
 
@@ -168,13 +166,37 @@ HandGesture-WebNavigation/
 
 ---
 
-## Deployment notes
+## Deployment notes (Render)
 
-- Set the same **env vars** as in `.env.example` on your host (Render, Fly.io, VPS, etc.).
-- Point `DATABASE_URL` at a **managed Postgres** with `sslmode=require` if the provider requires TLS.
-- If connections fail from Python, try **dropping** `channel_binding=require` from the URL (some libpq / driver stacks are picky).
-- `RAZORPAY_KEY_SECRET` must **only** run on the server.
-- For production, restrict CORS (`main.py` currently allows `*` for simplicity).
+Your local `.env` file is **not** uploaded to Render. You must add every variable in **Render Dashboard → your Web Service → Environment**.
+
+Minimum for contact form + auth email:
+
+1. `DATABASE_URL`, `JWT_SECRET`
+2. `SMTP_HOST` = `smtp.gmail.com`, `SMTP_PORT` = `587`, `SMTP_TLS` = `true`
+3. `SMTP_USERNAME` = your Gmail address
+4. `SMTP_PASSWORD` = [Gmail App Password](https://myaccount.google.com/apppasswords) (16 characters, **not** your normal Gmail password)
+5. `SMTP_FROM` = same Gmail address
+6. `CONTACT_EMAIL` = where contact form messages should arrive (can match `SMTP_FROM`)
+
+After deploy, open **Logs** and look for `Email ready:` on startup. If you see `Email NOT configured`, a variable is missing.
+
+**Render Free plan:** outbound SMTP to ports **587, 465, and 25 is blocked** (you get `502` / `OSError`). Your Gmail SMTP env vars can be correct and still fail. Fix:
+
+1. Sign up at [resend.com](https://resend.com) → **API Keys** → create a key.
+2. On Render, add `RESEND_API_KEY=re_...` and `CONTACT_EMAIL=your@gmail.com`.
+3. For testing, set `RESEND_FROM=Spooky Studios <onboarding@resend.dev>` (Resend’s test sender).
+4. Redeploy. Check `GET /api/email/status` — `resend_configured` should be `true`.
+
+Or upgrade Render to a **paid** instance to use Gmail SMTP directly.
+
+**Vercel + Nodemailer (same pattern as your other project):** deploy `vercel-email-api/` to Vercel, set Gmail SMTP env vars there, then on Render set:
+
+`CONTACT_API_URL=https://<your-vercel-project>.vercel.app/api/contact`
+
+See `vercel-email-api/README.md`.
+
+Redeploy after changing Environment variables.
 
 ---
 
@@ -192,8 +214,10 @@ HandGesture-WebNavigation/
 |--------|----------------|
 | `503` + `"Database unavailable"` on APIs | `DATABASE_URL`, DB running, network/firewall, SSL params; see server logs. |
 | Paid games always locked | `GET /api/entitlements` response; Razorpay verify step; user logged in. |
-| `500` on register: SMTP not configured | Set all `SMTP_*` vars in `.env` (see `.env.example`). |
-| Registration OTP not received | Correct `SMTP_*`, Gmail “app password”, spam folder. |
+| `500` / `503` on contact form | Set all `SMTP_*` + `CONTACT_EMAIL` (or `SMTP_FROM`) on **Render Environment**, not only local `.env`. Redeploy. |
+| `502` on contact form | SMTP login failed from Render — use Gmail **App Password**, check Render logs for `SMTP send failed`. |
+| `500` on register: SMTP not configured | Set all `SMTP_*` vars in Render Environment (see `.env.example`). |
+| Registration OTP not received | Correct `SMTP_*`, Gmail App Password, spam folder; confirm `Email ready` in Render logs. |
 | Camera blocked | Permission, use **localhost** or **HTTPS** on mobile. |
 | No server webcam in cloud | Expected — set `SKIP_SERVER_CAMERA=1` or deploy without expecting `/video`. |
 

@@ -915,6 +915,28 @@
   var status = document.getElementById("formStatus");
   var submit = document.getElementById("contactSubmit");
   if (!form) return;
+
+  var VERCEL_CONTACT_API = "https://vercel-contactform.vercel.app/api/contact";
+  var contactApiUrlPromise = fetch("/api/public-config")
+    .then(function (r) { return r.ok ? r.json() : {}; })
+    .then(function (cfg) {
+      if (cfg && cfg.contact_api_url) return cfg.contact_api_url;
+      return VERCEL_CONTACT_API;
+    })
+    .catch(function () { return VERCEL_CONTACT_API; });
+
+  function formatApiDetail(d) {
+    if (!d) return "";
+    if (typeof d === "string") return d;
+    if (typeof d === "object" && d.error) return d.error;
+    if (Array.isArray(d)) {
+      return d.map(function (x) {
+        return (x && (x.msg || x.message)) ? (x.msg || x.message) : String(x);
+      }).join(" ");
+    }
+    return String(d);
+  }
+
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
     var name = document.getElementById("cName").value.trim();
@@ -930,17 +952,18 @@
     status.textContent = "Sending…";
     status.className = "form-status";
     try {
-      var res = await fetch("/api/contact", {
+      var contactApiUrl = await contactApiUrlPromise;
+      var res = await fetch(contactApiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: name, email: email, subject: subject, message: message }),
       });
       var data = await res.json().catch(function () { return {}; });
       if (!res.ok) {
-        status.textContent = data.detail || "Could not send. Try WhatsApp or Telegram.";
+        status.textContent = formatApiDetail(data.detail) || formatApiDetail(data.error) || "Could not send. Try WhatsApp or Telegram.";
         status.className = "form-status err";
       } else {
-        status.textContent = data.detail || "Message sent!";
+        status.textContent = data.detail || (data.ok ? "Message sent!" : "Message sent!");
         status.className = "form-status ok";
         form.reset();
       }

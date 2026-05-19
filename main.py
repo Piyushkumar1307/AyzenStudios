@@ -1,7 +1,11 @@
 import asyncio
 import json
+import logging
 import os
+import ssl
 import time
+import urllib.error
+import urllib.request
 import hmac
 import hashlib
 import secrets
@@ -35,6 +39,8 @@ from auth_schemas import (
     VerifyEmailOtp,
 )
 from db import engine, get_db
+
+logger = logging.getLogger("spookystudios")
 
 # --- Password policy ---
 def _validate_password_or_400(pw: str) -> None:
@@ -260,17 +266,47 @@ def privacy_page():
     return FileResponse(PRIVACY_HTML)
 
 
+@app.get("/api/public-config")
+def public_config():
+    """Public config for the static frontend (no secrets)."""
+    contact_url = _env_str("CONTACT_API_URL")
+    return {
+        "contact_api_url": contact_url or None,
+        "brand": "spookystudios",
+    }
+
+
+@app.get("/api/email/status")
+def email_status():
+    """Lightweight check: is email configured for contact/OTP (no secrets exposed)."""
+    cfg = _smtp_settings_or_none()
+    inbox = _contact_inbox_email()
+    resend = bool(_env_str("RESEND_API_KEY"))
+    on_render = _env_str("RENDER").lower() == "true"
+    return {
+        "resend_configured": resend,
+        "smtp_configured": cfg is not None,
+        "contact_inbox_configured": bool(inbox),
+        "smtp_host": cfg["host"] if cfg else None,
+        "smtp_port": cfg["port"] if cfg else None,
+        "smtp_mode": cfg["mode"] if cfg else None,
+        "render_free_smtp_blocked": on_render and not resend,
+        "hint": (
+            "Render Free blocks SMTP ports 587/465. Add RESEND_API_KEY (HTTPS) or upgrade Render."
+            if on_render and not resend
+            else None
+        ),
+    }
+
+
 @app.post("/api/contact", response_model=OtpStatusResponse)
 def submit_contact(payload: ContactRequest):
     """Public contact form — emails studio inbox via SMTP."""
-    to = (
-        os.environ.get("CONTACT_EMAIL", "").strip()
-        or os.environ.get("SMTP_FROM", "").strip()
-    )
+    to = _contact_inbox_email()
     if not to:
         raise HTTPException(
             status_code=503,
-            detail="Contact form is not configured. Set CONTACT_EMAIL or SMTP_FROM in .env.",
+            detail="Contact form is not configured. Set CONTACT_EMAIL or SMTP_FROM in Render Environment.",
         )
     name = payload.name.strip()
     subject = payload.subject.strip() or "Studio inquiry"
@@ -285,6 +321,7 @@ def submit_contact(payload: ContactRequest):
         to_email=to,
         subject=f"[spookystudios] {subject}",
         body=body,
+        reply_to=str(payload.email),
     )
     return OtpStatusResponse(ok=True, detail="Thanks — we received your message and will reply soon.")
 
@@ -333,6 +370,7 @@ def _require_auth_tables() -> None:
 
 @app.on_event("startup")
 def _startup_db():
+    _log_email_config_status()
     try:
         _ensure_auth_tables()
     except OperationalError as e:
@@ -405,20 +443,82 @@ def api_login(payload: LoginRequest, db: Session = Depends(get_db)):
     return TokenResponse(access_token=token)
 
 
+def _env_str(key: str) -> str:
+    """Read env var; strip whitespace, quotes, and accidental newlines from Render UI."""
+    raw = os.environ.get(key, "")
+    if raw is None:
+        return ""
+    v = str(raw).strip().strip('"').strip("'")
+    return v
+
+
+def _contact_inbox_email() -> str:
+    return _env_str("CONTACT_EMAIL") or _env_str("SMTP_FROM")
+
+
 def _smtp_settings_or_none():
-    host = os.environ.get("SMTP_HOST", "").strip()
-    port_raw = os.environ.get("SMTP_PORT", "").strip()
-    user = os.environ.get("SMTP_USERNAME", "").strip()
-    pwd = os.environ.get("SMTP_PASSWORD", "").strip()
-    from_email = os.environ.get("SMTP_FROM", "").strip() or user
-    use_tls = os.environ.get("SMTP_TLS", "true").strip().lower() in ("1", "true", "yes")
+    host = _env_str("SMTP_HOST")
+    port_raw = _env_str("SMTP_PORT")
+    user = _env_str("SMTP_USERNAME")
+    # Gmail app passwords are often pasted with spaces; strip them for Render/env UIs.
+    pwd = _env_str("SMTP_PASSWORD").replace(" ", "")
+    from_email = _env_str("SMTP_FROM") or user
+    use_tls = _env_str("SMTP_TLS").lower() in ("1", "true", "yes", "")
     if not host or not port_raw or not user or not pwd or not from_email:
         return None
     try:
         port = int(port_raw)
     except Exception:
         return None
-    return {"host": host, "port": port, "user": user, "pwd": pwd, "from": from_email, "tls": use_tls}
+    # Port 465 = implicit SSL; 587 = STARTTLS (Gmail default).
+    if port == 465:
+        mode = "ssl"
+    elif use_tls:
+        mode = "starttls"
+    else:
+        mode = "plain"
+    return {
+        "host": host,
+        "port": port,
+        "user": user,
+        "pwd": pwd,
+        "from": from_email,
+        "mode": mode,
+    }
+
+
+def _log_email_config_status() -> None:
+    cfg = _smtp_settings_or_none()
+    inbox = _contact_inbox_email()
+    resend = bool(_env_str("RESEND_API_KEY"))
+    on_render = _env_str("RENDER").lower() == "true"
+    if resend and inbox:
+        logger.info("Email ready: provider=resend inbox=%s", inbox)
+        return
+    if cfg and inbox:
+        logger.info(
+            "Email ready: provider=smtp %s:%s mode=%s from=%s inbox=%s",
+            cfg["host"],
+            cfg["port"],
+            cfg["mode"],
+            cfg["from"],
+            inbox,
+        )
+        if on_render:
+            logger.warning(
+                "Render Free blocks outbound SMTP (587/465). Contact/OTP may fail with OSError "
+                "until you set RESEND_API_KEY or upgrade to a paid Render instance."
+            )
+        return
+    missing = []
+    if not resend and not cfg:
+        missing.append("RESEND_API_KEY or SMTP_*")
+    if not inbox:
+        missing.append("CONTACT_EMAIL or SMTP_FROM")
+    logger.warning(
+        "Email NOT configured (contact form + OTP will fail until set): %s",
+        "; ".join(missing),
+    )
 
 
 def _otp_signing_key() -> bytes:
@@ -434,30 +534,132 @@ def _otp_hash(email: str, code: str) -> str:
     return hmac.new(_otp_signing_key(), msg, hashlib.sha256).hexdigest()
 
 
-def _send_email_or_500(*, to_email: str, subject: str, body: str):
+def _smtp_send(cfg: dict, message: EmailMessage) -> None:
+    ctx = ssl.create_default_context()
+    timeout = 30
+    debug = _env_str("SMTP_DEBUG").lower() in ("1", "true", "yes")
+    if cfg["mode"] == "ssl":
+        with smtplib.SMTP_SSL(
+            cfg["host"], cfg["port"], timeout=timeout, context=ctx
+        ) as s:
+            if debug:
+                s.set_debuglevel(1)
+            s.login(cfg["user"], cfg["pwd"])
+            s.send_message(message)
+        return
+    with smtplib.SMTP(cfg["host"], cfg["port"], timeout=timeout) as s:
+        if debug:
+            s.set_debuglevel(1)
+        s.ehlo()
+        if cfg["mode"] == "starttls":
+            s.starttls(context=ctx)
+            s.ehlo()
+        s.login(cfg["user"], cfg["pwd"])
+        s.send_message(message)
+
+
+def _smtp_error_detail(exc: Exception) -> str:
+    name = type(exc).__name__
+    base = f"Email send failed ({name})."
+    if name == "SMTPAuthenticationError":
+        return (
+            base
+            + " Gmail rejected the login — set SMTP_PASSWORD to a 16-character "
+            "App Password (Google Account → Security → App passwords), not your normal password."
+        )
+    if name in ("SMTPConnectError", "TimeoutError", "OSError"):
+        if _env_str("RENDER").lower() == "true":
+            return (
+                base
+                + " Render Free blocks outbound SMTP (ports 587/465). "
+                "Add RESEND_API_KEY from resend.com (free, uses HTTPS), redeploy, "
+                "or upgrade your Render service to a paid instance."
+            )
+        return (
+            base
+            + " Could not reach the mail server — try SMTP_PORT=465, or set RESEND_API_KEY."
+        )
+    return base + " See Render service logs for the full error."
+
+
+def _send_via_resend(*, to_email: str, subject: str, body: str, reply_to: str | None = None) -> None:
+    api_key = _env_str("RESEND_API_KEY")
+    if not api_key:
+        raise HTTPException(
+            status_code=500,
+            detail="RESEND_API_KEY is not set.",
+        )
+    from_addr = _env_str("RESEND_FROM") or "Spooky Studios <onboarding@resend.dev>"
+    payload: dict = {
+        "from": from_addr,
+        "to": [to_email],
+        "subject": subject,
+        "text": body,
+    }
+    if reply_to:
+        payload["reply_to"] = reply_to
+    req = urllib.request.Request(
+        "https://api.resend.com/emails",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            resp.read()
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode("utf-8", errors="replace")[:500]
+        logger.error("Resend API HTTP %s: %s", e.code, err_body)
+        raise HTTPException(
+            status_code=502,
+            detail=f"Resend rejected the send (HTTP {e.code}). Check RESEND_FROM and domain verification at resend.com.",
+        )
+    except Exception as e:
+        logger.exception("Resend API failed: %s", e)
+        raise HTTPException(status_code=502, detail=f"Resend send failed ({type(e).__name__}).")
+
+
+def _send_email_or_500(*, to_email: str, subject: str, body: str, reply_to: str | None = None):
+    if _env_str("RESEND_API_KEY"):
+        _send_via_resend(
+            to_email=to_email,
+            subject=subject,
+            body=body,
+            reply_to=reply_to,
+        )
+        return
+
     cfg = _smtp_settings_or_none()
     if not cfg:
         raise HTTPException(
             status_code=500,
-            detail="SMTP not configured. Set SMTP_HOST/SMTP_PORT/SMTP_USERNAME/SMTP_PASSWORD/SMTP_FROM.",
+            detail=(
+                "Email not configured. On Render Free, set RESEND_API_KEY (resend.com). "
+                "On paid hosts, set SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM."
+            ),
         )
     m = EmailMessage()
     m["From"] = cfg["from"]
     m["To"] = to_email
     m["Subject"] = subject
+    if reply_to:
+        m["Reply-To"] = reply_to
     m.set_content(body)
     try:
-        if cfg["tls"]:
-            with smtplib.SMTP(cfg["host"], cfg["port"], timeout=20) as s:
-                s.starttls()
-                s.login(cfg["user"], cfg["pwd"])
-                s.send_message(m)
-        else:
-            with smtplib.SMTP_SSL(cfg["host"], cfg["port"], timeout=20) as s:
-                s.login(cfg["user"], cfg["pwd"])
-                s.send_message(m)
+        _smtp_send(cfg, m)
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Email send failed: {type(e).__name__}")
+        logger.exception(
+            "SMTP send failed to %s via %s:%s mode=%s: %s",
+            to_email,
+            cfg["host"],
+            cfg["port"],
+            cfg["mode"],
+            e,
+        )
+        raise HTTPException(status_code=502, detail=_smtp_error_detail(e))
 
 
 def _send_verification_otp_or_500(*, db: Session, email: str) -> None:

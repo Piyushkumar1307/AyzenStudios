@@ -15,3 +15,35 @@ services:
         value: 3.12.8
       - key: SKIP_SERVER_CAMERA
         value: "1"
+      # --- Set these in Render Dashboard → Environment (sync: false = you enter secrets) ---
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      # Contact form + signup OTP (Gmail: use App Password, 2FA required)
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_TLS
+        value: "true"
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: CONTACT_EMAIL
+        sync: false
+      # Render Free blocks SMTP 587/465 — use Resend (HTTPS) instead
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM
+        value: "Spooky Studios <onboarding@resend.dev>"
+      # Or use external Vercel Nodemailer API (see vercel-email-api/README.md)
+      - key: CONTACT_API_URL
+        sync: false
