@@ -130,6 +130,27 @@ SUPPORT_HTML = os.path.join(BASE_DIR, "static", "support.html")
 TERMS_HTML = os.path.join(BASE_DIR, "static", "terms.html")
 REFUNDS_HTML = os.path.join(BASE_DIR, "static", "refunds.html")
 PRIVACY_HTML = os.path.join(BASE_DIR, "static", "privacy.html")
+FAVICON_SVG = os.path.join(BASE_DIR, "static", "favicon.svg")
+FAVICON_VERSION = "3"
+
+
+def _favicon_response() -> FileResponse:
+    return FileResponse(
+        FAVICON_SVG,
+        media_type="image/svg+xml",
+        headers={
+            "Cache-Control": "public, max-age=3600",
+            "X-Favicon-Version": FAVICON_VERSION,
+        },
+    )
+
+
+@app.get("/favicon.svg")
+@app.get("/favicon.ico")
+def favicon():
+    """Browsers often request /favicon.ico directly (ignores HTML link tags)."""
+    return _favicon_response()
+
 
 # --- Store / Razorpay config ---
 PAID_GAMES: dict[str, dict] = {}
