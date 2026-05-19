@@ -282,18 +282,21 @@ def email_status():
     cfg = _smtp_settings_or_none()
     inbox = _contact_inbox_email()
     resend = bool(_env_str("RESEND_API_KEY"))
-    on_render = _env_str("RENDER").lower() == "true"
+    vercel = _vercel_email_configured()
+    on_render = _is_render_host()
     return {
+        "vercel_email_configured": vercel,
+        "vercel_email_base": _vercel_email_api_base() or None,
         "resend_configured": resend,
         "smtp_configured": cfg is not None,
         "contact_inbox_configured": bool(inbox),
         "smtp_host": cfg["host"] if cfg else None,
         "smtp_port": cfg["port"] if cfg else None,
         "smtp_mode": cfg["mode"] if cfg else None,
-        "render_free_smtp_blocked": on_render and not resend,
+        "render_free_smtp_blocked": on_render and not vercel and not resend,
         "hint": (
-            "Render Free blocks SMTP ports 587/465. Add RESEND_API_KEY (HTTPS) or upgrade Render."
-            if on_render and not resend
+            "Set EMAIL_API_SECRET on Render (match Vercel) and redeploy. SMTP is blocked on Render Free."
+            if on_render and not vercel and not resend
             else None
         ),
     }
@@ -487,15 +490,85 @@ def _smtp_settings_or_none():
     }
 
 
+def _is_render_host() -> bool:
+    return _env_str("RENDER").lower() == "true"
+
+
+def _vercel_email_api_base() -> str:
+    base = _env_str("EMAIL_API_URL").rstrip("/")
+    if base:
+        return base
+    contact = _env_str("CONTACT_API_URL")
+    if not contact:
+        return ""
+    if "/api/" in contact:
+        return contact.rsplit("/api/", 1)[0]
+    return contact.rstrip("/")
+
+
+def _vercel_email_api_secret() -> str:
+    return _env_str("EMAIL_API_SECRET")
+
+
+def _vercel_email_configured() -> bool:
+    secret = _vercel_email_api_secret()
+    if not secret or secret.startswith("<") or "same value" in secret.lower():
+        return False
+    return bool(_vercel_email_api_base() and secret)
+
+
+def _send_via_vercel_mail(*, to_email: str, subject: str, body: str) -> None:
+    base = _vercel_email_api_base()
+    secret = _vercel_email_api_secret()
+    if not base or not secret:
+        raise HTTPException(
+            status_code=500,
+            detail="Vercel email not configured. Set EMAIL_API_SECRET on Render (same as Vercel).",
+        )
+    url = f"{base}/api/send-mail"
+    payload = {"to": to_email, "subject": subject, "text": body}
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json", "X-Api-Key": secret},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            resp.read()
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode("utf-8", errors="replace")[:500]
+        logger.error("Vercel send-mail HTTP %s: %s", e.code, err_body)
+        raise HTTPException(
+            status_code=502,
+            detail=f"Email API failed (HTTP {e.code}). Check EMAIL_API_SECRET matches Vercel.",
+        )
+    except Exception as e:
+        logger.exception("Vercel send-mail failed: %s", e)
+        raise HTTPException(
+            status_code=502,
+            detail=f"Email API failed ({type(e).__name__}). Is /api/send-mail deployed on Vercel?",
+        )
+
+
 def _log_email_config_status() -> None:
     cfg = _smtp_settings_or_none()
     inbox = _contact_inbox_email()
     resend = bool(_env_str("RESEND_API_KEY"))
-    on_render = _env_str("RENDER").lower() == "true"
+    vercel = _vercel_email_configured()
+    on_render = _is_render_host()
+    if vercel:
+        logger.info("Email ready: provider=vercel base=%s", _vercel_email_api_base())
+        return
+    if on_render and _vercel_email_api_base() and not _vercel_email_api_secret():
+        logger.error(
+            "EMAIL_API_SECRET missing on Render. OTP/contact server mail will fail. "
+            "Set the same secret as on Vercel (not the placeholder text)."
+        )
     if resend and inbox:
         logger.info("Email ready: provider=resend inbox=%s", inbox)
         return
-    if cfg and inbox:
+    if cfg and inbox and not on_render:
         logger.info(
             "Email ready: provider=smtp %s:%s mode=%s from=%s inbox=%s",
             cfg["host"],
@@ -504,15 +577,15 @@ def _log_email_config_status() -> None:
             cfg["from"],
             inbox,
         )
-        if on_render:
-            logger.warning(
-                "Render Free blocks outbound SMTP (587/465). Contact/OTP may fail with OSError "
-                "until you set RESEND_API_KEY or upgrade to a paid Render instance."
-            )
+        return
+    if cfg and inbox and on_render:
+        logger.warning(
+            "SMTP vars present but Render Free blocks SMTP. Set EMAIL_API_SECRET for Vercel send-mail."
+        )
         return
     missing = []
-    if not resend and not cfg:
-        missing.append("RESEND_API_KEY or SMTP_*")
+    if not vercel and not resend and not cfg:
+        missing.append("EMAIL_API_SECRET + Vercel /api/send-mail, RESEND_API_KEY, or SMTP_*")
     if not inbox:
         missing.append("CONTACT_EMAIL or SMTP_FROM")
     logger.warning(
@@ -568,12 +641,11 @@ def _smtp_error_detail(exc: Exception) -> str:
             "App Password (Google Account → Security → App passwords), not your normal password."
         )
     if name in ("SMTPConnectError", "TimeoutError", "OSError"):
-        if _env_str("RENDER").lower() == "true":
+        if _is_render_host():
             return (
                 base
-                + " Render Free blocks outbound SMTP (ports 587/465). "
-                "Add RESEND_API_KEY from resend.com (free, uses HTTPS), redeploy, "
-                "or upgrade your Render service to a paid instance."
+                + " Render Free blocks SMTP. Set EMAIL_API_SECRET on Render (same as Vercel) "
+                "and redeploy — OTP uses https://spooky-studios-contactform.vercel.app/api/send-mail."
             )
         return (
             base
@@ -623,6 +695,21 @@ def _send_via_resend(*, to_email: str, subject: str, body: str, reply_to: str | 
 
 
 def _send_email_or_500(*, to_email: str, subject: str, body: str, reply_to: str | None = None):
+    if _vercel_email_configured():
+        _send_via_vercel_mail(to_email=to_email, subject=subject, body=body)
+        return
+
+    on_render = _is_render_host()
+
+    if on_render and _vercel_email_api_base():
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "EMAIL_API_SECRET is missing or invalid on Render. "
+                "Set it to the same random string as on Vercel, then redeploy."
+            ),
+        )
+
     if _env_str("RESEND_API_KEY"):
         _send_via_resend(
             to_email=to_email,
@@ -632,13 +719,21 @@ def _send_email_or_500(*, to_email: str, subject: str, body: str, reply_to: str 
         )
         return
 
+    if on_render:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Render cannot send SMTP. Set CONTACT_API_URL + EMAIL_API_SECRET "
+                "(Vercel /api/send-mail) or RESEND_API_KEY."
+            ),
+        )
+
     cfg = _smtp_settings_or_none()
     if not cfg:
         raise HTTPException(
             status_code=500,
             detail=(
-                "Email not configured. On Render Free, set RESEND_API_KEY (resend.com). "
-                "On paid hosts, set SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM."
+                "Email not configured. Set EMAIL_API_SECRET (Vercel), RESEND_API_KEY, or SMTP_*."
             ),
         )
     m = EmailMessage()
