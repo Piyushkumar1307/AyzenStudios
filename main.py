@@ -25,6 +25,7 @@ from models import HandState
 from auth import create_access_token, get_current_user, hash_password, verify_password
 from auth_models import Base, EmailOtp, GameEntitlement, GameScore, User
 from auth_schemas import (
+    ContactRequest,
     LoginRequest,
     MeResponse,
     OtpStatusResponse,
@@ -90,7 +91,7 @@ async def lifespan(app: FastAPI):
         detector.stop()
 
 app = FastAPI(
-    title="Gesture Backend",
+    title="spookystudios",
     description="MediaPipe hand gesture API for Unity",
     version="1.0.0",
     lifespan=lifespan
@@ -106,6 +107,7 @@ app.add_middleware(
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_HTML = os.path.join(BASE_DIR, "static", "index.html")
+GAMES_HTML = os.path.join(BASE_DIR, "static", "games.html")
 GAME_HTML = os.path.join(BASE_DIR, "static", "game.html")
 PUZZLE_HTML = os.path.join(BASE_DIR, "static", "puzzle.html")
 RUNNER_HTML = os.path.join(BASE_DIR, "static", "runner.html")
@@ -175,16 +177,22 @@ def index_alt():
     return FileResponse(INDEX_HTML)
 
 
+@app.get("/games")
+def games_catalog():
+    """Gesture games & AI tools catalog (requires login in-page)."""
+    return FileResponse(GAMES_HTML)
+
+
 @app.get("/marketplace")
 def marketplace():
-    """Game store / marketplace (same HTML as home page in this build)."""
-    return FileResponse(INDEX_HTML)
+    """Back-compat alias for the games catalog."""
+    return FileResponse(GAMES_HTML)
 
 
 @app.get("/store")
 def store_alias():
-    """Back-compat alias for the marketplace."""
-    return FileResponse(INDEX_HTML)
+    """Back-compat alias for the games catalog."""
+    return FileResponse(GAMES_HTML)
 
 
 @app.get("/game")
@@ -250,6 +258,35 @@ def refunds_page():
 @app.get("/privacy")
 def privacy_page():
     return FileResponse(PRIVACY_HTML)
+
+
+@app.post("/api/contact", response_model=OtpStatusResponse)
+def submit_contact(payload: ContactRequest):
+    """Public contact form — emails studio inbox via SMTP."""
+    to = (
+        os.environ.get("CONTACT_EMAIL", "").strip()
+        or os.environ.get("SMTP_FROM", "").strip()
+    )
+    if not to:
+        raise HTTPException(
+            status_code=503,
+            detail="Contact form is not configured. Set CONTACT_EMAIL or SMTP_FROM in .env.",
+        )
+    name = payload.name.strip()
+    subject = payload.subject.strip() or "Studio inquiry"
+    body = (
+        f"New message from spookystudios contact form\n\n"
+        f"Name: {name}\n"
+        f"Email: {payload.email}\n"
+        f"Subject: {subject}\n\n"
+        f"{payload.message.strip()}\n"
+    )
+    _send_email_or_500(
+        to_email=to,
+        subject=f"[spookystudios] {subject}",
+        body=body,
+    )
+    return OtpStatusResponse(ok=True, detail="Thanks — we received your message and will reply soon.")
 
 app.mount(
     "/static",
@@ -445,7 +482,7 @@ def _send_verification_otp_or_500(*, db: Session, email: str) -> None:
 
     _send_email_or_500(
         to_email=email,
-        subject="Your OTP for Piyush-Store",
+        subject="Your OTP for spookystudios",
         body=f"Your OTP is: {code}\n\nThis code expires in 10 minutes.\n",
     )
 

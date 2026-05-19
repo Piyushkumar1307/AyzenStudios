@@ -37,3 +37,10 @@ class OtpStatusResponse(BaseModel):
     ok: bool
     detail: str
 
+
+class ContactRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    email: EmailStr
+    message: str = Field(min_length=10, max_length=4000)
+    subject: str = Field(default="Studio inquiry", max_length=200)
+
