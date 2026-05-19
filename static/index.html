@@ -313,7 +313,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center 35%;
+    object-position: center center;
     display: block;
     transition: transform 0.45s ease;
   }
@@ -713,7 +713,7 @@
   <div class="services-grid">
     <article class="service-tile">
       <div class="service-tile-media">
-        <img src="/static/assets/studio/unity-games.png" alt="Spooky Studios 2D and 3D game development booth" loading="lazy" width="640" height="360">
+        <img src="/static/assets/studio/unity-games.png" alt="Spooky Studios — 2D and 3D game development" loading="lazy" width="640" height="360">
       </div>
       <div class="service-tile-body">
         <h3>2D &amp; 3D Unity games</h3>
@@ -722,7 +722,7 @@
     </article>
     <article class="service-tile">
       <div class="service-tile-media">
-        <img src="/static/assets/studio/gesture-games.png" alt="Spooky Studios gesture games at a convention booth" loading="lazy" width="640" height="360">
+        <img src="/static/assets/studio/gesture-games.png" alt="Spooky Studios — gesture-based games" loading="lazy" width="640" height="360">
       </div>
       <div class="service-tile-body">
         <h3>Gesture-based games</h3>
@@ -731,7 +731,7 @@
     </article>
     <article class="service-tile">
       <div class="service-tile-media">
-        <img src="/static/assets/studio/ai-services.png" alt="Spooky Studios AI services — gesture vision, generative AI, and face swap" loading="lazy" width="640" height="360">
+        <img src="/static/assets/studio/ai-services.png" alt="Spooky Studios — AI services" loading="lazy" width="640" height="360">
       </div>
       <div class="service-tile-body">
         <h3>AI services</h3>
@@ -740,7 +740,7 @@
     </article>
     <article class="service-tile">
       <div class="service-tile-media">
-        <img src="/static/assets/studio/web-services.png" alt="Spooky Studios web services and global API development" loading="lazy" width="640" height="360">
+        <img src="/static/assets/studio/web-services.png" alt="Spooky Studios — web and live ops" loading="lazy" width="640" height="360">
       </div>
       <div class="service-tile-body">
         <h3>Web &amp; live ops</h3>
@@ -916,7 +916,7 @@
   var submit = document.getElementById("contactSubmit");
   if (!form) return;
 
-  var VERCEL_CONTACT_API = "https://vercel-contactform.vercel.app/api/contact";
+  var VERCEL_CONTACT_API = "https://spooky-studios-contactform.vercel.app/api/contact";
   var contactApiUrlPromise = fetch("/api/public-config")
     .then(function (r) { return r.ok ? r.json() : {}; })
     .then(function (cfg) {
