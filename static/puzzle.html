@@ -6,6 +6,9 @@
 
 
 <script src="/static/favicon-set.js"></script>
+<script src="/static/js/runtime-config.js"></script>
+<script src="/static/js/spooky-api.js"></script>
+
 <title>Neon Pop — spookystudios</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -357,7 +360,7 @@ async function ensureAccess() {
     return false;
   }
   try {
-    const res = await fetch("/api/entitlements", { headers: { Authorization: "Bearer " + t } });
+    const res = await fetch(apiUrl("/api/entitlements"), { headers: { Authorization: "Bearer " + t } });
     if (!res.ok) {
       window.location.href = "/login";
       return false;
@@ -507,7 +510,7 @@ function submitScoreBestEffort(s) {
     lastSubmitted = scoreInt;
 
     const body = JSON.stringify({ game_id: GAME_ID, score: scoreInt });
-    const url = "/api/scores/submit";
+    const url = apiUrl("/api/scores/submit");
 
     // Most reliable on back/home/mobile: sendBeacon
     if (navigator.sendBeacon) {

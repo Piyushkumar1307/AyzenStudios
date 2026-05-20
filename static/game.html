@@ -6,6 +6,9 @@
 
 
 <script src="/static/favicon-set.js"></script>
+<script src="/static/js/runtime-config.js"></script>
+<script src="/static/js/spooky-api.js"></script>
+
 <title>Fruit Ninja</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -375,7 +378,7 @@ async function submitScore(s) {
   try {
     const t = sessionStorage.getItem(TOKEN_KEY);
     if (!t) return;
-    await fetch("/api/scores/submit", {
+    await fetch(apiUrl("/api/scores/submit"), {
       method: "POST",
       headers: {
         Authorization: "Bearer " + t,

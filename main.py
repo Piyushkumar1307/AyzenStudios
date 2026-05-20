@@ -103,10 +103,18 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Allow Unity (localhost) and any frontend to connect
+def _cors_origins() -> list[str]:
+    """Comma-separated FRONTEND_ORIGINS for Netlify/custom domain; default * for local dev."""
+    raw = os.environ.get("FRONTEND_ORIGINS", "").strip()
+    if raw:
+        return [o.strip() for o in raw.split(",") if o.strip()]
+    return ["*"]
+
+
+# Allow Unity (localhost), Netlify static site, and legacy same-origin Render HTML
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_cors_origins(),
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -291,8 +299,10 @@ def privacy_page():
 def public_config():
     """Public config for the static frontend (no secrets)."""
     contact_url = _env_str("CONTACT_API_URL")
+    api_base = _env_str("PUBLIC_API_BASE") or _env_str("SPOOKY_API_BASE")
     return {
         "contact_api_url": contact_url or None,
+        "api_base_url": api_base or None,
         "brand": "spookystudios",
     }
 

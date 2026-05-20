@@ -6,6 +6,9 @@
 
 
 <script src="/static/favicon-set.js"></script>
+<script src="/static/js/runtime-config.js"></script>
+<script src="/static/js/spooky-api.js"></script>
+
 <title>spookystudios — Game &amp; AI Development</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -919,7 +922,7 @@
   if (!form) return;
 
   var VERCEL_CONTACT_API = "https://spooky-studios-contactform.vercel.app/api/contact";
-  var contactApiUrlPromise = fetch("/api/public-config")
+  var contactApiUrlPromise = fetch(apiUrl("/api/public-config"))
     .then(function (r) { return r.ok ? r.json() : {}; })
     .then(function (cfg) {
       if (cfg && cfg.contact_api_url) return cfg.contact_api_url;

@@ -1,0 +1,25 @@
+# Used by Netlify when publish root is static/ (Git deploy + drag-and-drop).
+# Mirrors netlify.toml [[redirects]].
+
+/static/*           /:splat              200
+/favicon.ico        /favicon.svg         200
+/index              /index.html          200
+/games              /games.html          200
+/marketplace        /games.html          200
+/store              /games.html          200
+/game               /game.html           200
+/puzzle             /puzzle.html         200
+/runner             /runner.html         200
+/tictactoe          /tictactoe.html      200
+/traffic            /traffic.html        200
+/temple-run         /temple-run.html     200
+/login              /login.html          200
+/profile            /profile.html        200
+/leaderboard        /leaderboard.html    200
+/holo               /holo.html           200
+/kamehameha         /kamehameha.html     200
+/slingshot          /slingshot.html      200
+/support            /support.html        200
+/terms              /terms.html          200
+/refunds            /refunds.html        200
+/privacy            /privacy.html        200

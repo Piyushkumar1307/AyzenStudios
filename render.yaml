@@ -47,3 +47,6 @@ services:
       # Or use external Vercel Nodemailer API (see vercel-email-api/README.md)
       - key: CONTACT_API_URL
         sync: false
+      # Netlify static site origin(s), comma-separated (enables CORS for split deploy)
+      - key: FRONTEND_ORIGINS
+        sync: false

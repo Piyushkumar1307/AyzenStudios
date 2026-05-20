@@ -1,0 +1,125 @@
+# Static frontend on Netlify; FastAPI API on Render.
+# Repo root for Netlify: HandGesture-WebNavigation (or set base directory in Netlify UI).
+
+[build]
+  publish = "static"
+  command = "node scripts/netlify-build.js"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# HTML uses /static/... paths; publish root is static/, so map to files at /
+[[redirects]]
+  from = "/static/*"
+  to = "/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/favicon.svg"
+  to = "/favicon.svg"
+  status = 200
+
+[[redirects]]
+  from = "/favicon.ico"
+  to = "/favicon.svg"
+  status = 200
+
+[[redirects]]
+  from = "/index"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/games"
+  to = "/games.html"
+  status = 200
+
+[[redirects]]
+  from = "/marketplace"
+  to = "/games.html"
+  status = 200
+
+[[redirects]]
+  from = "/store"
+  to = "/games.html"
+  status = 200
+
+[[redirects]]
+  from = "/game"
+  to = "/game.html"
+  status = 200
+
+[[redirects]]
+  from = "/puzzle"
+  to = "/puzzle.html"
+  status = 200
+
+[[redirects]]
+  from = "/runner"
+  to = "/runner.html"
+  status = 200
+
+[[redirects]]
+  from = "/tictactoe"
+  to = "/tictactoe.html"
+  status = 200
+
+[[redirects]]
+  from = "/traffic"
+  to = "/traffic.html"
+  status = 200
+
+[[redirects]]
+  from = "/temple-run"
+  to = "/temple-run.html"
+  status = 200
+
+[[redirects]]
+  from = "/login"
+  to = "/login.html"
+  status = 200
+
+[[redirects]]
+  from = "/profile"
+  to = "/profile.html"
+  status = 200
+
+[[redirects]]
+  from = "/leaderboard"
+  to = "/leaderboard.html"
+  status = 200
+
+[[redirects]]
+  from = "/holo"
+  to = "/holo.html"
+  status = 200
+
+[[redirects]]
+  from = "/kamehameha"
+  to = "/kamehameha.html"
+  status = 200
+
+[[redirects]]
+  from = "/slingshot"
+  to = "/slingshot.html"
+  status = 200
+
+[[redirects]]
+  from = "/support"
+  to = "/support.html"
+  status = 200
+
+[[redirects]]
+  from = "/terms"
+  to = "/terms.html"
+  status = 200
+
+[[redirects]]
+  from = "/refunds"
+  to = "/refunds.html"
+  status = 200
+
+[[redirects]]
+  from = "/privacy"
+  to = "/privacy.html"
+  status = 200

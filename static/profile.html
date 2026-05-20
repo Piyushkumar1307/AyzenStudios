@@ -6,6 +6,9 @@
 
 
 <script src="/static/favicon-set.js"></script>
+<script src="/static/js/runtime-config.js"></script>
+<script src="/static/js/spooky-api.js"></script>
+
 <title>Profile — spookystudios</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -533,7 +536,7 @@
         return;
       }
       try {
-        const res = await fetch("/api/me", { headers: { Authorization: "Bearer " + token } });
+        const res = await fetch(apiUrl("/api/me"), { headers: { Authorization: "Bearer " + token } });
         if (!res.ok) { logout(); return; }
         const data = await res.json();
 

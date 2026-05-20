@@ -6,6 +6,9 @@
 
 
 <script src="/static/favicon-set.js"></script>
+<script src="/static/js/runtime-config.js"></script>
+<script src="/static/js/spooky-api.js"></script>
+
 <title>Temple Lean Run — spookystudios</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -116,7 +119,7 @@ async function ensureAccess() {
   const t = sessionStorage.getItem(TOKEN_KEY);
   if (!t) { window.location.href = "/login"; return false; }
   try {
-    const res = await fetch("/api/entitlements", { headers: { Authorization: "Bearer " + t } });
+    const res = await fetch(apiUrl("/api/entitlements"), { headers: { Authorization: "Bearer " + t } });
     if (!res.ok) { window.location.href = "/login"; return false; }
     const data = await res.json();
     const games = new Set(Array.isArray(data.games) ? data.games : []);
@@ -175,7 +178,7 @@ async function submitScore(v) {
   const t = sessionStorage.getItem(TOKEN_KEY);
   if (!t || !Number.isFinite(v) || v <= 0) return;
   try {
-    await fetch("/api/score", {
+    await fetch(apiUrl("/api/score"), {
       method:"POST",
       headers:{"Content-Type":"application/json", "Authorization":"Bearer " + t},
       body: JSON.stringify({ game_id: GAME_ID, score: Math.floor(v) })

@@ -6,6 +6,9 @@
 
 
 <script src="/static/favicon-set.js"></script>
+<script src="/static/js/runtime-config.js"></script>
+<script src="/static/js/spooky-api.js"></script>
+
 <title>Leaderboard — spookystudios</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -269,7 +272,7 @@
     }
 
     async function api(path, opts={}){
-      const res = await fetch(path, {
+      const res = await fetch(apiUrl(path), {
         ...opts,
         headers: {
           ...(opts.headers || {}),

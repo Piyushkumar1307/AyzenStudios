@@ -166,6 +166,12 @@ HandGesture-WebNavigation/
 
 ---
 
+## Split deploy: Netlify + Render
+
+Host **HTML/CSS/JS** on [Netlify](https://www.netlify.com) (instant loads) and keep **FastAPI** on Render (API only). See **[DEPLOY-NETLIFY.md](./DEPLOY-NETLIFY.md)** for setup (`SPOOKY_API_BASE`, `FRONTEND_ORIGINS`, redirects).
+
+---
+
 ## Deployment notes (Render)
 
 Your local `.env` file is **not** uploaded to Render. You must add every variable in **Render Dashboard → your Web Service → Environment**.

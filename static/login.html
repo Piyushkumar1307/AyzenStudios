@@ -6,6 +6,9 @@
 
 
 <script src="/static/favicon-set.js"></script>
+<script src="/static/js/runtime-config.js"></script>
+<script src="/static/js/spooky-api.js"></script>
+
 <title>Login — spookystudios</title>
 
 <style>
@@ -503,7 +506,7 @@
     });
 
     async function api(path, body) {
-      const res = await fetch(path, {
+      const res = await fetch(apiUrl(path), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -517,7 +520,7 @@
     }
 
     async function apiOtp(path, body) {
-      const res = await fetch(path, {
+      const res = await fetch(apiUrl(path), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -597,7 +600,7 @@
           throw new Error("Password must be 6+ characters with 1 uppercase, 1 lowercase, and 1 number.");
         }
         // Register now sends OTP and asks user to verify.
-        const res = await fetch("/api/auth/register", {
+        const res = await fetch(apiUrl("/api/auth/register"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, email, password }),

@@ -6,6 +6,9 @@
 
 
 <script src="/static/favicon-set.js"></script>
+<script src="/static/js/runtime-config.js"></script>
+<script src="/static/js/spooky-api.js"></script>
+
 <title>Traffic Rush — spookystudios</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -142,7 +145,7 @@ async function ensureAccess() {
   const t = sessionStorage.getItem(TOKEN_KEY);
   if (!t) { window.location.href = "/login"; return false; }
   try {
-    const res = await fetch("/api/entitlements", { headers: { Authorization: "Bearer " + t } });
+    const res = await fetch(apiUrl("/api/entitlements"), { headers: { Authorization: "Bearer " + t } });
     if (!res.ok) { window.location.href = "/login"; return false; }
     const data = await res.json();
     const games = new Set(Array.isArray(data.games) ? data.games : []);
@@ -416,7 +419,7 @@ async function submitScore(score) {
   try {
     const t = sessionStorage.getItem("piyush_token");
     if (!t) return;
-    await fetch("/api/scores/submit", {
+    await fetch(apiUrl("/api/scores/submit"), {
       method: "POST",
       headers: {
         Authorization: "Bearer " + t,

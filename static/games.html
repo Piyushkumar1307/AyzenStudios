@@ -6,6 +6,9 @@
 
 
 <script src="/static/favicon-set.js"></script>
+<script src="/static/js/runtime-config.js"></script>
+<script src="/static/js/spooky-api.js"></script>
+
 <title>Games — spookystudios</title>
 <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -608,7 +611,7 @@ renderPage();
 (async function(){
   var t=sessionStorage.getItem("piyush_token");
   if(!t){location.href="/login";return;}
-  var res=await fetch("/api/me",{headers:{Authorization:"Bearer "+t}});
+  var res=await fetch(apiUrl("/api/me"), {headers:{Authorization:"Bearer "+t}});
   if(!res.ok){sessionStorage.removeItem("piyush_token");location.href="/login";}
 })();
 </script>
