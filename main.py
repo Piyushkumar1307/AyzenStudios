@@ -168,7 +168,7 @@ FREE_GAMES = {
     "neon_runner": {"route": "/runner", "title": "Neon Runner", "category": "gesture-games", "leaderboard": True},
     "tictactoe": {"route": "/tictactoe", "title": "Neon Tic-Tac-Toe", "category": "gesture-games", "leaderboard": False},
     "traffic": {"route": "/traffic", "title": "Traffic Rush", "category": "gesture-games", "leaderboard": True},
-    "temple_lean_run": {"route": "/temple-run", "title": "Temple Lean Run", "category": "gesture-games", "leaderboard": True},
+    "temple_lean_run": {"route": "/temple-run", "title": "Temple Lean Run", "category": "gesture-games", "leaderboard": False},
     "sky_sling_birds": {"route": "/slingshot", "title": "Sky Sling Birds", "category": "gesture-games", "leaderboard": True},
     "holo": {"route": "/holo", "title": "Holo Hand FX", "category": "gesture-effect", "leaderboard": False},
     "kamehameha": {"route": "/kamehameha", "title": "Kamehameha Beam", "category": "gesture-effect", "leaderboard": False},

@@ -301,9 +301,8 @@
     <p>Final score: <strong id="finalScore">0</strong></p>
     <div class="panel-actions">
       <button type="button" class="btn-restart" id="btnRestart">Restart</button>
-      <a class="btn-home" id="btnHome" href="/">Home</a>
+      <a class="btn-home" id="btnHome" href="/games">Games</a>
     </div>
-    <p class="hint">Or pinch on a button with your hand.</p>
   </div>
 </div>
 
@@ -614,6 +613,16 @@ function clickAtCursor() {
     target.closest("#startOverlay")
   ) {
     onStartDismiss();
+    return;
+  }
+
+  const gameOverEl = document.getElementById("gameOverOverlay");
+  if (
+    gameOverEl &&
+    getComputedStyle(gameOverEl).display !== "none" &&
+    target.closest &&
+    target.closest("#gameOverOverlay")
+  ) {
     return;
   }
 

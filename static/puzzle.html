@@ -420,9 +420,8 @@ ensureAccess();
     <p>Best: <strong id="bestScore">0</strong></p>
     <div class="btn-row">
       <button type="button" class="btn btn-primary" id="btnRestart">Play again</button>
-      <a class="btn btn-ghost" href="/">Home</a>
+      <a class="btn btn-ghost" href="/games">Games</a>
     </div>
-    <p class="hint">Or pinch a button.</p>
   </div>
 </div>
 
@@ -818,6 +817,15 @@ function clickAtCursor() {
     target.closest("#startOverlay")
   ) {
     onStartDismiss();
+    return;
+  }
+
+  if (
+    gameOverOverlay &&
+    getComputedStyle(gameOverOverlay).display !== "none" &&
+    target.closest &&
+    target.closest("#gameOverOverlay")
+  ) {
     return;
   }
 

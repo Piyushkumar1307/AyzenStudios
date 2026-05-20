@@ -189,7 +189,7 @@ async function ensureAccess() {
     const games = new Set(Array.isArray(data.games) ? data.games : []);
     if (!games.has(GAME_ID)) {
       alert("This game is locked. Please unlock it from the store (Home).");
-      window.location.href = "/";
+      window.location.href = "/games";
       return false;
     }
     return true;
@@ -219,7 +219,7 @@ ensureAccess();
     <p>Endless runner: obstacles approach from the right.</p>
     <p><strong style="color:#67e8f9;">Pinch</strong> to jump and collect coins.</p>
     <p><strong style="color:#f87171;">Hit an obstacle</strong> and it’s game over.</p>
-    <p class="hint">Click, tap, or pinch anywhere here to start. Camera runs in your browser.</p>
+    <p class="hint">Click or tap here to start. Use pinch during the run to jump.</p>
   </div>
 </div>
 
@@ -230,9 +230,8 @@ ensureAccess();
     <p>Distance: <strong id="finalDist">0</strong></p>
     <div class="panel-actions">
       <button type="button" class="btn btn-primary" id="btnRestart">Restart</button>
-      <a class="btn btn-ghost" href="/">Home</a>
+      <a class="btn btn-ghost" href="/games">Games</a>
     </div>
-    <p class="hint">Or pinch on a button with your hand.</p>
   </div>
 </div>
 
@@ -430,12 +429,29 @@ function resetGame() {
   startBackgroundMusic();
 }
 
+async function submitScore(score) {
+  try {
+    const t = sessionStorage.getItem(TOKEN_KEY);
+    if (!t) return;
+    await fetch("/api/scores/submit", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + t,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ game_id: GAME_ID, score: Math.floor(score) }),
+    });
+  } catch { /* best-effort */ }
+}
+
 function endGame() {
   playing = false;
   gameOver = true;
   stopBackgroundMusic();
+  const final = Math.floor(distance);
   finalCoinsEl.textContent = String(coins);
-  finalDistEl.textContent = String(Math.floor(distance));
+  finalDistEl.textContent = String(final);
+  submitScore(final);
   gameOverOverlay.classList.add("visible");
 }
 
@@ -464,31 +480,6 @@ function spawnCoin(speed) {
   coinDrops.push({ x: getVW() + 40, y, r: COIN_R, alive: true, speed });
 }
 
-function clickAtCursor() {
-  const c = cursorEl.getBoundingClientRect();
-  const cx = c.left + c.width / 2;
-  const cy = c.top + c.height / 2;
-  const skip = (node) => node === cursorEl || node === handCanvas || node === gameCanvas;
-
-  const stack = document.elementsFromPoint ? document.elementsFromPoint(cx, cy) : [];
-  let target = null;
-  for (const el of stack) {
-    if (!el || skip(el)) continue;
-    target = el;
-    break;
-  }
-  if (!target) target = document.elementFromPoint(cx, cy);
-  if (!target || skip(target)) return;
-
-  if (startOverlay && getComputedStyle(startOverlay).display !== "none" && target.closest && target.closest("#startOverlay")) {
-    onStartDismiss();
-    return;
-  }
-
-  const clickable = target.closest ? target.closest("button, a[href], [role='button']") : null;
-  if (clickable && typeof clickable.click === "function") clickable.click();
-}
-
 function applyHandFrame(data) {
   const vv = window.visualViewport;
   const vw = vv?.width ?? window.innerWidth;
@@ -511,11 +502,7 @@ function applyHandFrame(data) {
   const isPinch = data.detected && data.gesture === "pinch";
   if (isPinch && !pinchDown) {
     pinchDown = true;
-    // If we are on an overlay (start/game over), pinch should click UI.
-    const startVisible = startOverlay && getComputedStyle(startOverlay).display !== "none";
-    const overVisible = gameOverOverlay && gameOverOverlay.classList.contains("visible");
-    if (startVisible || overVisible) clickAtCursor();
-    else jump();
+    if (playing && !gameOver) jump();
   }
   if (!isPinch) pinchDown = false;
 }

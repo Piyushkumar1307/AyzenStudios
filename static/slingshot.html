@@ -149,7 +149,7 @@
     <p class="hint">Tap start to allow camera + audio. Pinch + drag to aim.</p>
     <div class="btn-row">
       <button class="btn btn-primary" id="btnStart" type="button">Start</button>
-      <a class="btn btn-ghost" href="/">Home</a>
+      <a class="btn btn-ghost" href="/games">Games</a>
     </div>
   </div>
 </div>
@@ -161,7 +161,7 @@
     <p>Best Score: <strong id="bestScore">0</strong></p>
     <div class="btn-row">
       <button class="btn btn-primary" id="btnAgain" type="button">Play Again</button>
-      <a class="btn btn-ghost" href="/">Home</a>
+      <a class="btn btn-ghost" href="/games">Games</a>
     </div>
   </div>
 </div>
@@ -187,7 +187,7 @@ async function ensureAccess() {
     const games = new Set(Array.isArray(data.games) ? data.games : []);
     if (!games.has(GAME_ID)) {
       alert("This game is locked. Please unlock it from the store (Home).");
-      window.location.href = "/";
+      window.location.href = "/games";
       return false;
     }
     return true;
@@ -281,7 +281,7 @@ async function submitScore(v) {
   if (!t || !Number.isFinite(v) || v <= 0) return;
   submittedScores.add(v);
   try {
-    await fetch("/api/score", {
+    await fetch("/api/scores/submit", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

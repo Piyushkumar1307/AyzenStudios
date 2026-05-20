@@ -227,7 +227,7 @@ ensureAccess();
     <div class="btn-row">
       <button type="button" class="btn btn-primary btn-wide" id="btnAgain">Rematch</button>
       <button type="button" class="btn btn-ghost" id="btnResymbol">Change symbol</button>
-      <a class="btn btn-ghost" href="/">Home</a>
+      <a class="btn btn-ghost" href="/games">Games</a>
     </div>
     <p class="hint">Pinch a button to continue.</p>
   </div>
@@ -712,8 +712,7 @@ function clickAtCursor() {
     if (btn && (btn.id === "btnPickX" || btn.id === "btnPickO")) { btn.click(); return; }
   }
   if (!resultOverlay.classList.contains("hidden") && target.closest && target.closest("#resultOverlay")) {
-    const clicky = target.closest("button, a[href], [role='button']");
-    if (clicky && clicky.click) { clicky.click(); return; }
+    return;
   }
   const b = target.closest && target.closest(".board .cell");
   if (b && !b.disabled && b.dataset && b.dataset.index != null) b.click();
