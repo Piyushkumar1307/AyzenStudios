@@ -131,7 +131,7 @@ TERMS_HTML = os.path.join(BASE_DIR, "static", "terms.html")
 REFUNDS_HTML = os.path.join(BASE_DIR, "static", "refunds.html")
 PRIVACY_HTML = os.path.join(BASE_DIR, "static", "privacy.html")
 FAVICON_SVG = os.path.join(BASE_DIR, "static", "favicon.svg")
-FAVICON_VERSION = "3"
+FAVICON_VERSION = "4"
 
 
 def _favicon_response() -> FileResponse:
@@ -139,7 +139,7 @@ def _favicon_response() -> FileResponse:
         FAVICON_SVG,
         media_type="image/svg+xml",
         headers={
-            "Cache-Control": "public, max-age=3600",
+            "Cache-Control": "no-cache, must-revalidate",
             "X-Favicon-Version": FAVICON_VERSION,
         },
     )
