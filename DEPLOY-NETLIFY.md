@@ -26,6 +26,7 @@ You can deploy by dragging the **`static`** folder onto [Netlify Drop](https://a
    ```
 
 2. The folder must include `static/_redirects` (already in the repo) so `/games`, `/login`, and `/static/assets/...` work.
+3. Pages load API config from **`/js/runtime-config.js`** (not `/static/js/...` — that path 404s on Netlify unless redirects are applied).
 
 **Then:** drag the whole `static` folder (not the parent `HandGesture-WebNavigation` folder).
 
@@ -56,6 +57,15 @@ cd HandGesture-WebNavigation
 source .venv/bin/activate
 uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
+
+## Troubleshooting: login 404 on `yoursite.netlify.app/api/...`
+
+That means the browser called **Netlify** instead of **Render**. Usually `runtime-config.js` or `spooky-api.js` did not load.
+
+1. In Safari/Chrome DevTools → **Network**, confirm `runtime-config.js` and `spooky-api.js` return **200** from `/js/...`.
+2. Redeploy the full `static` folder (include `_redirects` and `js/`).
+3. Confirm `static/js/runtime-config.js` contains your Render URL.
+4. On Render, set `FRONTEND_ORIGINS=https://piyush-store.netlify.app`.
 
 ## Note on cold starts
 

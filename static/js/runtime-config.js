@@ -1,2 +1,2 @@
-// Local dev & Render (same host): empty base. Netlify build overwrites via scripts/netlify-build.js.
-window.SPOOKY_API_BASE = window.SPOOKY_API_BASE || "https://piyush-store.onrender.com";
+// Netlify / split deploy: point at Render API. Use "" for local uvicorn same-origin dev.
+window.SPOOKY_API_BASE = "https://piyush-store.onrender.com";

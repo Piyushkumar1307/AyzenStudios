@@ -1,11 +1,21 @@
 /**
  * Resolve API paths for split deploy: static on Netlify, FastAPI on Render.
- * Set window.SPOOKY_API_BASE (e.g. https://your-app.onrender.com) before this script loads.
+ * Load /js/runtime-config.js first to set window.SPOOKY_API_BASE.
  */
 (function (global) {
+  var DEFAULT_RENDER_API = "https://piyush-store.onrender.com";
+
   function apiBase() {
     var b = global.SPOOKY_API_BASE;
     if (typeof b === "string" && b.trim()) return b.trim().replace(/\/$/, "");
+
+    // If config script failed to load on Netlify, still hit Render (not Netlify 404).
+    if (typeof global.location !== "undefined") {
+      var host = global.location.hostname || "";
+      if (host.endsWith(".netlify.app")) {
+        return DEFAULT_RENDER_API.replace(/\/$/, "");
+      }
+    }
     return "";
   }
 
