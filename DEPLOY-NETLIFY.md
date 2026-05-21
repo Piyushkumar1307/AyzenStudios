@@ -40,7 +40,7 @@ Keep the existing Web Service (`uvicorn main:app`). Set:
 |----------|---------|
 | `SKIP_SERVER_CAMERA` | `1` |
 | `DATABASE_URL`, `JWT_SECRET`, Razorpay, email vars | (unchanged) |
-| `FRONTEND_ORIGINS` | `https://your-site.netlify.app,https://spookystudios.com` |
+| `FRONTEND_ORIGINS` | `https://spookystudios.netlify.app` (must match your real Netlify URL; any `*.netlify.app` is also allowed after latest API deploy) |
 
 Optional: HTML routes in `main.py` still work for backward compatibility; users should use the Netlify URL.
 
@@ -65,7 +65,7 @@ That means the browser called **Netlify** instead of **Render**. Usually `runtim
 1. In Safari/Chrome DevTools → **Network**, confirm `runtime-config.js` and `spooky-api.js` return **200** from `/js/...`.
 2. Redeploy the full `static` folder (include `_redirects` and `js/`).
 3. Confirm `static/js/runtime-config.js` contains your Render URL.
-4. On Render, set `FRONTEND_ORIGINS=https://piyush-store.netlify.app`.
+4. On Render, set `FRONTEND_ORIGINS=https://spookystudios.netlify.app` (your actual Netlify hostname — a mismatch causes login to hang with no response in Safari).
 
 ## Note on cold starts
 

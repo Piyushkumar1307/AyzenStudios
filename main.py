@@ -111,13 +111,24 @@ def _cors_origins() -> list[str]:
     return ["*"]
 
 
+def _cors_middleware_kwargs() -> dict:
+    origins = _cors_origins()
+    kwargs: dict = {
+        "allow_methods": ["*"],
+        "allow_headers": ["*"],
+    }
+    if origins == ["*"]:
+        kwargs["allow_origins"] = ["*"]
+        return kwargs
+    kwargs["allow_origins"] = origins
+    # Any Netlify preview/production subdomain (e.g. spookystudios vs piyush-store).
+    if os.environ.get("CORS_ALLOW_NETLIFY", "1").strip().lower() in ("1", "true", "yes"):
+        kwargs["allow_origin_regex"] = r"https://[a-zA-Z0-9][a-zA-Z0-9-]*\.netlify\.app"
+    return kwargs
+
+
 # Allow Unity (localhost), Netlify static site, and legacy same-origin Render HTML
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=_cors_origins(),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.add_middleware(CORSMiddleware, **_cors_middleware_kwargs())
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_HTML = os.path.join(BASE_DIR, "static", "index.html")
