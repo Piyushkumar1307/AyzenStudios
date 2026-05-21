@@ -50,7 +50,7 @@ Add your Netlify URL to `ALLOWED_ORIGINS` on the contact/OTP Vercel project.
 
 ## Local development
 
-Run uvicorn as usual. Leave `SPOOKY_API_BASE` empty — `apiUrl("/api/...")` stays same-origin.
+Run uvicorn as usual. On `http://127.0.0.1:8000` or `localhost`, `spooky-api.js` **automatically** uses same-origin APIs (even if `runtime-config.js` lists Render).
 
 ```bash
 cd HandGesture-WebNavigation

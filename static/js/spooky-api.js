@@ -5,11 +5,20 @@
 (function (global) {
   var DEFAULT_RENDER_API = "https://piyush-store.onrender.com";
 
+  function isLocalDevHost() {
+    if (typeof global.location === "undefined") return false;
+    var host = (global.location.hostname || "").toLowerCase();
+    return host === "localhost" || host === "127.0.0.1" || host === "[::1]";
+  }
+
   function apiBase() {
+    // Local uvicorn: always same-origin (ignore runtime-config Render URL).
+    if (isLocalDevHost()) return "";
+
     var b = global.SPOOKY_API_BASE;
     if (typeof b === "string" && b.trim()) return b.trim().replace(/\/$/, "");
 
-    // If config script failed to load on Netlify, still hit Render (not Netlify 404).
+    // Netlify static host: hit Render API (not Netlify /api 404).
     if (typeof global.location !== "undefined") {
       var host = global.location.hostname || "";
       if (host.endsWith(".netlify.app")) {

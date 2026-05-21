@@ -6,8 +6,8 @@
 
 
 <script src="/static/favicon-set.js"></script>
-<script src="/js/runtime-config.js"></script>
-<script src="/js/spooky-api.js"></script>
+<script src="/js/runtime-config.js?v=3"></script>
+<script src="/js/spooky-api.js?v=3"></script>
 
 <title>spookystudios — Game &amp; AI Development</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -325,6 +325,22 @@
 
   .service-tile:hover .service-tile-media img {
     transform: scale(1.04);
+  }
+
+  /* Branded banners (light PNG art) — fill tile like other services */
+  .service-tile-media--brand {
+    background: #c4c4c4;
+  }
+
+  .service-tile-media--brand img {
+    object-fit: cover;
+    object-position: center center;
+    padding: 0;
+    transform: scale(1.08);
+  }
+
+  .service-tile:hover .service-tile-media--brand img {
+    transform: scale(1.12);
   }
 
   .service-tile-body {
@@ -712,8 +728,8 @@
 <section id="about" class="reveal">
   <h2 class="section-title">What we do</h2>
   <p class="section-intro">
-    A small studio focused on memorable interaction — whether that means a Unity level,
-    a browser game controlled by your hands, or an AI product your users love.
+    A small studio focused on memorable interaction — Unity games, gesture web titles, AI tools,
+    live backends, and event-ready registration flows your guests actually enjoy using.
   </p>
   <div class="services-grid">
     <article class="service-tile">
@@ -750,6 +766,26 @@
       <div class="service-tile-body">
         <h3>Web &amp; live ops</h3>
         <p>FastAPI backends, auth, payments, leaderboards, and deployment so your game can grow after launch.</p>
+      </div>
+    </article>
+    <article class="service-tile">
+      <div class="service-tile-media service-tile-media--brand">
+        <img src="/static/assets/studio/smart-registration.png" alt="Spooky Studios Smart Registration — QR and Sunmi event check-in" loading="lazy" width="640" height="360">
+      </div>
+      <div class="service-tile-body">
+        <h3>Smart Registration</h3>
+        <p>QR-based guest check-in and Sunmi kiosk registration for events — fast queues, verified entries, and live attendance on site.</p>
+        <a href="#contact">Discuss your event →</a>
+      </div>
+    </article>
+    <article class="service-tile">
+      <div class="service-tile-media service-tile-media--brand">
+        <img src="/static/assets/studio/kiosk-application.png" alt="Spooky Studios — Kiosk Application with circular displays and kiosk games" loading="lazy" width="640" height="360">
+      </div>
+      <div class="service-tile-body">
+        <h3>Kiosk Application</h3>
+        <p>We build kiosk experiences for events and venues — circular screen displays for looping video, branded attract loops, and touch-first kiosk games guests play on the floor.</p>
+        <a href="#contact">Plan a kiosk experience →</a>
       </div>
     </article>
   </div>

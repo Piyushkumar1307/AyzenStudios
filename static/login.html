@@ -6,8 +6,8 @@
 
 
 <script src="/static/favicon-set.js"></script>
-<script src="/js/runtime-config.js"></script>
-<script src="/js/spooky-api.js"></script>
+<script src="/js/runtime-config.js?v=3"></script>
+<script src="/js/spooky-api.js?v=3"></script>
 
 <title>Login — spookystudios</title>
 
@@ -539,14 +539,14 @@
       sessionStorage.setItem(TOKEN_KEY, accessToken);
     }
 
-    function goStore() {
-      window.location.href = "/";
+    function goGames() {
+      window.location.href = "/games";
     }
 
-    // If already logged in, jump straight to store.
+    // If already logged in, jump straight to games catalog.
     (function boot() {
       const t = sessionStorage.getItem(TOKEN_KEY);
-      if (t) goStore();
+      if (t) goGames();
     })();
 
     document.getElementById("formLogin").addEventListener("submit", async (e) => {
@@ -562,7 +562,7 @@
         const data = await api("/api/auth/login", { email, password });
         saveToken(data.access_token);
         setMsg(msg, "Logged in. Redirecting…", "ok");
-        setTimeout(goStore, 250);
+        setTimeout(goGames, 250);
       } catch (err) {
         const emsg = String(err && err.message ? err.message : err);
         setMsg(msg, emsg, "error");
