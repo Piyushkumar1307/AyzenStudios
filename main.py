@@ -374,6 +374,7 @@ def submit_contact(payload: ContactRequest):
     return OtpStatusResponse(ok=True, detail="Thanks — we received your message and will reply soon.")
 
 _STATIC_DIR = os.path.join(BASE_DIR, "static")
+app.mount("/assets", StaticFiles(directory=os.path.join(_STATIC_DIR, "assets")), name="assets")
 app.mount("/js", StaticFiles(directory=os.path.join(_STATIC_DIR, "js")), name="js")
 app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
 

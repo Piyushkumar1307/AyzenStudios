@@ -287,6 +287,10 @@
     transform: translateY(0);
   }
 
+  .reveal img {
+    opacity: 1;
+  }
+
   .services-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -392,6 +396,7 @@
     overflow: hidden;
     border-bottom: 1px solid var(--border);
     background: #08040e;
+    position: relative;
   }
 
   .work-card-media img {
@@ -417,6 +422,26 @@
     font-weight: 700;
     color: var(--accent);
     font-size: 14px;
+  }
+
+  .play-badge {
+    position: absolute;
+    left: 14px;
+    bottom: 14px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #fff;
+    background: linear-gradient(135deg, #34a853, #1e8e3e);
+    box-shadow: 0 4px 16px rgba(52, 168, 83, 0.35);
+  }
+
+  .work-card--play .work-card-media img {
+    object-fit: cover;
+    object-position: center center;
   }
 
   .contact-section {
@@ -690,16 +715,17 @@
 </head>
 <body>
 
-<img class="bg-web" src="/static/assets/spooky/web.svg" alt="" aria-hidden="true">
-<img class="bg-web corner-bl" src="/static/assets/spooky/web.svg" alt="" aria-hidden="true">
+<img class="bg-web" src="/assets/spooky/web.svg" alt="" aria-hidden="true">
+<img class="bg-web corner-bl" src="/assets/spooky/web.svg" alt="" aria-hidden="true">
 
-<img class="scroll-ghost" id="scrollGhost" src="/static/assets/spooky/ghost.svg" alt="" aria-hidden="true">
+<img class="scroll-ghost" id="scrollGhost" src="/assets/spooky/ghost.svg" alt="" aria-hidden="true">
 
 <header class="site-header">
   <a class="logo" href="/">spookystudios</a>
   <nav class="nav-main">
     <a class="nav-link" href="#about">About</a>
     <a class="nav-link" href="#work">Work</a>
+    <a class="nav-link" href="#playstore">Play Store</a>
     <a class="nav-link" href="#contact">Contact</a>
     <a class="nav-link" href="/games">Play games</a>
     <button type="button" class="theme-btn" id="themeBtn" aria-label="Toggle day and night">🌙</button>
@@ -720,8 +746,8 @@
     </div>
   </div>
   <div class="hero-visual reveal" style="transition-delay: 0.15s">
-    <img class="float-deco ghost" src="/static/assets/spooky/ghost.svg" alt="" width="140" height="168">
-    <img class="float-deco spider" src="/static/assets/spooky/spider.svg" alt="" width="72" height="72">
+    <img class="float-deco ghost" src="/assets/spooky/ghost.svg" alt="" width="140" height="168">
+    <img class="float-deco spider" src="/assets/spooky/spider.svg" alt="" width="72" height="72">
   </div>
 </section>
 
@@ -734,7 +760,7 @@
   <div class="services-grid">
     <article class="service-tile">
       <div class="service-tile-media">
-        <img src="/static/assets/studio/unity-games.png" alt="Spooky Studios — 2D and 3D game development" loading="lazy" width="640" height="360">
+        <img src="/assets/studio/unity-games.png" alt="Spooky Studios — 2D and 3D game development" width="640" height="360">
       </div>
       <div class="service-tile-body">
         <h3>2D &amp; 3D Unity games</h3>
@@ -743,7 +769,7 @@
     </article>
     <article class="service-tile">
       <div class="service-tile-media">
-        <img src="/static/assets/studio/gesture-games.png" alt="Spooky Studios — gesture-based games" loading="lazy" width="640" height="360">
+        <img src="/assets/studio/gesture-games.png" alt="Spooky Studios — gesture-based games" width="640" height="360">
       </div>
       <div class="service-tile-body">
         <h3>Gesture-based games</h3>
@@ -752,7 +778,7 @@
     </article>
     <article class="service-tile">
       <div class="service-tile-media">
-        <img src="/static/assets/studio/ai-services.png" alt="Spooky Studios — AI services" loading="lazy" width="640" height="360">
+        <img src="/assets/studio/ai-services.png" alt="Spooky Studios — AI services" width="640" height="360">
       </div>
       <div class="service-tile-body">
         <h3>AI services</h3>
@@ -761,7 +787,7 @@
     </article>
     <article class="service-tile">
       <div class="service-tile-media">
-        <img src="/static/assets/studio/web-services.png" alt="Spooky Studios — web and live ops" loading="lazy" width="640" height="360">
+        <img src="/assets/studio/web-services.png" alt="Spooky Studios — web and live ops" width="640" height="360">
       </div>
       <div class="service-tile-body">
         <h3>Web &amp; live ops</h3>
@@ -770,7 +796,7 @@
     </article>
     <article class="service-tile">
       <div class="service-tile-media service-tile-media--brand">
-        <img src="/static/assets/studio/smart-registration.png" alt="Spooky Studios Smart Registration — QR and Sunmi event check-in" loading="lazy" width="640" height="360">
+        <img src="/assets/studio/smart-registration.png" alt="Spooky Studios Smart Registration — QR and Sunmi event check-in" width="640" height="360">
       </div>
       <div class="service-tile-body">
         <h3>Smart Registration</h3>
@@ -780,7 +806,7 @@
     </article>
     <article class="service-tile">
       <div class="service-tile-media service-tile-media--brand">
-        <img src="/static/assets/studio/kiosk-application.png" alt="Spooky Studios — Kiosk Application with circular displays and kiosk games" loading="lazy" width="640" height="360">
+        <img src="/assets/studio/kiosk-application.png" alt="Spooky Studios — Kiosk Application with circular displays and kiosk games" width="640" height="360">
       </div>
       <div class="service-tile-body">
         <h3>Kiosk Application</h3>
@@ -797,7 +823,7 @@
   <div class="work-row">
     <a class="work-card" href="/games">
       <div class="work-card-media">
-        <img src="/static/assets/games/gesture-catalog.png" alt="spookystudios gesture games" loading="lazy" width="400" height="225">
+        <img src="/assets/games/gesture-catalog.png" alt="spookystudios gesture games" width="400" height="225">
       </div>
       <div class="work-card-body">
         <h3>Gesture game catalog</h3>
@@ -807,12 +833,42 @@
     </a>
     <a class="work-card" href="https://facechange.in" target="_blank" rel="noopener noreferrer">
       <div class="work-card-media">
-        <img src="/static/assets/games/face-swap.png" alt="Face Swap by spookystudios" loading="lazy" width="400" height="225">
+        <img src="/assets/games/face-swap.png" alt="Face Swap by spookystudios" width="400" height="225">
       </div>
       <div class="work-card-body">
         <h3>Face Swap (AI)</h3>
         <p>Our face-swap tool on facechange.in — upload, swap, and download with a fast AI pipeline.</p>
         <span class="arrow">Open facechange.in →</span>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- Play Store: edit href, title, description, and img src for each game below -->
+<section id="playstore" class="reveal">
+  <h2 class="section-title">Published on Google Play Store</h2>
+  <p class="section-intro">Our Android games — download them on the Play Store.</p>
+  <div class="work-row">
+    <a class="work-card work-card--play" href="https://play.google.com/store/apps/details?id=com.DefaultCompany.ZombieCrusher" target="_blank" rel="noopener noreferrer">
+      <div class="work-card-media">
+        <img src="/assets/games/zombie-crusher.png" alt="Zombie Crusher on Google Play" width="400" height="225">
+        <span class="play-badge">Google Play</span>
+      </div>
+      <div class="work-card-body">
+        <h3>Zombie Crusher</h3>
+        <p>Smash cartoon zombies with oversized hammers in this arcade-style party-hat mayhem — quick rounds, silly chaos, and satisfying crushes.</p>
+        <span class="arrow">Get it on Google Play →</span>
+      </div>
+    </a>
+    <a class="work-card work-card--play" href="https://play.google.com/store/apps/details?id=com.TretaCompany.TicTacToe" target="_blank" rel="noopener noreferrer">
+      <div class="work-card-media">
+        <img src="/assets/games/tic-tac-toe-playstore.png" alt="Tic Tac Toe on Google Play" width="400" height="225">
+        <span class="play-badge">Google Play</span>
+      </div>
+      <div class="work-card-body">
+        <h3>Tic Tac Toe</h3>
+        <p>Classic Xs and Os with a bright, nostalgic look — recall your childhood in a polished mobile take on the board game everyone knows.</p>
+        <span class="arrow">Get it on Google Play →</span>
       </div>
     </a>
   </div>
@@ -846,7 +902,7 @@
       <div class="contact-ghost-wrap">
         <p class="ghost-speech" id="ghostSpeech" aria-live="polite">Hello there!</p>
         <div class="contact-ghost-frame">
-          <img class="contact-ghost" src="/static/assets/spooky/ghost.svg" alt="" width="160" height="192" aria-hidden="true">
+          <img class="contact-ghost" src="/assets/spooky/ghost.svg" alt="" width="160" height="192" aria-hidden="true">
         </div>
       </div>
       <p class="contact-chat-text">Prefer chat? Reach us directly — we usually reply within a day.</p>
@@ -897,19 +953,26 @@
 
 (function () {
   var els = document.querySelectorAll(".reveal");
+  function markVisible(el) {
+    el.classList.add("visible");
+  }
   if (!("IntersectionObserver" in window)) {
-    els.forEach(function (el) { el.classList.add("visible"); });
+    els.forEach(markVisible);
     return;
   }
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (e) {
       if (e.isIntersecting) {
-        e.target.classList.add("visible");
+        markVisible(e.target);
         io.unobserve(e.target);
       }
     });
-  }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
-  els.forEach(function (el) { io.observe(el); });
+  }, { threshold: 0.08, rootMargin: "0px 0px -20px 0px" });
+  els.forEach(function (el) {
+    var r = el.getBoundingClientRect();
+    if (r.top < window.innerHeight && r.bottom > 0) markVisible(el);
+    io.observe(el);
+  });
 })();
 
 (function () {
