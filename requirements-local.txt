@@ -1,0 +1,3 @@
+# Optional — only if you run the server-side webcam (not used on Render / Netlify).
+# mediapipe wheels for 0.10.29 may be unavailable on Python 3.12+; use Python 3.11 locally.
+mediapipe>=0.10.0,<0.10.30

@@ -10,7 +10,7 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
-      # Match wheels for mediapipe<0.10.30 (legacy solutions API).
+      # Python 3.12+; mediapipe not required on Render (SKIP_SERVER_CAMERA=1, browser hand tracking).
       - key: PYTHON_VERSION
         value: 3.12.8
       - key: SKIP_SERVER_CAMERA

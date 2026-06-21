@@ -1,7 +1,7 @@
 fastapi
 uvicorn[standard]
-# Legacy mp.solutions.hands API; removed in mediapipe>=0.10.30 — pin below that range.
-mediapipe>=0.10.0,<0.10.30
+# Server webcam optional (Render sets SKIP_SERVER_CAMERA=1). Browser games use client MediaPipe.
+# Local server camera: pip install -r requirements-local.txt
 opencv-python-headless
 websockets
 python-dotenv
@@ -13,4 +13,3 @@ passlib[bcrypt]
 email-validator
 bcrypt<4.0
 razorpay
-email-validator
