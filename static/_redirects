@@ -3,10 +3,12 @@
 
 /static/*           /:splat              200
 /assets/*           /assets/:splat        200
+/css/*              /css/:splat           200
 /js/*               /js/:splat           200
 /favicon.ico        /favicon.svg         200
 /index              /index.html          200
 /games              /games.html          200
+/game-instructions  /game-instructions.html  200
 /marketplace        /games.html          200
 /store              /games.html          200
 /game               /game.html           200
@@ -21,6 +23,9 @@
 /holo               /holo.html           200
 /kamehameha         /kamehameha.html     200
 /slingshot          /slingshot.html      200
+/webgl              /webgl.html          200
+/webgl-play         /webgl-play.html     200
+/controller         /controller.html     200
 /support            /support.html        200
 /terms              /terms.html          200
 /refunds            /refunds.html        200

@@ -35,4 +35,12 @@
     var base = apiBase();
     return base ? base + path : path;
   };
+
+  global.phoneControllerUrl = function (override) {
+    if (typeof override === "string" && override.trim()) {
+      return override.trim().replace(/\/$/, "");
+    }
+    var base = global.PHONE_CONTROLLER_BASE || "https://phonecontrollerserver.onrender.com";
+    return String(base).trim().replace(/\/$/, "");
+  };
 })(typeof window !== "undefined" ? window : globalThis);

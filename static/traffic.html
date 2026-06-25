@@ -8,6 +8,7 @@
 <script src="/static/favicon-set.js"></script>
 <script src="/js/runtime-config.js?v=3"></script>
 <script src="/js/spooky-api.js?v=3"></script>
+<link rel="stylesheet" href="/css/gesture-instructions.css?v=2">
 
 <title>Traffic Rush — spookystudios</title>
 <style>
@@ -113,16 +114,7 @@
 </div>
 
 <div class="overlay" id="startOverlay">
-  <div class="panel">
-    <h1>Traffic Rush</h1>
-    <p>Dodge oncoming cars across <strong style="color:#fbbf24;">3 lanes</strong>. The longer you survive, the faster traffic gets.</p>
-    <p><strong style="color:#22d3ee;">Steer</strong>: pinch with your <em>left hand</em> to move left, <em>right hand</em> to move right.</p>
-    <p class="hint"><strong>Tap Start</strong> to turn on the camera (required by your browser). Then play with hand pinches.</p>
-    <div class="btn-row">
-      <button class="btn btn-primary" id="btnStart" type="button">Start</button>
-      <a class="btn btn-ghost" href="/marketplace">Marketplace</a>
-    </div>
-  </div>
+  <div class="panel"></div>
 </div>
 
 <div class="overlay hidden" id="gameOverOverlay">
@@ -137,6 +129,9 @@
   </div>
 </div>
 
+<script src="/js/gesture-games.js"></script>
+<script src="/js/gesture-instructions.js?v=4"></script>
+<script>GestureInstructions.mountGameStart("traffic");</script>
 <script>
 const TOKEN_KEY = "piyush_token";
 const GAME_ID = "traffic";
@@ -656,7 +651,8 @@ function onStart() {
   });
 }
 
-btnStart.addEventListener("click", async () => {
+document.getElementById("startOverlay").addEventListener("click", async (e) => {
+  if (!e.target.closest("#btnStart")) return;
   const camOk = await bootHandTracking();
   if (!camOk) return;
   await unlockAudio();

@@ -8,6 +8,7 @@
 <script src="/static/favicon-set.js"></script>
 <script src="/js/runtime-config.js?v=3"></script>
 <script src="/js/spooky-api.js?v=3"></script>
+<link rel="stylesheet" href="/css/gesture-instructions.css?v=2">
 
 <title>Neon Pop — spookystudios</title>
 <style>
@@ -396,12 +397,7 @@ ensureAccess();
 </div>
 
 <div id="startOverlay">
-  <div class="panel">
-    <h1>Neon Pop</h1>
-    <p>One tile lights up — <strong style="color:#67e8f9;">pinch it</strong> before the bar runs out.</p>
-    <p>Each hit speeds things up a little. Three misses and it is game over. Beat your best score.</p>
-    <p class="hint">Point to aim, pinch to tap. Pinch here to start.</p>
-  </div>
+  <div class="panel"></div>
 </div>
 
 <div id="gameRoot">
@@ -428,6 +424,9 @@ ensureAccess();
   </div>
 </div>
 
+<script src="/js/gesture-games.js?v=3"></script>
+<script src="/js/gesture-instructions.js?v=5"></script>
+<script>GestureInstructions.mountGameStart("neon-pop");</script>
 <script>
 const HAND_CONNECTIONS = [
   [0,1],[1,2],[2,3],[3,4],
@@ -817,9 +816,9 @@ function clickAtCursor() {
     startOverlay &&
     getComputedStyle(startOverlay).display !== "none" &&
     target.closest &&
-    target.closest("#startOverlay")
+    target.closest("#startOverlay") &&
+    !target.closest("#btnStart")
   ) {
-    onStartDismiss();
     return;
   }
 
@@ -915,7 +914,7 @@ async function bootstrapHandTracking() {
         };
         document.addEventListener("click", go);
         document.addEventListener("touchstart", go);
-        alert("Tap the screen to allow the camera — then you can pinch to play.");
+        alert("Tap the screen to allow the camera — then click Start game.");
       });
       try {
         const { startClientHandTracking } = await import("/static/hand-client.js");
@@ -940,10 +939,14 @@ async function bootstrapHandTracking() {
 
 bootstrapHandTracking();
 
-startOverlay.addEventListener("click", onStartDismiss);
+startOverlay.addEventListener("click", (e) => {
+  if (!e.target.closest("#btnStart")) return;
+  onStartDismiss();
+});
 startOverlay.addEventListener(
   "touchstart",
   (e) => {
+    if (!e.target.closest("#btnStart")) return;
     e.preventDefault();
     onStartDismiss();
   },

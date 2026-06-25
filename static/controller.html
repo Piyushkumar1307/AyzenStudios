@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<script src="/static/favicon-set.js"></script>
+<script src="/js/runtime-config.js?v=3"></script>
+<script src="/js/spooky-api.js?v=3"></script>
+<title>Phone controller — spookystudios</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{
+    min-height:100dvh;background:#0c0612;color:#f3eef8;
+    font-family:system-ui,sans-serif;display:flex;flex-direction:column;
+    touch-action:manipulation;user-select:none;-webkit-user-select:none;
+  }
+  .head{padding:20px 16px 12px;text-align:center;border-bottom:1px solid rgba(167,139,250,.2)}
+  .head h1{font-size:18px;margin-bottom:4px}
+  .room{font-size:24px;font-weight:700;letter-spacing:.2em;color:#a78bfa}
+  .status{font-size:13px;margin-top:8px;color:#9d8fb0}
+  .status.ok{color:#34d399}
+  .status.err{color:#f87171}
+  .pad{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px;max-width:480px;margin:0 auto;width:100%}
+  .btn{
+    border:none;border-radius:16px;font-size:16px;font-weight:700;
+    background:#160d22;border:2px solid rgba(167,139,250,.35);color:#f3eef8;
+    min-height:72px;touch-action:manipulation;
+  }
+  .btn:active{background:#a78bfa;color:#0c0612}
+  .btn-wide{grid-column:1/-1;min-height:88px;background:linear-gradient(135deg,#a78bfa,#f472b6);color:#0c0612;border:none}
+  .stick-wrap{grid-column:1/-1;aspect-ratio:2/1;background:#160d22;border-radius:16px;border:2px solid rgba(167,139,250,.25);position:relative;touch-action:none}
+  .stick-knob{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;background:#a78bfa;box-shadow:0 4px 20px rgba(167,139,250,.5);left:50%;top:50%;pointer-events:none}
+  .foot{padding:12px;text-align:center;font-size:11px;color:#6b5f7a}
+</style>
+</head>
+<body>
+<header class="head">
+  <h1>Phone controller</h1>
+  <div class="room" id="roomEl">------</div>
+  <p class="status" id="status">Connecting…</p>
+</header>
+
+<div class="pad">
+  <button type="button" class="btn" data-action="left">◀ Left</button>
+  <button type="button" class="btn" data-action="right">Right ▶</button>
+  <div class="stick-wrap" id="stick">
+    <div class="stick-knob" id="knob"></div>
+  </div>
+  <button type="button" class="btn btn-wide" data-action="action">Action / Tap</button>
+</div>
+<p class="foot">spookystudios · Keep this screen open while playing</p>
+
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var room = (params.get("room") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
+  document.getElementById("roomEl").textContent = room || "??????";
+
+  if (!room) {
+    document.getElementById("status").textContent = "Missing room code in URL";
+    document.getElementById("status").className = "status err";
+    return;
+  }
+
+  var wsUrl;
+  (function () {
+    var api = typeof apiUrl === "function" ? apiUrl("") : "";
+    if (api && /^https?:\/\//i.test(api)) {
+      wsUrl = api.replace(/^http/, "ws") + "/ws/room/" + room;
+    } else {
+      var proto = location.protocol === "https:" ? "wss:" : "ws:";
+      wsUrl = proto + "//" + location.host + "/ws/room/" + room;
+    }
+  })();
+
+  var ws = null;
+  var statusEl = document.getElementById("status");
+
+  function send(obj) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    ws.send(JSON.stringify(obj));
+  }
+
+  function connect() {
+    statusEl.textContent = "Connecting…";
+    statusEl.className = "status";
+    ws = new WebSocket(wsUrl);
+    ws.onopen = function () {
+      statusEl.textContent = "Connected — play on the big screen";
+      statusEl.className = "status ok";
+      send({ type: "hello", role: "controller", room: room });
+    };
+    ws.onclose = function () {
+      statusEl.textContent = "Disconnected — tap to retry";
+      statusEl.className = "status err";
+      setTimeout(connect, 2000);
+    };
+    ws.onerror = function () {
+      statusEl.textContent = "Connection error";
+      statusEl.className = "status err";
+    };
+  }
+  connect();
+
+  document.querySelectorAll(".btn[data-action]").forEach(function (btn) {
+    var action = btn.getAttribute("data-action");
+  function pulse() {
+      send({ type: "input", action: action, ts: Date.now() });
+    }
+    btn.addEventListener("click", pulse);
+    btn.addEventListener("touchstart", function (e) { e.preventDefault(); pulse(); }, { passive: false });
+  });
+
+  var stick = document.getElementById("stick");
+  var knob = document.getElementById("knob");
+  var dragging = false;
+
+  function stickMove(clientX, clientY) {
+    var r = stick.getBoundingClientRect();
+    var x = (clientX - r.left) / r.width;
+    var y = (clientY - r.top) / r.height;
+    x = Math.max(0, Math.min(1, x));
+    y = Math.max(0, Math.min(1, y));
+    knob.style.left = (x * 100) + "%";
+    knob.style.top = (y * 100) + "%";
+    send({ type: "input", action: "joystick", x: x * 2 - 1, y: -(y * 2 - 1), ts: Date.now() });
+  }
+
+  stick.addEventListener("touchstart", function (e) {
+    dragging = true;
+    e.preventDefault();
+    stickMove(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: false });
+  stick.addEventListener("touchmove", function (e) {
+    if (!dragging) return;
+    e.preventDefault();
+    stickMove(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: false });
+  stick.addEventListener("touchend", function () { dragging = false; });
+})();
+</script>
+</body>
+</html>

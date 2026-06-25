@@ -8,6 +8,7 @@
 <script src="/static/favicon-set.js"></script>
 <script src="/js/runtime-config.js?v=3"></script>
 <script src="/js/spooky-api.js?v=3"></script>
+<link rel="stylesheet" href="/css/gesture-instructions.css?v=2">
 
 <title>Sky Sling Birds — spookystudios</title>
 <style>
@@ -145,16 +146,7 @@
 </div>
 
 <div class="overlay" id="startOverlay">
-  <div class="panel">
-    <h1>Sky Sling Birds</h1>
-    <p>Use <strong>pinch</strong> to grab the bird on the sling, pull back, and release to launch.</p>
-    <p>Break blocks and hit targets. You get <strong>3 birds</strong> total.</p>
-    <p class="hint">Tap start to allow camera + audio. Pinch + drag to aim.</p>
-    <div class="btn-row">
-      <button class="btn btn-primary" id="btnStart" type="button">Start</button>
-      <a class="btn btn-ghost" href="/games">Games</a>
-    </div>
-  </div>
+  <div class="panel"></div>
 </div>
 
 <div class="overlay hidden" id="gameOverOverlay">
@@ -202,6 +194,9 @@ async function ensureAccess() {
 ensureAccess();
 </script>
 
+<script src="/js/gesture-games.js"></script>
+<script src="/js/gesture-instructions.js?v=4"></script>
+<script>GestureInstructions.mountGameStart("sky-sling");</script>
 <script>
 const HAND_CONNECTIONS = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
 const canvas = document.getElementById("gameCanvas");
@@ -691,7 +686,8 @@ async function startHandTracking(){
   handStop = await startClientHandTracking(applyHandFrame);
 }
 
-btnStart.addEventListener("click", async () => {
+document.getElementById("startOverlay").addEventListener("click", async (e) => {
+  if (!e.target.closest("#btnStart")) return;
   await unlockAudio();
   if (!handStop) await startHandTracking();
   resetRound();

@@ -8,6 +8,7 @@
 <script src="/static/favicon-set.js"></script>
 <script src="/js/runtime-config.js?v=3"></script>
 <script src="/js/spooky-api.js?v=3"></script>
+<link rel="stylesheet" href="/css/gesture-instructions.css?v=2">
 
 <title>Neon Tic-Tac-Toe — spookystudios</title>
 <style>
@@ -198,15 +199,7 @@ ensureAccess();
 </div>
 
 <div class="panel-wrap" id="symbolOverlay">
-  <div class="panel">
-    <h1>Tic-Tac-Toe</h1>
-    <p>Pick your side. <strong style="color:#67e8f9;">X</strong> always opens. If you play <strong style="color:#a78bfa;">O</strong>, the AI moves first.</p>
-    <p class="hint">Point to aim, <strong>pinch</strong> to tap — on buttons and the grid.</p>
-    <div class="sym-row">
-      <button type="button" class="btn btn-x" id="btnPickX" data-sym="X">Play as X</button>
-      <button type="button" class="btn btn-o" id="btnPickO" data-sym="O">Play as O</button>
-    </div>
-  </div>
+  <div class="panel"></div>
 </div>
 
 <div id="gameRoot">
@@ -236,6 +229,9 @@ ensureAccess();
   </div>
 </div>
 
+<script src="/js/gesture-games.js"></script>
+<script src="/js/gesture-instructions.js?v=4"></script>
+<script>GestureInstructions.mountGameStart("tictactoe");</script>
 <script>
 const LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 const handCanvas = document.getElementById("handCanvas");
@@ -677,8 +673,10 @@ function onPickSym(sym) {
   symbolOverlay.classList.add("hidden");
   startMatch();
 }
-document.getElementById("btnPickX").addEventListener("click", () => onPickSym("X"));
-document.getElementById("btnPickO").addEventListener("click", () => onPickSym("O"));
+document.getElementById("symbolOverlay").addEventListener("click", (e) => {
+  if (e.target.closest("#btnPickX")) onPickSym("X");
+  else if (e.target.closest("#btnPickO")) onPickSym("O");
+});
 document.getElementById("btnAgain").addEventListener("click", () => {
   initAudio();
   startMatch();

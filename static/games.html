@@ -134,10 +134,12 @@
   .price{font-size:10px;font-weight:700;text-transform:uppercase;padding:3px 7px;border-radius:4px;background:var(--bg);color:var(--muted)}
   .desc{font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .cta{
-    display:block;text-align:center;padding:10px;border-radius:8px;
+    display:block;width:100%;text-align:center;padding:10px;border-radius:8px;
     background:linear-gradient(135deg,var(--accent),#7c3aed);
     color:#fff;font-weight:700;font-size:13px;text-decoration:none;
+    border:none;cursor:pointer;font-family:inherit;
   }
+  .cta:hover{filter:brightness(1.08)}
 
   .stage-footer{
     flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:12px;
@@ -291,7 +293,7 @@
 
   <div class="page-head">
     <h1>Gesture games</h1>
-    <p>Browse and play inside the catalog — scroll the box or flip pages. AI tools live on the <a href="/" style="color:var(--accent);font-weight:600">home page</a>.</p>
+    <p>Pick a game and tap <strong>Play</strong> — a quick guide opens before you jump in.</p>
   </div>
 
   <section class="catalog-stage" aria-label="Game catalog">
@@ -329,15 +331,15 @@
 
 <script>
 var GAMES=[
-  {id:"game-skeleton-catch",cat:"gesture-games",img:"/static/assets/games/fruit-ninja.png",title:"Fruit-Ninja",desc:"Slice fruit with hand gestures — pinch to play, swipe to slash.",href:"/game"},
-  {id:"game-holo-fx",cat:"gesture-effect",img:"/static/assets/games/kamehameha.png",title:"Holo Hand FX",desc:"Neon hand trails and sci-fi FX controlled by your hands.",href:"/holo",hidden:true},
-  {id:"game-kamehameha",cat:"gesture-effect",img:"/static/assets/games/kamehameha.png",title:"Kamehameha Beam",desc:"Charge energy between your palms and fire a two-hand blast.",href:"/kamehameha"},
-  {id:"game-neon-pop",cat:"gesture-games",img:"/static/assets/games/neon-pop.png",title:"Neon Pop",desc:"Pinch glowing tiles before the timer runs out.",href:"/puzzle"},
-  {id:"game-neon-runner",cat:"gesture-games",img:"/static/assets/games/neon-runner.png",title:"Neon Runner",desc:"Endless cyberpunk runner — pinch to jump.",href:"/runner"},
-  {id:"game-tictactoe",cat:"gesture-games",img:"/static/assets/games/tictactoe.png",title:"Neon Tic-Tac-Toe",desc:"Pinch cells to play against a leveling AI.",href:"/tictactoe"},
-  {id:"game-traffic",cat:"gesture-games",img:"/static/assets/games/traffic-rush.png",title:"Traffic Rush",desc:"Steer through neon traffic lanes with gestures.",href:"/traffic"},
-  {id:"game-sky-sling-birds",cat:"gesture-games",img:"/static/assets/games/slingshot.png",title:"Sky Sling Birds",desc:"Pull back and launch with physics-based puzzles.",href:"/slingshot"},
-  {id:"game-temple-lean-run",cat:"gesture-games",img:"/static/assets/games/neon-runner.png",title:"Temple Lean Run",desc:"Lean left or right to dodge in an endless runner.",href:"/temple-run",hidden:true}
+  {id:"game-skeleton-catch",gestureId:"fruit-ninja",cat:"gesture-games",img:"/static/assets/games/fruit-ninja.png",title:"Fruit-Ninja",desc:"Slice fruit with hand gestures — swipe to slash.",href:"/game"},
+  {id:"game-holo-fx",gestureId:"holo-fx",cat:"gesture-effect",img:"/static/assets/games/kamehameha.png",title:"Holo Hand FX",desc:"Neon hand trails and sci-fi FX controlled by your hands.",href:"/holo",hidden:true},
+  {id:"game-kamehameha",gestureId:"kamehameha",cat:"gesture-effect",img:"/static/assets/games/kamehameha.png",title:"Kamehameha Beam",desc:"Charge energy between your palms and fire a two-hand blast.",href:"/kamehameha"},
+  {id:"game-neon-pop",gestureId:"neon-pop",cat:"gesture-games",img:"/static/assets/games/neon-pop.png",title:"Neon Pop",desc:"Tap glowing tiles before the timer runs out.",href:"/puzzle"},
+  {id:"game-neon-runner",gestureId:"neon-runner",cat:"gesture-games",img:"/static/assets/games/neon-runner.png",title:"Neon Runner",desc:"Endless cyberpunk runner — tap to jump.",href:"/runner"},
+  {id:"game-tictactoe",gestureId:"tictactoe",cat:"gesture-games",img:"/static/assets/games/tictactoe.png",title:"Neon Tic-Tac-Toe",desc:"Pinch cells to play against a leveling AI.",href:"/tictactoe"},
+  {id:"game-traffic",gestureId:"traffic",cat:"gesture-games",img:"/static/assets/games/traffic-rush.png",title:"Traffic Rush",desc:"Steer through neon traffic lanes with gestures.",href:"/traffic"},
+  {id:"game-sky-sling-birds",gestureId:"sky-sling",cat:"gesture-games",img:"/static/assets/games/slingshot.png",title:"Sky Sling Birds",desc:"Pull back and launch with physics-based puzzles.",href:"/slingshot"},
+  {id:"game-temple-lean-run",gestureId:"temple-run",cat:"gesture-games",img:"/static/assets/games/neon-runner.png",title:"Temple Lean Run",desc:"Lean left or right to dodge in an endless runner.",href:"/temple-run",hidden:true}
 ];
 
 var PER_PAGE=6;
@@ -373,7 +375,14 @@ function renderCard(g){
     '<div class="media"><img src="'+g.img+'" alt="'+alt.replace(/"/g,"&quot;")+'" loading="lazy"></div>'+
     '<div class="body"><div class="row"><h3>'+g.title+'</h3><span class="price">Free</span></div>'+
     '<p class="desc">'+g.desc+'</p>'+
-    '<a class="cta" href="'+g.href+'">Play now</a></div>';
+    '<button type="button" class="cta" data-play="'+g.gestureId+'">▶ Play</button></div>';
+  el.querySelector("[data-play]").addEventListener("click",function(){
+    if(g.gestureId){
+      location.href="/game-instructions?game="+encodeURIComponent(g.gestureId);
+    } else {
+      location.href=g.href;
+    }
+  });
   return el;
 }
 

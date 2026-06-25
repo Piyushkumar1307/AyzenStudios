@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="/static/favicon-set.js"></script>
+<script src="/js/runtime-config.js?v=4"></script>
+<script src="/js/spooky-api.js?v=5"></script>
+<script src="/js/webgl-games.js?v=4"></script>
+<title>WebGL Games — spookystudios</title>
+<link href="https://fonts.googleapis.com/css2?family=Creepster&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root,[data-theme="dark"]{
+    --bg:#0c0612;--card:#160d22;--text:#f3eef8;--muted:#9d8fb0;
+    --accent:#a78bfa;--border:rgba(167,139,250,.22);--glow:rgba(167,139,250,.35);
+  }
+  [data-theme="light"]{
+    --bg:#f4f0f8;--card:#fff;--text:#1a1028;--muted:#5c4d6e;
+    --accent:#6d28d9;--border:rgba(109,40,217,.18);--glow:rgba(109,40,217,.12);
+  }
+  body{font-family:"Outfit",system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+  .wrap{max-width:1100px;margin:0 auto;padding:28px 24px 48px}
+  .top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:32px;flex-wrap:wrap}
+  .logo{font-family:"Creepster",cursive;font-size:26px;color:var(--accent);text-decoration:none}
+  .nav a{color:var(--muted);text-decoration:none;font-weight:600;font-size:14px;margin-left:18px}
+  .nav a:hover{color:var(--text)}
+  h1{font-size:clamp(28px,4vw,40px);margin-bottom:8px}
+  .intro{color:var(--muted);max-width:56ch;margin-bottom:28px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:22px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  .media{position:relative;aspect-ratio:16/9;background:#08040e;overflow:hidden}
+  .media img{width:100%;height:100%;object-fit:cover;display:block}
+  .media::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(12,6,18,.85))}
+  .play-overlay{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    z-index:2;background:rgba(12,6,18,.35);opacity:0;transition:opacity .25s,background .25s;
+  }
+  .card:hover .play-overlay{opacity:1;background:rgba(12,6,18,.5)}
+  .play-btn{
+    border:none;cursor:pointer;padding:14px 32px;border-radius:999px;
+    font-family:inherit;font-size:15px;font-weight:700;letter-spacing:.04em;
+    color:#0c0612;background:linear-gradient(135deg,var(--accent),#f472b6);
+    box-shadow:0 8px 32px var(--glow);transition:transform .2s;
+  }
+  .play-btn:hover{transform:scale(1.06)}
+  .body{padding:18px 20px 22px}
+  .body h2{font-size:18px;margin-bottom:6px}
+  .body p{font-size:14px;color:var(--muted)}
+  .badge{display:inline-block;margin-top:10px;font-size:10px;font-weight:700;text-transform:uppercase;padding:4px 8px;border-radius:4px;background:rgba(167,139,250,.15);color:var(--accent)}
+  .modal{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.72)}
+  .modal.open{display:flex}
+  .panel{max-width:440px;width:100%;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px 24px;box-shadow:0 24px 64px rgba(0,0,0,.45)}
+  .panel h3{font-size:22px;margin-bottom:8px}
+  .panel p{font-size:14px;color:var(--muted);margin-bottom:16px}
+  .panel ol{margin:0 0 20px 20px;font-size:14px;color:var(--muted)}
+  .panel ol li{margin-bottom:8px}
+  .room-box{background:#08040e;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px;text-align:center}
+  .room-label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  .room-code{font-size:28px;font-weight:700;letter-spacing:.2em;color:var(--accent);margin:6px 0}
+  .phone-url{font-size:12px;word-break:break-all;color:var(--muted);margin-bottom:12px}
+  .qr{display:block;margin:0 auto 16px;border-radius:8px;background:#fff;padding:8px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{flex:1;min-width:120px;padding:12px 16px;border-radius:10px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;border:none}
+  .btn-primary{background:var(--accent);color:#0c0612}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+</style>
+<script>(function(){var s=localStorage.getItem("spooky-studios-theme");document.documentElement.setAttribute("data-theme",s==="light"||s==="dark"?s:"dark")})();</script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="logo" href="/">spookystudios</a>
+    <nav class="nav">
+      <a href="/games">Gesture games</a>
+      <a href="/">Home</a>
+    </nav>
+  </header>
+  <h1>WebGL games</h1>
+  <p class="intro">Play in the browser on your laptop or TV. Use your phone as the controller — scan the QR code after you press Play.</p>
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="modal" id="instrModal" role="dialog" aria-modal="true" aria-labelledby="instrTitle">
+  <div class="panel">
+    <h3 id="instrTitle">Connect your phone</h3>
+    <p id="instrGame">Before the game starts, open this link on your phone:</p>
+    <ol>
+      <li>Open the URL below on your phone (same Wi‑Fi or mobile data).</li>
+      <li>Keep this tab open — the game runs here.</li>
+      <li>When your phone says <strong>Connected</strong>, tap Launch game.</li>
+    </ol>
+    <div class="room-box">
+      <div class="room-label">Phone controller</div>
+      <img class="qr" id="qrImg" width="160" height="160" alt="QR code for phone controller">
+      <div class="phone-url" id="phoneUrl"></div>
+    </div>
+    <div class="row">
+      <button type="button" class="btn btn-ghost" id="btnCopy">Copy link</button>
+      <button type="button" class="btn btn-primary" id="btnLaunch">Launch game</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button type="button" class="btn btn-ghost" id="btnCancel" style="flex:1">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var games = window.WEBGL_GAMES || [];
+  var grid = document.getElementById("grid");
+  var modal = document.getElementById("instrModal");
+  var pendingSlug = null;
+  var pendingGame = null;
+
+  function controllerUrl(game) {
+    var g = game || pendingGame;
+    var override = g && g.phoneControllerUrl;
+    return typeof phoneControllerUrl === "function"
+      ? phoneControllerUrl(override)
+      : (override || "https://phonecontrollerserver.onrender.com");
+  }
+
+  function openInstructions(game) {
+    pendingSlug = game.slug;
+    pendingGame = game;
+    document.getElementById("instrTitle").textContent = "Play " + game.title;
+    var url = controllerUrl(game);
+    document.getElementById("phoneUrl").textContent = url;
+    document.getElementById("qrImg").src =
+      "https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=" + encodeURIComponent(url);
+    modal.classList.add("open");
+  }
+
+  function render() {
+    grid.innerHTML = "";
+    if (!games.length) {
+      grid.innerHTML = "<p style='color:var(--muted)'>No WebGL games yet — add builds in static/webgl/ and webgl-games.js</p>";
+      return;
+    }
+    games.forEach(function (g) {
+      var card = document.createElement("article");
+      card.className = "card";
+      card.innerHTML =
+        '<div class="media">' +
+        '<img src="' + g.img + '" alt="' + g.title.replace(/"/g, "") + '">' +
+        '<div class="play-overlay"><button type="button" class="play-btn">▶ Play</button></div>' +
+        '</div>' +
+        '<div class="body"><h2>' + g.title + '</h2><p>' + g.desc + '</p>' +
+        '<span class="badge">' + (g.badge || "WebGL") + ' · Phone controller</span></div>';
+      card.querySelector(".play-btn").addEventListener("click", function () { openInstructions(g); });
+      grid.appendChild(card);
+    });
+  }
+
+  document.getElementById("btnCancel").addEventListener("click", function () {
+    modal.classList.remove("open");
+    pendingSlug = null;
+    pendingGame = null;
+  });
+
+  document.getElementById("btnCopy").addEventListener("click", function () {
+    if (!pendingSlug) return;
+    var url = controllerUrl();
+    navigator.clipboard.writeText(url).catch(function () {
+      prompt("Copy this URL:", url);
+    });
+  });
+
+  document.getElementById("btnLaunch").addEventListener("click", function () {
+    if (!pendingSlug) return;
+    window.location.href = "/webgl-play?game=" + encodeURIComponent(pendingSlug);
+  });
+
+  modal.addEventListener("click", function (e) {
+    if (e.target === modal) modal.classList.remove("open");
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

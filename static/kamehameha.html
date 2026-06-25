@@ -8,6 +8,7 @@
 <script src="/static/favicon-set.js"></script>
 <script src="/js/runtime-config.js?v=3"></script>
 <script src="/js/spooky-api.js?v=3"></script>
+<link rel="stylesheet" href="/css/gesture-instructions.css?v=2">
 
 <title>Kamehameha Beam — spookystudios</title>
 
@@ -167,21 +168,12 @@
   </div>
 
   <div class="overlay" id="startOverlay">
-    <div class="panel">
-      <h1>Kamehameha Beam</h1>
-      <p><strong style="color:var(--cyan)">Two hands</strong>: this effect needs both hands in view.</p>
-      <p>
-        <strong style="color:var(--violet)">Charge</strong>: hold <strong>both hands open</strong><br/>
-        <strong style="color:var(--amber)">Fire</strong>: keep charge full, then <strong>pinch with both hands</strong> to shoot
-      </p>
-      <p class="hint" id="hintTxt">Tap Start to allow camera + sound. Make sure your room is well lit.</p>
-      <div class="btnrow">
-        <button class="btn" id="btnStart" type="button">Start</button>
-        <a class="btn btn-ghost" href="/games">Games</a>
-      </div>
-    </div>
+    <div class="panel"></div>
   </div>
 
+  <script src="/js/gesture-games.js"></script>
+  <script src="/js/gesture-instructions.js?v=4"></script>
+  <script>GestureInstructions.mountGameStart("kamehameha");</script>
   <script type="module">
     import { classifyGesture } from "/static/hand-client.js";
 
@@ -957,9 +949,10 @@
       rafFx = requestAnimationFrame(fxLoop);
     }
 
-    btnStart.addEventListener("click", () => { start(); });
-    startOverlay.addEventListener("click", (e) => { if (e.target === btnStart) return; start(); });
-    startOverlay.addEventListener("touchstart", (e) => { e.preventDefault(); start(); }, { passive:false });
+    document.getElementById("startOverlay").addEventListener("click", (e) => {
+      if (!e.target.closest("#btnStart")) return;
+      start();
+    });
     window.addEventListener("pointerdown", unlockAudio, { once:true });
     window.addEventListener("keydown", unlockAudio, { once:true });
   </script>

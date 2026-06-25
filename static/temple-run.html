@@ -8,6 +8,7 @@
 <script src="/static/favicon-set.js"></script>
 <script src="/js/runtime-config.js?v=3"></script>
 <script src="/js/spooky-api.js?v=3"></script>
+<link rel="stylesheet" href="/css/gesture-instructions.css?v=2">
 
 <title>Temple Lean Run — spookystudios</title>
 <style>
@@ -88,16 +89,7 @@
 </div>
 
 <div class="overlay" id="startOverlay">
-  <div class="panel">
-    <h1>Temple Lean Run</h1>
-    <p>Endless temple track with <strong>3 lanes</strong>.</p>
-    <p><strong style="color:#67e8f9">Lean left</strong> with your torso to move left lane, <strong style="color:#fda4af">lean right</strong> to move right lane.</p>
-    <p class="hint">Tap Start for camera. Keep hips centered and tilt shoulders side to side.</p>
-    <div class="actions">
-      <button class="btn btn-primary" id="btnStart" type="button">Start</button>
-      <a class="btn btn-ghost" href="/">Home</a>
-    </div>
-  </div>
+  <div class="panel"></div>
 </div>
 
 <div class="overlay hidden" id="gameOverOverlay">
@@ -137,6 +129,9 @@ async function ensureAccess() {
 ensureAccess();
 </script>
 
+<script src="/js/gesture-games.js"></script>
+<script src="/js/gesture-instructions.js?v=4"></script>
+<script>GestureInstructions.mountGameStart("temple-run");</script>
 <script>
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -445,7 +440,10 @@ function startRun(){
   rafId = requestAnimationFrame(tick);
 }
 
-btnStart.addEventListener("click", async () => { await ensurePose(); startRun(); });
+document.getElementById("startOverlay").addEventListener("click", async (e) => {
+  if (!e.target.closest("#btnStart")) return;
+  await ensurePose(); startRun();
+});
 btnAgain.addEventListener("click", async () => { await ensurePose(); startRun(); });
 window.addEventListener("resize", resize);
 window.addEventListener("beforeunload", () => { if (poseStop) poseStop(); });

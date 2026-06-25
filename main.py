@@ -136,6 +136,7 @@ app.add_middleware(CORSMiddleware, **_cors_middleware_kwargs())
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_HTML = os.path.join(BASE_DIR, "static", "index.html")
 GAMES_HTML = os.path.join(BASE_DIR, "static", "games.html")
+GAME_INSTRUCTIONS_HTML = os.path.join(BASE_DIR, "static", "game-instructions.html")
 GAME_HTML = os.path.join(BASE_DIR, "static", "game.html")
 PUZZLE_HTML = os.path.join(BASE_DIR, "static", "puzzle.html")
 RUNNER_HTML = os.path.join(BASE_DIR, "static", "runner.html")
@@ -148,6 +149,9 @@ LEADERBOARD_HTML = os.path.join(BASE_DIR, "static", "leaderboard.html")
 HOLO_HTML = os.path.join(BASE_DIR, "static", "holo.html")
 KAMEHAMEHA_HTML = os.path.join(BASE_DIR, "static", "kamehameha.html")
 SLINGSHOT_HTML = os.path.join(BASE_DIR, "static", "slingshot.html")
+WEBGL_HTML = os.path.join(BASE_DIR, "static", "webgl.html")
+WEBGL_PLAY_HTML = os.path.join(BASE_DIR, "static", "webgl-play.html")
+CONTROLLER_HTML = os.path.join(BASE_DIR, "static", "controller.html")
 SUPPORT_HTML = os.path.join(BASE_DIR, "static", "support.html")
 TERMS_HTML = os.path.join(BASE_DIR, "static", "terms.html")
 REFUNDS_HTML = os.path.join(BASE_DIR, "static", "refunds.html")
@@ -232,6 +236,12 @@ def games_catalog():
     return FileResponse(GAMES_HTML)
 
 
+@app.get("/game-instructions")
+def game_instructions():
+    """Pre-game setup wizard (webcam + controls) before launching a gesture game."""
+    return FileResponse(GAME_INSTRUCTIONS_HTML)
+
+
 @app.get("/marketplace")
 def marketplace():
     """Back-compat alias for the games catalog."""
@@ -291,6 +301,22 @@ def kamehameha_page():
 @app.get("/slingshot")
 def slingshot_page():
     return FileResponse(SLINGSHOT_HTML)
+
+
+@app.get("/webgl")
+def webgl_catalog_page():
+    return FileResponse(WEBGL_HTML)
+
+
+@app.get("/webgl-play")
+def webgl_play_page():
+    return FileResponse(WEBGL_PLAY_HTML)
+
+
+@app.get("/controller")
+def phone_controller_page():
+    return FileResponse(CONTROLLER_HTML)
+
 
 @app.get("/support")
 def support_page():
@@ -375,6 +401,7 @@ def submit_contact(payload: ContactRequest):
 
 _STATIC_DIR = os.path.join(BASE_DIR, "static")
 app.mount("/assets", StaticFiles(directory=os.path.join(_STATIC_DIR, "assets")), name="assets")
+app.mount("/css", StaticFiles(directory=os.path.join(_STATIC_DIR, "css")), name="css")
 app.mount("/js", StaticFiles(directory=os.path.join(_STATIC_DIR, "js")), name="js")
 app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
 
@@ -1279,6 +1306,44 @@ def get_gesture():
         cursor_x=data.get("cursor_x"),
         cursor_y=data.get("cursor_y")
     )
+
+# --- WebGL phone controller room relay (phone ↔ Unity WebGL) ---
+_room_peers: dict[str, set[WebSocket]] = {}
+
+
+def _normalize_room_id(room_id: str) -> str:
+    return "".join(c for c in (room_id or "").upper() if c.isalnum())[:12]
+
+
+@app.websocket("/ws/room/{room_id}")
+async def room_relay(websocket: WebSocket, room_id: str):
+    rid = _normalize_room_id(room_id)
+    if not rid:
+        await websocket.close(code=4400)
+        return
+    await websocket.accept()
+    peers = _room_peers.setdefault(rid, set())
+    peers.add(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            dead: list[WebSocket] = []
+            for peer in list(peers):
+                if peer is websocket:
+                    continue
+                try:
+                    await peer.send_text(data)
+                except Exception:
+                    dead.append(peer)
+            for p in dead:
+                peers.discard(p)
+    except WebSocketDisconnect:
+        pass
+    finally:
+        peers.discard(websocket)
+        if not peers:
+            _room_peers.pop(rid, None)
+
 
 # --- WebSocket: stream gesture events to Unity in real time ---
 @app.websocket("/ws/gesture")
