@@ -61,6 +61,50 @@ def _validate_password_or_400(pw: str) -> None:
             detail="Password must include 1 uppercase letter, 1 lowercase letter, and 1 number",
         )
 
+
+# --- OTP policy ---
+OTP_EXPIRY_HOURS = 3
+OTP_RATE_LIMIT_HOURS = 3
+
+
+def _as_utc(dt: datetime) -> datetime:
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
+def _otp_rate_limit_or_429(*, db: Session, email: str) -> None:
+    """Allow at most one verification OTP per email every OTP_RATE_LIMIT_HOURS."""
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(hours=OTP_RATE_LIMIT_HOURS)
+    latest = (
+        db.query(EmailOtp)
+        .filter(
+            EmailOtp.email == email.strip().lower(),
+            EmailOtp.purpose == "verify_email",
+            EmailOtp.created_at >= cutoff,
+        )
+        .order_by(EmailOtp.created_at.desc())
+        .first()
+    )
+    if not latest:
+        return
+    retry_at = _as_utc(latest.created_at) + timedelta(hours=OTP_RATE_LIMIT_HOURS)
+    if retry_at <= now:
+        return
+    remaining = retry_at - now
+    total_minutes = max(1, int(remaining.total_seconds() // 60))
+    hours, minutes = divmod(total_minutes, 60)
+    if hours:
+        wait_msg = f"{hours}h {minutes}m" if minutes else f"{hours} hour{'s' if hours != 1 else ''}"
+    else:
+        wait_msg = f"{minutes} minute{'s' if minutes != 1 else ''}"
+    raise HTTPException(
+        status_code=429,
+        detail=f"OTP already sent recently. Please wait {wait_msg} before requesting another.",
+    )
+
+
 # --- Global detector instance ---
 detector = GestureDetector()
 
@@ -835,9 +879,10 @@ def _send_email_or_500(*, to_email: str, subject: str, body: str, reply_to: str 
 
 
 def _send_verification_otp_or_500(*, db: Session, email: str) -> None:
+    _otp_rate_limit_or_429(db=db, email=email)
     code = f"{secrets.randbelow(1_000_000):06d}"
     now = datetime.now(timezone.utc)
-    expires = now + timedelta(minutes=10)
+    expires = now + timedelta(hours=OTP_EXPIRY_HOURS)
 
     row = EmailOtp(
         email=email.strip().lower(),
@@ -857,7 +902,7 @@ def _send_verification_otp_or_500(*, db: Session, email: str) -> None:
     _send_email_or_500(
         to_email=email,
         subject="Your OTP for Ayzen Studios",
-        body=f"Your OTP is: {code}\n\nThis code expires in 10 minutes.\n",
+        body=f"Your OTP is: {code}\n\nThis code expires in {OTP_EXPIRY_HOURS} hours.\n",
     )
 
 
@@ -897,7 +942,7 @@ def api_verify_email_otp(payload: VerifyEmailOtp, db: Session = Depends(get_db))
     )
     if not otp:
         return OtpStatusResponse(ok=False, detail="Invalid OTP")
-    if otp.expires_at < now:
+    if _as_utc(otp.expires_at) < now:
         return OtpStatusResponse(ok=False, detail="OTP expired")
     if otp.attempts >= 5:
         return OtpStatusResponse(ok=False, detail="Too many attempts. Request a new OTP.")
