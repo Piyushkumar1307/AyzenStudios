@@ -2,7 +2,8 @@
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0c0612">
 
 
 <script src="/static/favicon-set.js"></script>
@@ -23,13 +24,23 @@
     --accent:#6d28d9;--border:rgba(109,40,217,.18);--glow:rgba(109,40,217,.12);
     --stage-bg:#ebe6f2;
   }
-  html,body{height:100%}
+  html{
+    -webkit-text-size-adjust:100%;
+    scroll-behavior:smooth;
+  }
+  html,body{min-height:100%;min-height:100dvh}
   body{
     font-family:"Outfit",system-ui,sans-serif;background:var(--bg);color:var(--text);
-    line-height:1.6;display:flex;flex-direction:column;min-height:100vh;overflow:hidden;
+    line-height:1.6;display:flex;flex-direction:column;min-height:100dvh;
+    overflow-x:hidden;
+  }
+
+  @media (min-width:769px){
+    html,body{height:100%}
+    body{overflow:hidden;min-height:100vh}
   }
   .chat-fab-dock{
-    position:fixed;right:20px;bottom:20px;z-index:50;
+    position:fixed;right:max(14px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));z-index:50;
     display:flex;flex-direction:column;gap:12px;
   }
   .chat-orb{
@@ -134,10 +145,11 @@
   .price{font-size:10px;font-weight:700;text-transform:uppercase;padding:3px 7px;border-radius:4px;background:var(--bg);color:var(--muted)}
   .desc{font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .cta{
-    display:block;width:100%;text-align:center;padding:10px;border-radius:8px;
+    display:block;width:100%;text-align:center;padding:12px;border-radius:8px;
     background:linear-gradient(135deg,var(--accent),#7c3aed);
-    color:#fff;font-weight:700;font-size:13px;text-decoration:none;
+    color:#fff;font-weight:700;font-size:14px;text-decoration:none;
     border:none;cursor:pointer;font-family:inherit;
+    min-height:44px;
   }
   .cta:hover{filter:brightness(1.08)}
 
@@ -166,11 +178,93 @@
     grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--muted);font-size:15px;
   }
 
+  @media (max-width:768px){
+    body{overflow-y:auto}
+
+    .page-shell{
+      flex:none;width:100%;max-width:none;
+      padding:12px 14px calc(88px + env(safe-area-inset-bottom));
+      min-height:auto;
+    }
+
+    .top{
+      margin-bottom:12px;
+      gap:10px;
+    }
+    .logo{font-size:20px;line-height:1.2;max-width:55%}
+    .actions{
+      flex:1;justify-content:flex-end;flex-wrap:wrap;gap:6px;
+    }
+    .hdr{
+      padding:10px 12px;font-size:12px;min-height:40px;
+      display:inline-flex;align-items:center;
+    }
+    .theme-btn{min-width:40px;min-height:40px}
+
+    .page-head{margin-bottom:12px}
+    .page-head h1{font-size:26px}
+    .page-head p{font-size:13px}
+
+    /* Drop nested scroll trap — full page scroll on phones */
+    .catalog-stage{
+      flex:none;min-height:auto;
+      border-radius:14px;
+      overflow:visible;
+      box-shadow:0 12px 40px rgba(0,0,0,.28);
+    }
+    .stage-toolbar{
+      padding:12px 14px;gap:10px;
+    }
+    .filterbar{width:100%;justify-content:stretch}
+    .filterbtn{
+      flex:1;text-align:center;padding:10px 8px;font-size:12px;min-height:40px;
+    }
+    .stage-meta{width:100%;text-align:center;font-size:11px}
+
+    .stage-box{flex:none;min-height:auto;position:static}
+    .stage-scroll{
+      height:auto;max-height:none;overflow:visible;
+      padding:12px 12px 4px;
+      -webkit-overflow-scrolling:touch;
+    }
+    .stage-fade{display:none}
+
+    .grid{
+      grid-template-columns:1fr;
+      gap:14px;
+    }
+    .media{height:160px}
+    .body{padding:14px 14px 16px}
+    .body h3{font-size:17px}
+
+    .stage-footer{
+      flex-direction:column;align-items:stretch;gap:10px;
+      padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+    }
+    .pager{width:100%;justify-content:center}
+    .pager-btn{flex:1;max-width:120px;min-height:44px;padding:10px}
+    .page-info{font-size:12px}
+    .scroll-hint{display:none}
+
+    .page-foot{padding-top:10px;font-size:11px;padding-bottom:4px}
+
+    .chat-fab-dock{
+      bottom:max(12px,env(safe-area-inset-bottom));
+      right:max(12px,env(safe-area-inset-right));
+    }
+    .chat-orb{width:48px;height:48px}
+
+    /* Decorative ghost overlaps cards on small screens */
+    .roam-ghost{display:none!important}
+  }
+
   @media (max-width:640px){
     .stage-toolbar{flex-direction:column;align-items:stretch}
-    .stage-meta{text-align:center}
-    .stage-footer{flex-wrap:wrap;justify-content:center}
-    .scroll-hint{width:100%;text-align:center}
+  }
+
+  @media (max-width:380px){
+    .actions .hdr{padding:8px 10px;font-size:11px}
+    .logo{font-size:18px;max-width:48%}
   }
 
   .roam-ghost{
@@ -343,7 +437,8 @@ var GAMES=[
   {id:"game-temple-lean-run",gestureId:"temple-run",cat:"gesture-games",img:"/static/assets/games/neon-runner.png",title:"Temple Lean Run",desc:"Lean left or right to dodge in an endless runner.",href:"/temple-run",hidden:true}
 ];
 
-var PER_PAGE=6;
+var PER_PAGE_DESKTOP=6;
+var PER_PAGE_MOBILE=4;
 var currentFilter="all";
 var currentPage=1;
 
@@ -361,9 +456,13 @@ function visibleGames(){
   });
 }
 
+function perPage(){
+  return window.innerWidth<=768?PER_PAGE_MOBILE:PER_PAGE_DESKTOP;
+}
+
 function totalPages(){
   var n=visibleGames().length;
-  return Math.max(1,Math.ceil(n/PER_PAGE));
+  return Math.max(1,Math.ceil(n/perPage()));
 }
 
 function renderCard(g){
@@ -390,10 +489,11 @@ function renderCard(g){
 function renderPage(){
   var all=visibleGames();
   var pages=totalPages();
+  var pp=perPage();
   if(currentPage>pages) currentPage=pages;
   if(currentPage<1) currentPage=1;
-  var start=(currentPage-1)*PER_PAGE;
-  var slice=all.slice(start,start+PER_PAGE);
+  var start=(currentPage-1)*pp;
+  var slice=all.slice(start,start+pp);
 
   grid.innerHTML="";
   if(!slice.length){
@@ -406,12 +506,12 @@ function renderPage(){
   if(pageInfo) pageInfo.textContent="Page "+currentPage+" of "+pages;
   if(prevBtn) prevBtn.disabled=currentPage<=1;
   if(nextBtn) nextBtn.disabled=currentPage>=pages;
-  if(viewport) viewport.scrollTop=0;
+  if(viewport&&window.innerWidth>768) viewport.scrollTop=0;
   requestAnimationFrame(applyParallax);
 }
 
 function applyParallax(){
-  if(!viewport) return;
+  if(!viewport||window.innerWidth<=768) return;
   var vr=viewport.getBoundingClientRect();
   var mid=vr.top+vr.height/2;
   viewport.querySelectorAll(".card").forEach(function(card){
@@ -425,7 +525,7 @@ function applyParallax(){
   });
 }
 
-if(viewport){
+if(viewport&&window.innerWidth>768){
   viewport.addEventListener("scroll",function(){
     if(viewport._parallaxTick) return;
     viewport._parallaxTick=true;
@@ -469,6 +569,10 @@ if(nextBtn) nextBtn.addEventListener("click",function(){
 })();
 
 renderPage();
+
+window.addEventListener("resize",function(){
+  renderPage();
+},{passive:true});
 
 (function roamGhost(){
   var ghost=document.getElementById("roamGhost");
