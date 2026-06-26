@@ -305,7 +305,7 @@
     var game = getGame(gameId);
     if (!game) return false;
 
-    document.title = "How to play — " + game.title + " — spookystudios";
+    document.title = "How to play — " + game.title + " — Ayzen Studios";
 
     var hero = document.getElementById("gameHero");
     if (hero && game.img) {

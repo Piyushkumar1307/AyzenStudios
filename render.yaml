@@ -43,7 +43,7 @@ services:
       - key: RESEND_API_KEY
         sync: false
       - key: RESEND_FROM
-        value: "Spooky Studios <onboarding@resend.dev>"
+        value: "Ayzen Studios <onboarding@resend.dev>"
       # Or use external Vercel Nodemailer API (see vercel-email-api/README.md)
       - key: CONTACT_API_URL
         sync: false

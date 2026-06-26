@@ -40,7 +40,7 @@ from auth_schemas import (
 )
 from db import engine, get_db
 
-logger = logging.getLogger("spookystudios")
+logger = logging.getLogger("ayzenstudios")
 
 # --- Password policy ---
 def _validate_password_or_400(pw: str) -> None:
@@ -97,7 +97,7 @@ async def lifespan(app: FastAPI):
         detector.stop()
 
 app = FastAPI(
-    title="spookystudios",
+    title="Ayzen Studios",
     description="MediaPipe hand gesture API for Unity",
     version="1.0.0",
     lifespan=lifespan
@@ -121,7 +121,7 @@ def _cors_middleware_kwargs() -> dict:
         kwargs["allow_origins"] = ["*"]
         return kwargs
     kwargs["allow_origins"] = origins
-    # Any Netlify preview/production subdomain (e.g. spookystudios vs piyush-store).
+    # Any Netlify preview/production subdomain (e.g. ayzen-studios vs piyush-store).
     if os.environ.get("CORS_ALLOW_NETLIFY", "1").strip().lower() in ("1", "true", "yes"):
         kwargs["allow_origin_regex"] = (
             r"https://[a-zA-Z0-9][a-zA-Z0-9-]*\.netlify\.app"
@@ -151,6 +151,7 @@ KAMEHAMEHA_HTML = os.path.join(BASE_DIR, "static", "kamehameha.html")
 SLINGSHOT_HTML = os.path.join(BASE_DIR, "static", "slingshot.html")
 WEBGL_HTML = os.path.join(BASE_DIR, "static", "webgl.html")
 WEBGL_PLAY_HTML = os.path.join(BASE_DIR, "static", "webgl-play.html")
+SOUNDORA_HTML = os.path.join(BASE_DIR, "static", "soundora.html")
 CONTROLLER_HTML = os.path.join(BASE_DIR, "static", "controller.html")
 SUPPORT_HTML = os.path.join(BASE_DIR, "static", "support.html")
 TERMS_HTML = os.path.join(BASE_DIR, "static", "terms.html")
@@ -313,6 +314,11 @@ def webgl_play_page():
     return FileResponse(WEBGL_PLAY_HTML)
 
 
+@app.get("/soundora")
+def soundora_page():
+    return FileResponse(SOUNDORA_HTML)
+
+
 @app.get("/controller")
 def phone_controller_page():
     return FileResponse(CONTROLLER_HTML)
@@ -343,7 +349,7 @@ def public_config():
     return {
         "contact_api_url": contact_url or None,
         "api_base_url": api_base or None,
-        "brand": "spookystudios",
+        "brand": "Ayzen Studios",
     }
 
 
@@ -385,7 +391,7 @@ def submit_contact(payload: ContactRequest):
     name = payload.name.strip()
     subject = payload.subject.strip() or "Studio inquiry"
     body = (
-        f"New message from spookystudios contact form\n\n"
+        f"New message from Ayzen Studios contact form\n\n"
         f"Name: {name}\n"
         f"Email: {payload.email}\n"
         f"Subject: {subject}\n\n"
@@ -393,7 +399,7 @@ def submit_contact(payload: ContactRequest):
     )
     _send_email_or_500(
         to_email=to,
-        subject=f"[spookystudios] {subject}",
+        subject=f"[Ayzen Studios] {subject}",
         body=body,
         reply_to=str(payload.email),
     )
@@ -732,7 +738,7 @@ def _send_via_resend(*, to_email: str, subject: str, body: str, reply_to: str | 
             status_code=500,
             detail="RESEND_API_KEY is not set.",
         )
-    from_addr = _env_str("RESEND_FROM") or "Spooky Studios <onboarding@resend.dev>"
+    from_addr = _env_str("RESEND_FROM") or "Ayzen Studios <onboarding@resend.dev>"
     payload: dict = {
         "from": from_addr,
         "to": [to_email],
@@ -850,7 +856,7 @@ def _send_verification_otp_or_500(*, db: Session, email: str) -> None:
 
     _send_email_or_500(
         to_email=email,
-        subject="Your OTP for spookystudios",
+        subject="Your OTP for Ayzen Studios",
         body=f"Your OTP is: {code}\n\nThis code expires in 10 minutes.\n",
     )
 

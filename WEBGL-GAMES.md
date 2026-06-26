@@ -1,4 +1,4 @@
-# Unity WebGL games on spookystudios
+# Unity WebGL games on Ayzen Studios
 
 Host browser-playable Unity games with **phone-as-controller** pairing.
 
@@ -152,3 +152,24 @@ WebSocket origin must be allowed on Render — set `FRONTEND_ORIGINS` to your Ne
 - [ ] Unity connects to `/ws/room/{room}` with same room as phone  
 - [ ] Test on Chrome desktop + Safari iOS phone  
 - [ ] Redeploy Netlify `static/` + Render API  
+
+---
+
+## Soundora (AI song generator)
+
+Standalone WebGL app — **no phone controller**.
+
+| Item | Value |
+|------|--------|
+| Landing page | `/soundora` |
+| Catalog slug | `soundora` |
+| Build folder | `static/webgl/Soundora/` |
+| Config | `static/js/webgl-games.js` → `comingSoon: true` until build is uploaded |
+
+**After Unity export:**
+
+1. Copy WebGL build into `static/webgl/Soundora/` (`index.html` + `Build/`).
+2. Set `comingSoon: false` for the `soundora` entry in `webgl-games.js`.
+3. Redeploy Netlify — the Soundora page auto-detects the build and enables **Launch Soundora**.
+
+Homepage **Explore our work** links to `/soundora`. The WebGL catalog shows Soundora with a **Coming soon** badge until the flag is cleared.

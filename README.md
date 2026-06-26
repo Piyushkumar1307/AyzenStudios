@@ -1,6 +1,6 @@
-# spookystudios — HandGesture Web Navigation
+# Ayzen Studios — HandGesture Web Navigation
 
-**spookystudios** is a gesture-driven game studio site: a marketing homepage, browser game catalog, Unity WebGL titles with **phone-as-controller**, user accounts, and Razorpay paywall for premium HTML5 games.
+**Ayzen Studios** is a gesture-driven game studio site: a marketing homepage, browser game catalog, Unity WebGL titles with **phone-as-controller**, user accounts, and Razorpay paywall for premium HTML5 games.
 
 | Layer | Host | URL |
 |--------|------|-----|
@@ -15,7 +15,7 @@
 
 ### Marketing site (`/`)
 
-Homepage with studio services (Smart Registration, Kiosk Application), work portfolio cards, Google Play links (Zombie Crusher, Tic Tac Toe), and a contact form.
+Homepage with studio services (Smart Registration, Kiosk Application), work portfolio cards, Google Play links (Mad Arrows, Zombie Crusher, Tic Tac Toe), and a contact form.
 
 ### Gesture game catalog (`/games`)
 
@@ -40,7 +40,10 @@ Unity builds run in the browser; the **phone is the controller** via separate Re
 | Game | Slug | Canvas | Phone controller |
 |------|------|--------|------------------|
 | **Beat Traffic** | `2d-car` | Portrait 1080×1920 | [phonecontrollerserver.onrender.com](https://phonecontrollerserver.onrender.com) |
-| **Spooky Fruit Ninja** | `fruit-ninja` | Landscape 1920×1080 | [fruit-ninja-phonecontroller.onrender.com](https://fruit-ninja-phonecontroller.onrender.com) |
+| **Ayzen Fruit Ninja** | `fruit-ninja` | Landscape 1920×1080 | [fruit-ninja-phonecontroller.onrender.com](https://fruit-ninja-phonecontroller.onrender.com) |
+| **Soundora** | `soundora` | Landscape (TBD) | Standalone — no phone controller |
+
+Landing page: **`/soundora`**. Set `comingSoon: false` in `webgl-games.js` after uploading the build to `static/webgl/Soundora/`.
 
 **Play flow**
 
@@ -165,6 +168,7 @@ SKIP_SERVER_CAMERA=1 uvicorn main:app --reload --host 127.0.0.1 --port 8000
 | WebGL catalog | http://127.0.0.1:8000/webgl |
 | Beat Traffic | http://127.0.0.1:8000/webgl-play?game=2d-car |
 | Fruit Ninja | http://127.0.0.1:8000/webgl-play?game=fruit-ninja |
+| Soundora | http://127.0.0.1:8000/soundora |
 | Login | http://127.0.0.1:8000/login |
 
 Use **HTTPS** or **localhost** for camera / `getUserMedia` on gesture games.
@@ -289,7 +293,7 @@ Render **blocks outbound SMTP** on the free plan. Use **Resend**:
 
 1. [resend.com](https://resend.com) → API key
 2. Render env: `RESEND_API_KEY`, `CONTACT_EMAIL`
-3. Test sender: `RESEND_FROM=Spooky Studios <onboarding@resend.dev>`
+3. Test sender: `RESEND_FROM=Ayzen Studios <onboarding@resend.dev>`
 4. Check `GET /api/email/status` → `resend_configured: true`
 
 Alternative: deploy `vercel-email-api/` to Vercel and set `CONTACT_API_URL` on Render.

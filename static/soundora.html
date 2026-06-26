@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="/static/favicon-set.js"></script>
+<script src="/js/runtime-config.js?v=4"></script>
+<script src="/js/spooky-api.js?v=5"></script>
+<script src="/js/webgl-games.js?v=6"></script>
+<title>Soundora — AI Song Generator · Ayzen Studios</title>
+<link href="https://fonts.googleapis.com/css2?family=Creepster&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root,[data-theme="dark"]{
+    --bg:#0c0612;--card:#160d22;--text:#f3eef8;--muted:#9d8fb0;
+    --accent:#a78bfa;--cyan:#22d3ee;--pink:#f472b6;--border:rgba(167,139,250,.22);
+    --glow:rgba(167,139,250,.35);
+  }
+  [data-theme="light"]{
+    --bg:#f4f0f8;--card:#fff;--text:#1a1028;--muted:#5c4d6e;
+    --accent:#6d28d9;--cyan:#0891b2;--pink:#db2777;--border:rgba(109,40,217,.18);
+    --glow:rgba(109,40,217,.12);
+  }
+  body{
+    font-family:"Outfit",system-ui,sans-serif;background:var(--bg);color:var(--text);
+    min-height:100vh;line-height:1.6;
+  }
+  .bg-glow{
+    position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(ellipse 70% 50% at 20% 0%, rgba(167,139,250,.18), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 100%, rgba(34,211,238,.1), transparent);
+  }
+  .wrap{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:24px 20px 56px}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:36px;flex-wrap:wrap}
+  .logo{font-family:"Creepster",cursive;font-size:22px;color:var(--accent);text-decoration:none;opacity:.75}
+  .back{color:var(--muted);text-decoration:none;font-weight:600;font-size:14px}
+  .back:hover{color:var(--accent)}
+  .hero-card{
+    background:linear-gradient(145deg, rgba(22,13,34,.95), rgba(12,6,18,.98));
+    border:1px solid var(--border);border-radius:24px;overflow:hidden;
+    box-shadow:0 28px 72px rgba(0,0,0,.45), 0 0 48px rgba(124,58,237,.12);
+  }
+  .hero-media{position:relative;aspect-ratio:16/9;background:#08040e;overflow:hidden}
+  .hero-media img{width:100%;height:100%;object-fit:cover;display:block}
+  .hero-media::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg, transparent 35%, rgba(12,6,18,.92));
+  }
+  .hero-badge{
+    position:absolute;top:16px;left:16px;z-index:2;
+    font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:#e9d5ff;background:rgba(12,6,18,.75);border:1px solid rgba(167,139,250,.35);
+    padding:6px 12px;border-radius:99px;backdrop-filter:blur(8px);
+  }
+  .hero-body{padding:28px 28px 32px}
+  .hero-body h1{
+    font-size:clamp(32px,5vw,44px);font-weight:800;line-height:1.1;margin-bottom:8px;
+    background:linear-gradient(135deg, var(--accent), var(--cyan), var(--pink));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+  .tagline{font-size:17px;color:var(--muted);max-width:52ch;margin-bottom:22px}
+  .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:28px}
+  .feat{
+    padding:16px 18px;border-radius:14px;background:rgba(167,139,250,.06);
+    border:1px solid rgba(167,139,250,.14);
+  }
+  .feat strong{display:block;font-size:14px;margin-bottom:4px;color:var(--text)}
+  .feat span{font-size:13px;color:var(--muted)}
+  .player-shell{
+    border-radius:16px;border:1px dashed rgba(167,139,250,.35);
+    background:rgba(8,4,14,.65);padding:32px 24px;text-align:center;margin-bottom:24px;
+  }
+  .player-shell.ready{border-style:solid;border-color:rgba(52,211,153,.35);background:rgba(52,211,153,.04)}
+  .player-shell .icon{font-size:40px;margin-bottom:10px}
+  .player-shell h2{font-size:18px;margin-bottom:8px}
+  .player-shell p{font-size:14px;color:var(--muted);max-width:44ch;margin:0 auto 18px}
+  .actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .btn{
+    padding:14px 28px;border-radius:12px;border:none;font-family:inherit;
+    font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;
+    display:inline-flex;align-items:center;justify-content:center;transition:transform .15s, filter .15s;
+  }
+  .btn:active{transform:scale(.98)}
+  .btn-primary{
+    background:linear-gradient(135deg, var(--accent), var(--pink));color:#fff;
+    box-shadow:0 10px 32px rgba(124,58,237,.35);
+  }
+  .btn-primary:hover{filter:brightness(1.06)}
+  .btn-primary:disabled{opacity:.45;cursor:not-allowed;filter:none;box-shadow:none}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--accent)}
+  .note{
+    margin-top:24px;padding:16px 18px;border-radius:12px;font-size:13px;color:var(--muted);
+    background:rgba(167,139,250,.05);border:1px solid rgba(167,139,250,.12);
+  }
+  .note code{font-size:12px;color:var(--cyan);word-break:break-all}
+</style>
+<script>(function(){var s=localStorage.getItem("ayzen-studios-theme");document.documentElement.setAttribute("data-theme",s==="light"||s==="dark"?s:"dark")})();</script>
+</head>
+<body>
+<div class="bg-glow" aria-hidden="true"></div>
+<div class="wrap">
+  <header class="top">
+    <a class="back" href="/#work">← Explore our work</a>
+    <a class="logo" href="/">Ayzen Studios</a>
+  </header>
+
+  <article class="hero-card">
+    <div class="hero-media">
+      <img id="heroImg" src="/assets/games/soundora.svg" alt="Soundora AI song generator">
+      <span class="hero-badge" id="statusBadge">Coming soon</span>
+    </div>
+    <div class="hero-body">
+      <h1>Soundora</h1>
+      <p class="tagline" id="appDesc">Describe a mood, genre, or story — Soundora composes original AI-generated songs in your browser.</p>
+
+      <div class="features">
+        <div class="feat"><strong>Prompt to track</strong><span>Turn ideas into full songs with AI-assisted composition.</span></div>
+        <div class="feat"><strong>Genre &amp; mood</strong><span>Dial in vibes — pop, cinematic, lo-fi, upbeat, and more.</span></div>
+        <div class="feat"><strong>Browser-native</strong><span>Runs as a WebGL app — no install required once the build is live.</span></div>
+      </div>
+
+      <div class="player-shell" id="playerShell">
+        <div class="icon" id="shellIcon">🎵</div>
+        <h2 id="shellTitle">WebGL build on the way</h2>
+        <p id="shellMsg">The Soundora player will load here after the Unity WebGL build is uploaded. Everything else is wired — flip one flag and drop files in place.</p>
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="btnLaunch" disabled>Launch Soundora</button>
+          <a class="btn btn-ghost" href="/webgl">Other WebGL apps</a>
+        </div>
+      </div>
+
+      <p class="note" id="devNote">
+        <strong>For deploy:</strong> export Unity WebGL to
+        <code>static/webgl/Soundora/</code>, then set
+        <code>comingSoon: false</code> in <code>static/js/webgl-games.js</code>.
+      </p>
+    </div>
+  </article>
+</div>
+
+<script>
+(function () {
+  var games = window.WEBGL_GAMES || [];
+  var app = games.find(function (g) { return g.slug === "soundora"; });
+  if (!app) return;
+
+  var heroImg = document.getElementById("heroImg");
+  var statusBadge = document.getElementById("statusBadge");
+  var appDesc = document.getElementById("appDesc");
+  var playerShell = document.getElementById("playerShell");
+  var shellTitle = document.getElementById("shellTitle");
+  var shellMsg = document.getElementById("shellMsg");
+  var shellIcon = document.getElementById("shellIcon");
+  var btnLaunch = document.getElementById("btnLaunch");
+  var devNote = document.getElementById("devNote");
+
+  if (app.img) heroImg.src = app.img;
+  if (app.desc) appDesc.textContent = app.desc;
+
+  function enableLaunch() {
+    app.comingSoon = false;
+    statusBadge.textContent = "Live";
+    playerShell.classList.add("ready");
+    shellIcon.textContent = "🚀";
+    shellTitle.textContent = "Ready to play";
+    shellMsg.textContent = "Your Soundora WebGL build is detected. Launch the app in full screen.";
+    btnLaunch.disabled = false;
+    devNote.style.display = "none";
+  }
+
+  if (!app.comingSoon) {
+    enableLaunch();
+  } else {
+    fetch(app.buildPath, { method: "HEAD" })
+      .then(function (res) {
+        if (res.ok) enableLaunch();
+      })
+      .catch(function () {});
+  }
+
+  btnLaunch.addEventListener("click", function () {
+    if (btnLaunch.disabled) return;
+    window.location.href = "/webgl-play?game=soundora";
+  });
+})();
+</script>
+</body>
+</html>

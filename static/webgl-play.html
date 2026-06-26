@@ -6,8 +6,8 @@
 <script src="/static/favicon-set.js"></script>
 <script src="/js/runtime-config.js?v=4"></script>
 <script src="/js/spooky-api.js?v=5"></script>
-<script src="/js/webgl-games.js?v=5"></script>
-<title>Playing — spookystudios</title>
+<script src="/js/webgl-games.js?v=6"></script>
+<title>Playing — Ayzen Studios</title>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{background:#000;color:#f3eef8;font-family:system-ui,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
@@ -43,7 +43,7 @@
 </head>
 <body>
 <header class="bar">
-  <a href="/webgl">← WebGL games</a>
+  <a href="/webgl" id="backLink">← WebGL games</a>
   <span class="room-pill">Controller <strong id="roomDisplay">Phone</strong></span>
   <button type="button" id="btnPhone">Phone link</button>
 </header>
@@ -71,7 +71,28 @@
     return;
   }
 
-  document.title = game.title + " — spookystudios";
+  if (game.comingSoon) {
+    var home = game.homeHref || "/webgl";
+    document.getElementById("loading").innerHTML =
+      "<p><strong>" + game.title + "</strong> is not live yet.</p>" +
+      "<p class='hint'><a href='" + home + "' style='color:#a78bfa'>Back</a></p>";
+    document.getElementById("gameShell").style.display = "none";
+    return;
+  }
+
+  var isStandalone = game.appType === "standalone" || !game.phoneControllerUrl;
+  if (isStandalone) {
+    document.querySelector(".room-pill").style.display = "none";
+    document.getElementById("btnPhone").style.display = "none";
+    document.getElementById("loadHint").textContent = "Loading app…";
+  }
+
+  document.title = game.title + " — Ayzen Studios";
+
+  if (game.homeHref) {
+    document.getElementById("backLink").href = game.homeHref;
+    document.getElementById("backLink").textContent = "← " + game.title;
+  }
 
   if (game.orientation === "landscape") {
     var wrap = document.getElementById("frameWrap");

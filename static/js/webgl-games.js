@@ -16,7 +16,7 @@ window.WEBGL_GAMES = [
   },
   {
     slug: "fruit-ninja",
-    title: "Spooky Fruit Ninja",
+    title: "Ayzen Fruit Ninja",
     desc: "Slice haunted fruit with your phone as the sword — gyro slash controls in the browser.",
     img: "/assets/games/spooky-fruit-ninja.png",
     buildPath: "/static/webgl/Fruitninjawebgl/index.html",
@@ -26,5 +26,18 @@ window.WEBGL_GAMES = [
     aspectRatio: "16 / 9",
     canvasWidth: 1920,
     canvasHeight: 1080,
+  },
+  {
+    slug: "soundora",
+    title: "Soundora",
+    desc: "Describe a mood, genre, or story — Soundora composes original AI-generated songs in your browser.",
+    img: "/assets/games/soundora.svg",
+    buildPath: "/static/webgl/Soundora/index.html",
+    badge: "AI Music",
+    appType: "standalone",
+    comingSoon: true,
+    orientation: "landscape",
+    aspectRatio: "16 / 9",
+    homeHref: "/soundora",
   },
 ];

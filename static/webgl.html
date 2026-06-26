@@ -6,8 +6,8 @@
 <script src="/static/favicon-set.js"></script>
 <script src="/js/runtime-config.js?v=4"></script>
 <script src="/js/spooky-api.js?v=5"></script>
-<script src="/js/webgl-games.js?v=4"></script>
-<title>WebGL Games — spookystudios</title>
+<script src="/js/webgl-games.js?v=6"></script>
+<title>WebGL Games — Ayzen Studios</title>
 <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -65,12 +65,12 @@
   .btn-primary{background:var(--accent);color:#0c0612}
   .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
 </style>
-<script>(function(){var s=localStorage.getItem("spooky-studios-theme");document.documentElement.setAttribute("data-theme",s==="light"||s==="dark"?s:"dark")})();</script>
+<script>(function(){var s=localStorage.getItem("ayzen-studios-theme");document.documentElement.setAttribute("data-theme",s==="light"||s==="dark"?s:"dark")})();</script>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
-    <a class="logo" href="/">spookystudios</a>
+    <a class="logo" href="/">Ayzen Studios</a>
     <nav class="nav">
       <a href="/games">Gesture games</a>
       <a href="/">Home</a>
@@ -141,14 +141,31 @@
     games.forEach(function (g) {
       var card = document.createElement("article");
       card.className = "card";
+      var isSoon = !!g.comingSoon;
+      var isStandalone = g.appType === "standalone" || !g.phoneControllerUrl;
+      var badgeExtra = isStandalone ? "" : " · Phone controller";
+      var playLabel = isSoon ? "Coming soon" : "▶ Play";
+      var homeLink = g.homeHref ? g.homeHref : null;
       card.innerHTML =
         '<div class="media">' +
         '<img src="' + g.img + '" alt="' + g.title.replace(/"/g, "") + '">' +
-        '<div class="play-overlay"><button type="button" class="play-btn">▶ Play</button></div>' +
+        '<div class="play-overlay"><button type="button" class="play-btn"' +
+        (isSoon ? ' disabled style="opacity:.85;cursor:default"' : "") + ">" + playLabel + "</button></div>" +
         '</div>' +
         '<div class="body"><h2>' + g.title + '</h2><p>' + g.desc + '</p>' +
-        '<span class="badge">' + (g.badge || "WebGL") + ' · Phone controller</span></div>';
-      card.querySelector(".play-btn").addEventListener("click", function () { openInstructions(g); });
+        '<span class="badge">' + (g.badge || "WebGL") + badgeExtra +
+        (isSoon ? " · Coming soon" : "") + '</span></div>';
+      card.querySelector(".play-btn").addEventListener("click", function () {
+        if (isSoon) {
+          if (homeLink) window.location.href = homeLink;
+          return;
+        }
+        if (isStandalone) {
+          window.location.href = "/webgl-play?game=" + encodeURIComponent(g.slug);
+          return;
+        }
+        openInstructions(g);
+      });
       grid.appendChild(card);
     });
   }
