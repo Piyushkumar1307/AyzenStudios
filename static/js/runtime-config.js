@@ -7,7 +7,7 @@
   g.PHONE_CONTROLLER_BASE = "https://phonecontrollerserver.onrender.com";
   g.AYZEN_CONTACT = {
     telegram: "https://t.me/ayzenstudios",
-    telegramHandle: "@ayzenstudios",
+    telegramHandle: "Telegram",
     whatsapp: "https://wa.me/919205726749",
     linkedin: "https://www.linkedin.com/in/piyush-kumar-42a745172/",
     linkedinLabel: "LinkedIn",

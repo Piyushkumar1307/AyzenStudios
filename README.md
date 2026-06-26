@@ -300,6 +300,21 @@ Alternative: deploy `vercel-email-api/` to Vercel and set `CONTACT_API_URL` on R
 
 ---
 
+## Soundora (Suno API)
+
+The Suno API key **must never** live in Unity or browser code. Render proxies all calls:
+
+1. **Rotate** your key at [sunoapi.org](https://sunoapi.org) (old keys in git/chat are compromised).
+2. Render env: `SUNO_API_KEY=your_new_key`
+3. Redeploy **Render** and **Netlify** (Netlify serves `soundora-proxy.js` + Unity build).
+4. Check `GET https://piyush-store.onrender.com/api/soundora/status` → `{"configured":true}`
+
+Unity WebGL still calls `api.sunoapi.org` internally; `static/js/soundora-proxy.js` (loaded in `webgl/AI-Musicapp/index.html`) rewrites those requests to `/api/soundora/*` on Render and strips the client `Authorization` header.
+
+**Long term:** remove the API key from Unity source and rebuild WebGL so it is not embedded in binaries or git history.
+
+---
+
 ## Troubleshooting
 
 | Issue | What to check |
@@ -310,6 +325,7 @@ Alternative: deploy `vercel-email-api/` to Vercel and set `CONTACT_API_URL` on R
 | Phone controller not connecting | Open the correct `phoneControllerUrl` for that game |
 | `503` Database unavailable | `DATABASE_URL`, DB running |
 | Contact/register email fails | Resend or SMTP env on Render; redeploy after changes |
+| Soundora returns to prompt / CORS | Set `SUNO_API_KEY` on Render; redeploy Netlify + Render; rotate leaked Suno key |
 | Camera blocked | Use localhost or HTTPS |
 | Git push rejected | Push from **this repo root** (`HandGesture-WebNavigation/`), not parent `gesture-backend/` |
 
@@ -318,8 +334,9 @@ Alternative: deploy `vercel-email-api/` to Vercel and set `CONTACT_API_URL` on R
 ## Security
 
 - Verify Razorpay **signatures** before granting entitlements
-- Keep `JWT_SECRET` and Razorpay secret server-side only
+- Keep `JWT_SECRET`, `SUNO_API_KEY`, and Razorpay secret server-side only
 - Do not commit `.env` or production keys
+- If a Suno/Razorpay key was pushed to GitHub, **rotate it** at the provider dashboard (git history may still contain old values)
 
 ---
 

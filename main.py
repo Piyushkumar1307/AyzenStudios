@@ -14,9 +14,9 @@ from email.message import EmailMessage
 from datetime import datetime, timedelta, timezone
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
@@ -65,6 +65,9 @@ def _validate_password_or_400(pw: str) -> None:
 # --- OTP policy ---
 OTP_EXPIRY_HOURS = 3
 OTP_RATE_LIMIT_HOURS = 3
+
+# --- Soundora / Suno API proxy (key must stay server-side only) ---
+SUNO_API_BASE = "https://api.sunoapi.org/api/v1"
 
 
 def _as_utc(dt: datetime) -> datetime:
@@ -394,7 +397,84 @@ def public_config():
         "contact_api_url": contact_url or None,
         "api_base_url": api_base or None,
         "brand": "Ayzen Studios",
+        "soundora_configured": bool(_env_str("SUNO_API_KEY")),
     }
+
+
+def _suno_api_key_or_503() -> str:
+    key = _env_str("SUNO_API_KEY")
+    if not key:
+        raise HTTPException(
+            status_code=503,
+            detail="Soundora is not configured. Set SUNO_API_KEY on Render and redeploy.",
+        )
+    return key
+
+
+def _suno_upstream_request(
+    *,
+    method: str,
+    path: str,
+    query: str,
+    body: bytes,
+    content_type: str | None,
+) -> tuple[int, bytes, str]:
+    subpath = path.lstrip("/")
+    url = f"{SUNO_API_BASE}/{subpath}" if subpath else SUNO_API_BASE
+    if query:
+        url = f"{url}?{query}"
+    headers = {
+        "Authorization": f"Bearer {_suno_api_key_or_503()}",
+        "Accept": "*/*",
+    }
+    if body:
+        headers["Content-Type"] = content_type or "application/json"
+    req = urllib.request.Request(
+        url,
+        data=body if body else None,
+        headers=headers,
+        method=method.upper(),
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            media_type = resp.headers.get_content_type() or "application/json"
+            return resp.status, resp.read(), media_type
+    except urllib.error.HTTPError as e:
+        err_body = e.read()
+        media_type = "application/json"
+        if e.headers:
+            media_type = e.headers.get_content_type() or media_type
+        logger.warning("Suno API HTTP %s for %s %s", e.code, method, subpath)
+        return e.code, err_body, media_type
+    except Exception as e:
+        logger.exception("Suno proxy failed for %s %s: %s", method, subpath, e)
+        raise HTTPException(
+            status_code=502,
+            detail=f"Soundora upstream error ({type(e).__name__}).",
+        )
+
+
+@app.get("/api/soundora/status")
+def soundora_status():
+    """Check Soundora proxy is configured (never exposes the API key)."""
+    return {"configured": bool(_env_str("SUNO_API_KEY"))}
+
+
+@app.api_route(
+    "/api/soundora/{path:path}",
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+)
+async def soundora_proxy(path: str, request: Request):
+    """Proxy Suno API calls so the browser never holds SUNO_API_KEY."""
+    body = await request.body()
+    status, resp_body, media_type = _suno_upstream_request(
+        method=request.method,
+        path=path,
+        query=request.url.query or "",
+        body=body,
+        content_type=request.headers.get("content-type"),
+    )
+    return Response(content=resp_body, status_code=status, media_type=media_type)
 
 
 @app.get("/api/email/status")

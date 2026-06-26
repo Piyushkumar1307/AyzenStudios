@@ -50,3 +50,6 @@ services:
       # Netlify static site origin(s), comma-separated (enables CORS for split deploy)
       - key: FRONTEND_ORIGINS
         sync: false
+      # Soundora AI music — Suno API key (proxy at /api/soundora/*)
+      - key: SUNO_API_KEY
+        sync: false
