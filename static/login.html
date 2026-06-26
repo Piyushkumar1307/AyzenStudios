@@ -31,10 +31,11 @@
       color: var(--text);
       font-family: "Segoe UI", system-ui, sans-serif;
       min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 24px;
-      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 24px 0;
+      overflow-x: hidden;
       position: relative;
     }
 
@@ -57,6 +58,10 @@
 
     .wrap {
       width: min(520px, 94vw);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 18px;
@@ -333,6 +338,7 @@
       letter-spacing: 0.06em;
     }
   </style>
+  <link rel="stylesheet" href="/css/site-footer.css?v=1">
 </head>
 <body>
   <div class="loading-overlay" id="loadingOverlay" aria-live="polite" aria-busy="true">
@@ -390,7 +396,7 @@
       <form id="formSignup" autocomplete="on" style="display:none;">
         <div class="row">
           <label for="signupName">Name</label>
-          <input id="signupName" name="name" type="text" placeholder="Piyush" required />
+          <input id="signupName" name="name" type="text" placeholder="Enter your name" required autocomplete="name" />
         </div>
         <div class="row">
           <label for="signupEmail">Email</label>
@@ -678,6 +684,8 @@
       }
     });
   </script>
+  <div id="site-footer-root"></div>
+  <script src="/js/site-footer.js?v=1" defer></script>
 </body>
 </html>
 

@@ -23,7 +23,7 @@
   }
   body{
     font-family:"Outfit",system-ui,sans-serif;background:var(--bg);color:var(--text);
-    min-height:100vh;line-height:1.6;
+    min-height:100vh;line-height:1.6;display:flex;flex-direction:column;
   }
   .bg-glow{
     position:fixed;inset:0;pointer-events:none;z-index:0;
@@ -31,7 +31,7 @@
       radial-gradient(ellipse 70% 50% at 20% 0%, rgba(167,139,250,.18), transparent),
       radial-gradient(ellipse 60% 40% at 100% 100%, rgba(34,211,238,.1), transparent);
   }
-  .wrap{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:24px 20px 56px}
+  .wrap{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:24px 20px 56px;flex:1;width:100%}
   .top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:36px;flex-wrap:wrap}
   .logo{font-family:"Creepster",cursive;font-size:22px;color:var(--accent);text-decoration:none;opacity:.75}
   .back{color:var(--muted);text-decoration:none;font-weight:600;font-size:14px}
@@ -95,6 +95,7 @@
   }
   .note code{font-size:12px;color:var(--cyan);word-break:break-all}
 </style>
+<link rel="stylesheet" href="/css/site-footer.css?v=1">
 <script>(function(){var s=localStorage.getItem("ayzen-studios-theme");document.documentElement.setAttribute("data-theme",s==="light"||s==="dark"?s:"dark")})();</script>
 </head>
 <body>
@@ -183,5 +184,7 @@
   });
 })();
 </script>
+<div id="site-footer-root"></div>
+<script src="/js/site-footer.js?v=1" defer></script>
 </body>
 </html>

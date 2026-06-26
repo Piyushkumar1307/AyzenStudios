@@ -1,0 +1,142 @@
+/* Ayzen Studios — shared site footer (uses page CSS variables when present) */
+@import url("https://fonts.googleapis.com/css2?family=Creepster&display=swap");
+
+#site-footer-root {
+  width: 100%;
+  margin-top: auto;
+}
+
+.site-footer {
+  --footer-accent: var(--accent, var(--glow, #a78bfa));
+  --footer-text: var(--text, #f3eef8);
+  --footer-muted: var(--muted, #9d8fb0);
+  --footer-bg: color-mix(in srgb, var(--bg-card, var(--card, #160d22)) 88%, transparent);
+  --footer-border: var(--border, rgba(167, 139, 250, 0.2));
+
+  position: relative;
+  z-index: 5;
+  flex-shrink: 0;
+  margin-top: auto;
+  border-top: 1px solid var(--footer-border);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--footer-bg) 60%, transparent) 100%
+  );
+}
+
+.site-footer__inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 24px 28px;
+}
+
+.site-footer__top {
+  display: grid;
+  grid-template-columns: minmax(200px, 1.2fr) minmax(0, 2fr);
+  gap: 36px 48px;
+  align-items: start;
+}
+
+.site-footer__logo {
+  font-family: "Creepster", "Segoe UI", cursive;
+  font-size: clamp(28px, 4vw, 36px);
+  letter-spacing: 0.04em;
+  color: var(--footer-accent);
+  text-decoration: none;
+  display: inline-block;
+  margin-bottom: 10px;
+  text-shadow: 0 0 32px color-mix(in srgb, var(--footer-accent) 35%, transparent);
+}
+
+.site-footer__logo:hover {
+  filter: brightness(1.08);
+}
+
+.site-footer__tagline {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--footer-muted);
+  max-width: 32ch;
+}
+
+.site-footer__cols {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px 20px;
+}
+
+.site-footer__col h3 {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--footer-text);
+  margin-bottom: 12px;
+}
+
+.site-footer__col ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.site-footer__col a {
+  color: var(--footer-muted);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.site-footer__col a:hover {
+  color: var(--footer-accent);
+}
+
+.site-footer__bottom {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--footer-border);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 20px;
+  font-size: 13px;
+  color: var(--footer-muted);
+}
+
+.site-footer__made {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+@media (max-width: 860px) {
+  .site-footer__top {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .site-footer__cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .site-footer__inner {
+    padding: 32px 18px 24px;
+  }
+
+  .site-footer__cols {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 16px;
+  }
+
+  .site-footer__bottom {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
