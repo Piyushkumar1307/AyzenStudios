@@ -545,11 +545,21 @@
       sessionStorage.setItem(TOKEN_KEY, accessToken);
     }
 
-    function goGames() {
+    function redirectAfterLogin() {
+      var params = new URLSearchParams(window.location.search);
+      var next = params.get("next");
+      if (next && next.startsWith("/") && !next.startsWith("//")) {
+        window.location.href = next;
+        return;
+      }
       window.location.href = "/games";
     }
 
-    // If already logged in, jump straight to games catalog.
+    function goGames() {
+      redirectAfterLogin();
+    }
+
+    // If already logged in, jump straight to destination.
     (function boot() {
       const t = sessionStorage.getItem(TOKEN_KEY);
       if (t) goGames();

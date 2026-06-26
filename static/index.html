@@ -452,6 +452,58 @@
     object-position: center center;
   }
 
+  .clients-strip {
+    margin-top: 44px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+  }
+
+  .clients-strip-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px 24px;
+  }
+
+  .clients-strip-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .clients-strip-names {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px 28px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .clients-strip-names li {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    opacity: 0.9;
+  }
+
+  @media (max-width: 640px) {
+    .clients-strip-inner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .clients-strip-names {
+      justify-content: flex-start;
+      gap: 8px 20px;
+    }
+  }
+
   .contact-section {
     background: color-mix(in srgb, var(--bg-card) 80%, var(--bg));
     border-top: 1px solid var(--border);
@@ -714,6 +766,7 @@
   <a class="logo" href="/">Ayzen Studios</a>
   <nav class="nav-main">
     <a class="nav-link" href="#about">About</a>
+    <a class="nav-link" href="#clients">Clients</a>
     <a class="nav-link" href="#work">Work</a>
     <a class="nav-link" href="#playstore">Play Store</a>
     <a class="nav-link" href="#contact">Contact</a>
@@ -805,6 +858,18 @@
       </div>
     </article>
   </div>
+
+  <div id="clients" class="clients-strip reveal">
+    <div class="clients-strip-inner">
+      <p class="clients-strip-label">Trusted by</p>
+      <ul class="clients-strip-names" aria-label="Client organisations">
+        <li>Fyers</li>
+        <li>ONGC</li>
+        <li>NTPC</li>
+        <li>Airtel</li>
+      </ul>
+    </div>
+  </div>
 </section>
 
 <section id="work" class="reveal">
@@ -844,12 +909,12 @@
     <a class="work-card" href="/soundora">
       <div class="work-card-media">
         <img src="/assets/games/soundora.svg" alt="Soundora — AI song generator by Ayzen Studios" width="400" height="225">
-        <span class="play-badge soon-badge">Coming soon</span>
+        <span class="play-badge">AI Music</span>
       </div>
       <div class="work-card-body">
         <h3>Soundora</h3>
-        <p>Our AI song generator — turn prompts into full tracks with mood, genre, and lyrics. Android app in development.</p>
-        <span class="arrow">Coming soon →</span>
+        <p>Our AI music service — describe a mood or story and get an original track you can play and download.</p>
+        <span class="arrow">Open Soundora →</span>
       </div>
     </a>
   </div>

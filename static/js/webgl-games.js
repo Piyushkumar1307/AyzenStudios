@@ -27,17 +27,4 @@ window.WEBGL_GAMES = [
     canvasWidth: 1920,
     canvasHeight: 1080,
   },
-  {
-    slug: "soundora",
-    title: "Soundora",
-    desc: "Describe a mood, genre, or story — Soundora composes original AI-generated songs in your browser.",
-    img: "/assets/games/soundora.svg",
-    buildPath: "/static/webgl/AI-Musicapp/index.html",
-    badge: "AI Music",
-    appType: "standalone",
-    comingSoon: true,
-    orientation: "portrait",
-    aspectRatio: "9 / 16",
-    homeHref: "/soundora",
-  },
 ];

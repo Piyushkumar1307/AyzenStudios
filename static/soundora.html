@@ -1,183 +1,156 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script src="/static/favicon-set.js"></script>
 <script src="/js/runtime-config.js?v=4"></script>
 <script src="/js/spooky-api.js?v=5"></script>
-<script src="/js/webgl-games.js?v=8"></script>
-<title>Soundora — AI Song Generator · Ayzen Studios</title>
+<title>Soundora — AI Music · Ayzen Studios</title>
 <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  :root,[data-theme="dark"]{
-    --bg:#0c0612;--card:#160d22;--text:#f3eef8;--muted:#9d8fb0;
-    --accent:#a78bfa;--cyan:#22d3ee;--pink:#f472b6;--border:rgba(167,139,250,.22);
-    --glow:rgba(167,139,250,.35);
-  }
-  [data-theme="light"]{
-    --bg:#f4f0f8;--card:#fff;--text:#1a1028;--muted:#5c4d6e;
-    --accent:#6d28d9;--cyan:#0891b2;--pink:#db2777;--border:rgba(109,40,217,.18);
-    --glow:rgba(109,40,217,.12);
-  }
-  body{
-    font-family:"Outfit",system-ui,sans-serif;background:var(--bg);color:var(--text);
-    min-height:100vh;line-height:1.6;display:flex;flex-direction:column;
-  }
-  .bg-glow{
-    position:fixed;inset:0;pointer-events:none;z-index:0;
-    background:
-      radial-gradient(ellipse 70% 50% at 20% 0%, rgba(167,139,250,.18), transparent),
-      radial-gradient(ellipse 60% 40% at 100% 100%, rgba(34,211,238,.1), transparent);
-  }
-  .wrap{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:24px 20px 56px;flex:1;width:100%}
-  .top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:36px;flex-wrap:wrap}
-  .logo{font-family:"Creepster",cursive;font-size:22px;color:var(--accent);text-decoration:none;opacity:.75}
-  .back{color:var(--muted);text-decoration:none;font-weight:600;font-size:14px}
-  .back:hover{color:var(--accent)}
-  .hero-card{
-    background:linear-gradient(145deg, rgba(22,13,34,.95), rgba(12,6,18,.98));
-    border:1px solid var(--border);border-radius:24px;overflow:hidden;
-    box-shadow:0 28px 72px rgba(0,0,0,.45), 0 0 48px rgba(124,58,237,.12);
-  }
-  .hero-media{position:relative;aspect-ratio:16/9;background:#08040e;overflow:hidden}
-  .hero-media img{width:100%;height:100%;object-fit:cover;display:block}
-  .hero-media::after{
-    content:"";position:absolute;inset:0;
-    background:linear-gradient(180deg, transparent 35%, rgba(12,6,18,.92));
-  }
-  .hero-badge{
-    position:absolute;top:16px;left:16px;z-index:2;
-    font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
-    color:#e9d5ff;background:rgba(12,6,18,.75);border:1px solid rgba(167,139,250,.35);
-    padding:6px 12px;border-radius:99px;backdrop-filter:blur(8px);
-  }
-  .hero-body{padding:28px 28px 32px}
-  .hero-body h1{
-    font-size:clamp(32px,5vw,44px);font-weight:800;line-height:1.1;margin-bottom:8px;
-    background:linear-gradient(135deg, var(--accent), var(--cyan), var(--pink));
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  }
-  .tagline{font-size:17px;color:var(--muted);max-width:52ch;margin-bottom:22px}
-  .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:28px}
-  .feat{
-    padding:16px 18px;border-radius:14px;background:rgba(167,139,250,.06);
-    border:1px solid rgba(167,139,250,.14);
-  }
-  .feat strong{display:block;font-size:14px;margin-bottom:4px;color:var(--text)}
-  .feat span{font-size:13px;color:var(--muted)}
-  .player-shell{
-    border-radius:16px;border:1px dashed rgba(167,139,250,.35);
-    background:rgba(8,4,14,.65);padding:32px 24px;text-align:center;margin-bottom:24px;
-  }
-  .player-shell.ready{border-style:solid;border-color:rgba(52,211,153,.35);background:rgba(52,211,153,.04)}
-  .player-shell .icon{font-size:40px;margin-bottom:10px}
-  .player-shell h2{font-size:18px;margin-bottom:8px}
-  .player-shell p{font-size:14px;color:var(--muted);max-width:44ch;margin:0 auto 18px}
-  .actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
-  .btn{
-    padding:14px 28px;border-radius:12px;border:none;font-family:inherit;
-    font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;
-    display:inline-flex;align-items:center;justify-content:center;transition:transform .15s, filter .15s;
-  }
-  .btn:active{transform:scale(.98)}
-  .btn-primary{
-    background:linear-gradient(135deg, var(--accent), var(--pink));color:#fff;
-    box-shadow:0 10px 32px rgba(124,58,237,.35);
-  }
-  .btn-primary:hover{filter:brightness(1.06)}
-  .btn-primary:disabled{opacity:.45;cursor:not-allowed;filter:none;box-shadow:none}
-  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--accent)}
-  .note{
-    margin-top:24px;padding:16px 18px;border-radius:12px;font-size:13px;color:var(--muted);
-    background:rgba(167,139,250,.05);border:1px solid rgba(167,139,250,.12);
-  }
-  .note code{font-size:12px;color:var(--cyan);word-break:break-all}
-</style>
+<link rel="stylesheet" href="/css/soundora.css?v=2">
 <link rel="stylesheet" href="/css/site-footer.css?v=1">
-<script>(function(){var s=localStorage.getItem("ayzen-studios-theme");document.documentElement.setAttribute("data-theme",s==="light"||s==="dark"?s:"dark")})();</script>
 </head>
 <body>
-<div class="bg-glow" aria-hidden="true"></div>
-<div class="wrap">
-  <header class="top">
-    <a class="back" href="/#work">← Explore our work</a>
-    <a class="logo" href="/">Ayzen Studios</a>
-  </header>
+<header class="mobile-header" aria-label="Soundora">
+  <a class="mobile-brand" href="/">Soundora</a>
+  <div class="mobile-header-actions">
+    <button type="button" class="mobile-icon-btn" id="btnRefreshMobile">Refresh</button>
+    <button type="button" class="mobile-icon-btn" id="btnLogoutMobile">Sign out</button>
+  </div>
+</header>
 
-  <article class="hero-card">
-    <div class="hero-media">
-      <img id="heroImg" src="/assets/games/soundora.svg" alt="Soundora AI song generator">
-      <span class="hero-badge" id="statusBadge">Coming soon</span>
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="sidebar-brand" href="/">Soundora</a>
+    <nav class="sidebar-nav">
+      <button type="button" class="nav-item active" data-view="home">🏠 Home</button>
+      <button type="button" class="nav-item" data-view="create">✨ Create</button>
+      <button type="button" class="nav-item" data-view="library">📚 Your library</button>
+      <a class="nav-item" href="/">← Ayzen Studios</a>
+    </nav>
+    <div class="sidebar-stats">
+      <h4>Your stats</h4>
+      <div class="stat-row"><span>Generated</span><strong id="statTotal">0</strong></div>
+      <div class="stat-row"><span>Ready</span><strong id="statCompleted">0</strong></div>
+      <div class="stat-row"><span>In progress</span><strong id="statProcessing">0</strong></div>
+      <div class="stat-row"><span>Remaining</span><strong id="statRemaining">—</strong></div>
+      <div class="stat-row"><span>Limit</span><span id="statMax">3</span></div>
     </div>
-    <div class="hero-body">
-      <h1>Soundora</h1>
-      <p class="tagline" id="appDesc">Describe a mood, genre, or story — Soundora composes original AI-generated songs. Launching soon on Android.</p>
+    <p class="sidebar-user" id="sidebarUser">—</p>
+    <button type="button" class="nav-item" id="btnLogout">Sign out</button>
+  </aside>
 
-      <div class="features">
-        <div class="feat"><strong>Prompt to track</strong><span>Turn ideas into full songs with AI-assisted composition.</span></div>
-        <div class="feat"><strong>Genre &amp; mood</strong><span>Dial in vibes — pop, cinematic, lo-fi, upbeat, and more.</span></div>
-        <div class="feat"><strong>Android app</strong><span>Full experience coming as a downloadable app from Ayzen Studios.</span></div>
+  <main class="main">
+    <div class="main-scroll">
+      <div class="mobile-stats" aria-label="Demo stats">
+        <span class="mobile-stat-pill"><strong id="mobileStatRemaining">3</strong> left</span>
+        <span class="mobile-stat-pill"><strong id="mobileStatCompleted">0</strong> ready</span>
+        <span class="mobile-stat-pill"><strong id="mobileStatProcessing">0</strong> generating</span>
       </div>
 
-      <div class="player-shell" id="playerShell">
-        <div class="icon" id="shellIcon">🎵</div>
-        <h2 id="shellTitle">Coming soon</h2>
-        <p id="shellMsg">Soundora is in development. We’re polishing the Android app — check back here for the download link.</p>
-        <div class="actions">
-          <button type="button" class="btn btn-primary" id="btnLaunch" disabled>Coming soon</button>
-          <a class="btn btn-ghost" href="/">Back to home</a>
+      <header class="main-header">
+        <div>
+          <h1 id="mainHeading">Good evening</h1>
+          <p id="mainSub">Create original AI songs — demo limit: 3 completed tracks per account.</p>
         </div>
-      </div>
+        <div class="header-actions">
+          <button type="button" class="btn btn-ghost" id="btnRefresh">Refresh</button>
+        </div>
+      </header>
 
-      <p class="note" id="devNote" hidden>
-        Set <code>comingSoon: false</code> in <code>webgl-games.js</code> when ready to launch.
-      </p>
+      <section class="create-panel" id="panelCreate" style="display:none">
+        <h2>New track</h2>
+        <div class="field">
+          <label for="promptInput">Song description</label>
+          <textarea id="promptInput" placeholder="A dreamy lo-fi beat about rainy nights in Tokyo…" maxlength="500" autocomplete="off"></textarea>
+        </div>
+        <div class="field">
+          <label for="styleInput">Style / genre</label>
+          <input id="styleInput" type="text" placeholder="Pop, cinematic, lo-fi…" maxlength="120" autocomplete="off">
+          <div class="style-chips" id="styleChips"></div>
+        </div>
+        <div class="field">
+          <label for="titleInput">Title (optional)</label>
+          <input id="titleInput" type="text" placeholder="Midnight Rain" maxlength="120" autocomplete="off">
+        </div>
+        <label class="checkbox-row">
+          <input type="checkbox" id="instrumentalCheck">
+          Instrumental only (no vocals)
+        </label>
+        <button type="button" class="btn btn-accent" id="btnGenerate">Generate song</button>
+      </section>
+
+      <section id="panelLibrary">
+        <h2 class="section-title">Recently created</h2>
+        <div class="empty-state" id="emptyLibrary">
+          <p>No songs yet. Tap <strong>Create</strong> below and describe your first track.</p>
+        </div>
+        <div class="track-grid" id="trackGrid"></div>
+      </section>
     </div>
-  </article>
+  </main>
+
+  <footer class="player-bar hidden" id="playerBar">
+    <div class="player-track">
+      <div class="player-thumb" id="playerThumb"></div>
+      <div class="player-meta">
+        <h4 id="playerTitle">—</h4>
+        <p id="playerSubtitle">—</p>
+      </div>
+      <div class="player-track-actions">
+        <button type="button" id="btnPlayMobile" aria-label="Play or pause">▶</button>
+      </div>
+    </div>
+    <div class="player-controls">
+      <div class="control-btns">
+        <button type="button" class="play-main" id="btnPlayMain" aria-label="Play">▶</button>
+      </div>
+      <div class="progress-wrap">
+        <span id="timeCurrent">0:00</span>
+        <input type="range" id="progressBar" min="0" max="100" value="0" aria-label="Seek">
+        <span id="timeTotal">0:00</span>
+      </div>
+    </div>
+    <div class="player-actions">
+      <button type="button" class="btn btn-ghost" id="btnDownload" disabled>Download</button>
+    </div>
+  </footer>
 </div>
 
-<script>
-(function () {
-  var games = window.WEBGL_GAMES || [];
-  var app = games.find(function (g) { return g.slug === "soundora"; });
-  if (!app) return;
+<nav class="mobile-tabs" aria-label="Navigation">
+  <button type="button" class="mobile-tab active" data-view="home">
+    <span aria-hidden="true">🏠</span>
+    <span>Home</span>
+  </button>
+  <button type="button" class="mobile-tab" data-view="create">
+    <span aria-hidden="true">✨</span>
+    <span>Create</span>
+  </button>
+  <button type="button" class="mobile-tab" data-view="library">
+    <span aria-hidden="true">📚</span>
+    <span>Library</span>
+  </button>
+  <a class="mobile-tab" href="/">
+    <span aria-hidden="true">←</span>
+    <span>Studio</span>
+  </a>
+</nav>
 
-  var heroImg = document.getElementById("heroImg");
-  var statusBadge = document.getElementById("statusBadge");
-  var appDesc = document.getElementById("appDesc");
-  var playerShell = document.getElementById("playerShell");
-  var shellTitle = document.getElementById("shellTitle");
-  var shellMsg = document.getElementById("shellMsg");
-  var shellIcon = document.getElementById("shellIcon");
-  var btnLaunch = document.getElementById("btnLaunch");
-  var devNote = document.getElementById("devNote");
+<div class="auth-gate" id="authGate">
+  <div class="auth-card">
+    <h2>Sign in to Soundora</h2>
+    <p>Use your Ayzen Studios account to generate AI music, track your songs, and download them.</p>
+    <button type="button" class="btn btn-accent" id="btnLogin">Log in / Register</button>
+  </div>
+</div>
 
-  if (app.img) heroImg.src = app.img;
-  if (app.desc) appDesc.textContent = app.desc;
+<div class="toast hidden" id="toast" role="status"></div>
 
-  function enableLaunch() {
-    app.comingSoon = false;
-    statusBadge.textContent = "Live";
-    playerShell.classList.add("ready");
-    shellIcon.textContent = "🚀";
-    shellTitle.textContent = "Ready to play";
-    shellMsg.textContent = "Your Soundora WebGL build is detected. Launch the app in full screen.";
-    btnLaunch.disabled = false;
-    devNote.style.display = "none";
-  }
-
-  if (!app.comingSoon) {
-    enableLaunch();
-  }
-
-  btnLaunch.addEventListener("click", function () {
-    if (btnLaunch.disabled) return;
-    window.location.href = "/webgl-play?game=soundora";
-  });
-})();
-</script>
+<script src="/js/soundora-app.js?v=2"></script>
 <div id="site-footer-root"></div>
 <script src="/js/site-footer.js?v=1" defer></script>
 </body>

@@ -18,8 +18,8 @@
     var suffix = rest.indexOf("?") >= 0 ? rest.slice(rest.indexOf("?")) : "";
     var proxied =
       typeof g.apiUrl === "function"
-        ? g.apiUrl("/api/soundora/" + subPath)
-        : "/api/soundora/" + subPath;
+        ? g.apiUrl("/api/soundora/upstream/" + subPath)
+        : "/api/soundora/upstream/" + subPath;
     if (suffix) {
       proxied += proxied.indexOf("?") === -1 ? suffix : "&" + suffix.slice(1);
     }

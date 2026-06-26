@@ -64,3 +64,23 @@ class GameScore(Base):
     best_score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     updated_at: Mapped["DateTime"] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
+
+class SoundoraTrack(Base):
+    __tablename__ = "soundora_tracks"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+
+    prompt: Mapped[str] = mapped_column(String(500), nullable=False)
+    style: Mapped[str] = mapped_column(String(120), nullable=False, default="")
+    title: Mapped[str] = mapped_column(String(200), nullable=False, default="")
+
+    suno_task_id: Mapped[str] = mapped_column(String(128), nullable=True, index=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending", index=True)
+    audio_url: Mapped[str] = mapped_column(String(1024), nullable=True)
+    image_url: Mapped[str] = mapped_column(String(1024), nullable=True)
+    error_message: Mapped[str] = mapped_column(String(500), nullable=True)
+
+    created_at: Mapped["DateTime"] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    completed_at: Mapped["DateTime"] = mapped_column(DateTime(timezone=True), nullable=True)
+

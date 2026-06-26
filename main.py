@@ -5,7 +5,9 @@ import os
 import ssl
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
+import uuid
 import hmac
 import hashlib
 import secrets
@@ -27,7 +29,7 @@ from sqlalchemy.exc import ProgrammingError
 from gesture_detector import GestureDetector
 from models import HandState
 from auth import create_access_token, get_current_user, hash_password, verify_password
-from auth_models import Base, EmailOtp, GameEntitlement, GameScore, User
+from auth_models import Base, EmailOtp, GameEntitlement, GameScore, SoundoraTrack, User
 from auth_schemas import (
     ContactRequest,
     LoginRequest,
@@ -35,6 +37,10 @@ from auth_schemas import (
     OtpStatusResponse,
     RegisterRequest,
     RequestEmailOtp,
+    SoundoraGenerateRequest,
+    SoundoraStatsResponse,
+    SoundoraTrackItem,
+    SoundoraTrackListResponse,
     TokenResponse,
     VerifyEmailOtp,
 )
@@ -68,6 +74,11 @@ OTP_RATE_LIMIT_HOURS = 3
 
 # --- Soundora / Suno API proxy (key must stay server-side only) ---
 SUNO_API_BASE = "https://api.sunoapi.org/api/v1"
+# Cloudflare on api.sunoapi.org blocks default Python urllib (error 1010) without a browser UA.
+SUNO_HTTP_USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+)
 
 
 def _as_utc(dt: datetime) -> datetime:
@@ -411,6 +422,16 @@ def _suno_api_key_or_503() -> str:
     return key
 
 
+def _suno_ssl_context() -> ssl.SSLContext:
+    """Use certifi CA bundle (fixes macOS Python.org SSL verify failures)."""
+    try:
+        import certifi
+
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        return ssl.create_default_context()
+
+
 def _suno_upstream_request(
     *,
     method: str,
@@ -425,7 +446,8 @@ def _suno_upstream_request(
         url = f"{url}?{query}"
     headers = {
         "Authorization": f"Bearer {_suno_api_key_or_503()}",
-        "Accept": "*/*",
+        "Accept": "application/json, */*",
+        "User-Agent": SUNO_HTTP_USER_AGENT,
     }
     if body:
         headers["Content-Type"] = content_type or "application/json"
@@ -436,7 +458,7 @@ def _suno_upstream_request(
         method=method.upper(),
     )
     try:
-        with urllib.request.urlopen(req, timeout=120) as resp:
+        with urllib.request.urlopen(req, timeout=120, context=_suno_ssl_context()) as resp:
             media_type = resp.headers.get_content_type() or "application/json"
             return resp.status, resp.read(), media_type
     except urllib.error.HTTPError as e:
@@ -446,6 +468,18 @@ def _suno_upstream_request(
             media_type = e.headers.get_content_type() or media_type
         logger.warning("Suno API HTTP %s for %s %s", e.code, method, subpath)
         return e.code, err_body, media_type
+    except urllib.error.URLError as e:
+        reason = getattr(e, "reason", e)
+        logger.exception("Suno proxy failed for %s %s: %s", method, subpath, e)
+        if isinstance(reason, ssl.SSLError):
+            raise HTTPException(
+                status_code=502,
+                detail="Could not reach Suno API (SSL certificate error on this machine).",
+            )
+        raise HTTPException(
+            status_code=502,
+            detail=f"Could not reach Suno API ({reason}).",
+        )
     except Exception as e:
         logger.exception("Suno proxy failed for %s %s: %s", method, subpath, e)
         raise HTTPException(
@@ -454,18 +488,404 @@ def _suno_upstream_request(
         )
 
 
+def _ensure_auth_tables():
+    Base.metadata.create_all(bind=engine)
+    _migrate_auth_schema()
+
+
+def _migrate_auth_schema():
+    """
+    Lightweight schema migration (no Alembic).
+    create_all() won't add new columns to existing tables, so we patch forward here.
+    """
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "ALTER TABLE users "
+                "ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE"
+            )
+        )
+
+
+def _ensure_tables_or_503():
+    try:
+        _ensure_auth_tables()
+    except OperationalError:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+
+def _require_auth_tables() -> None:
+    """
+    Run before get_current_user on auth routes.
+    If we open a session and SELECT users first, then _migrate_auth_schema() runs
+    ALTER TABLE users on another connection, Postgres can block or time out
+    (statement_timeout) while the ORM still holds a transaction.
+    """
+    _ensure_tables_or_503()
+
+
 @app.get("/api/soundora/status")
 def soundora_status():
     """Check Soundora proxy is configured (never exposes the API key)."""
-    return {"configured": bool(_env_str("SUNO_API_KEY"))}
+    return {
+        "configured": bool(_env_str("SUNO_API_KEY")),
+        "max_tracks": _soundora_max_tracks(),
+    }
+
+
+def _soundora_max_tracks() -> int:
+    raw = _env_str("SOUNDORA_MAX_TRACKS") or "3"
+    try:
+        return max(1, min(int(raw), 500))
+    except Exception:
+        return 3
+
+
+def _purge_incomplete_soundora_tracks(db: Session, user_id: uuid.UUID) -> int:
+    """Remove pending/failed demo clutter; keep completed and in-flight processing."""
+    deleted = (
+        db.query(SoundoraTrack)
+        .filter(
+            SoundoraTrack.user_id == user_id,
+            SoundoraTrack.status.in_(("pending", "failed")),
+        )
+        .delete(synchronize_session=False)
+    )
+    if deleted:
+        db.commit()
+    return deleted
+
+
+def _completed_soundora_count(db: Session, user_id: uuid.UUID) -> int:
+    return (
+        db.query(SoundoraTrack)
+        .filter(SoundoraTrack.user_id == user_id, SoundoraTrack.status == "completed")
+        .count()
+    )
+
+
+def _processing_soundora_count(db: Session, user_id: uuid.UUID) -> int:
+    return (
+        db.query(SoundoraTrack)
+        .filter(SoundoraTrack.user_id == user_id, SoundoraTrack.status == "processing")
+        .count()
+    )
+
+
+def _soundora_callback_url() -> str:
+    base = _env_str("PUBLIC_API_BASE") or _env_str("SPOOKY_API_BASE") or "https://piyush-store.onrender.com"
+    return base.rstrip("/") + "/api/soundora/webhook"
+
+
+def _suno_json_request(
+    *,
+    method: str,
+    path: str,
+    query: str = "",
+    body: dict | None = None,
+) -> tuple[int, dict]:
+    payload = json.dumps(body).encode("utf-8") if body is not None else b""
+    status, resp_body, _ = _suno_upstream_request(
+        method=method,
+        path=path,
+        query=query,
+        body=payload,
+        content_type="application/json" if body is not None else None,
+    )
+    try:
+        data = json.loads(resp_body.decode("utf-8"))
+    except Exception:
+        data = {"raw": resp_body.decode("utf-8", errors="replace")[:500]}
+    return status, data
+
+
+def _extract_suno_clips(data: dict) -> list[dict]:
+    """Pull audio clip objects from varied Suno record-info payloads."""
+    clips: list[dict] = []
+    root = data.get("data") if isinstance(data, dict) else None
+    if not isinstance(root, dict):
+        return clips
+    response = root.get("response")
+    if isinstance(response, dict):
+        for key in ("sunoData", "data", "clips", "tracks"):
+            val = response.get(key)
+            if isinstance(val, list):
+                clips.extend([c for c in val if isinstance(c, dict)])
+    if not clips and isinstance(response, list):
+        clips.extend([c for c in response if isinstance(c, dict)])
+    return clips
+
+
+def _clip_audio_url(clip: dict) -> str | None:
+    for key in ("audioUrl", "audio_url", "sourceAudioUrl", "source_audio_url", "streamAudioUrl"):
+        val = clip.get(key)
+        if isinstance(val, str) and val.strip():
+            return val.strip()
+    return None
+
+
+def _clip_image_url(clip: dict) -> str | None:
+    for key in ("imageUrl", "image_url", "sourceImageUrl", "coverUrl"):
+        val = clip.get(key)
+        if isinstance(val, str) and val.strip():
+            return val.strip()
+    return None
+
+
+def _track_to_item(row: SoundoraTrack) -> SoundoraTrackItem:
+    created = row.created_at.isoformat() if row.created_at else ""
+    completed = row.completed_at.isoformat() if row.completed_at else None
+    display_title = (row.title or "").strip() or (row.prompt[:60] + ("…" if len(row.prompt) > 60 else ""))
+    return SoundoraTrackItem(
+        id=str(row.id),
+        prompt=row.prompt,
+        style=row.style or "",
+        title=display_title,
+        status=row.status,
+        audio_url=row.audio_url,
+        image_url=row.image_url,
+        error_message=row.error_message,
+        created_at=created,
+        completed_at=completed,
+    )
+
+
+def _refresh_soundora_track_from_suno(db: Session, track: SoundoraTrack) -> SoundoraTrack:
+    if track.status in ("completed", "failed") or not track.suno_task_id:
+        return track
+    status, data = _suno_json_request(
+        method="GET",
+        path="generate/record-info",
+        query=f"taskId={urllib.parse.quote(track.suno_task_id, safe='')}",
+    )
+    if status >= 400:
+        track.status = "failed"
+        track.error_message = f"Suno status check failed (HTTP {status})"
+        track.completed_at = datetime.now(timezone.utc)
+        db.add(track)
+        db.commit()
+        db.refresh(track)
+        return track
+
+    root = data.get("data") if isinstance(data, dict) else {}
+    task_status = str((root or {}).get("status") or "").upper()
+    if task_status in ("PENDING", "PROCESSING", "TEXT_SUCCESS", "FIRST_SUCCESS", "RUNNING"):
+        track.status = "processing"
+        db.add(track)
+        db.commit()
+        db.refresh(track)
+        return track
+
+    if task_status in ("FAILED", "ERROR", "CREATE_TASK_FAILED"):
+        track.status = "failed"
+        track.error_message = str((root or {}).get("errorMessage") or "Generation failed")
+        track.completed_at = datetime.now(timezone.utc)
+        db.add(track)
+        db.commit()
+        db.refresh(track)
+        return track
+
+    clips = _extract_suno_clips(data)
+    audio = _clip_audio_url(clips[0]) if clips else None
+    if task_status == "SUCCESS" and audio:
+        track.status = "completed"
+        track.audio_url = audio
+        track.image_url = _clip_image_url(clips[0]) if clips else track.image_url
+        if clips and not track.title:
+            clip_title = clips[0].get("title")
+            if isinstance(clip_title, str) and clip_title.strip():
+                track.title = clip_title.strip()[:200]
+        track.completed_at = datetime.now(timezone.utc)
+        track.error_message = None
+    elif task_status == "SUCCESS":
+        track.status = "processing"
+    db.add(track)
+    db.commit()
+    db.refresh(track)
+    return track
+
+
+def _require_verified_user(user: User) -> None:
+    if not getattr(user, "email_verified", False):
+        raise HTTPException(status_code=403, detail="Email not verified. Please verify via OTP.")
+
+
+@app.get(
+    "/api/soundora/stats",
+    response_model=SoundoraStatsResponse,
+    dependencies=[Depends(_require_auth_tables)],
+)
+def soundora_stats(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    _require_verified_user(user)
+    _purge_incomplete_soundora_tracks(db, user.id)
+    completed = _completed_soundora_count(db, user.id)
+    processing = _processing_soundora_count(db, user.id)
+    return SoundoraStatsResponse(
+        total_generated=completed,
+        completed=completed,
+        processing=processing,
+        max_tracks=_soundora_max_tracks(),
+    )
+
+
+@app.get(
+    "/api/soundora/tracks",
+    response_model=SoundoraTrackListResponse,
+    dependencies=[Depends(_require_auth_tables)],
+)
+def soundora_list_tracks(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    _require_verified_user(user)
+    _purge_incomplete_soundora_tracks(db, user.id)
+    rows = (
+        db.query(SoundoraTrack)
+        .filter(
+            SoundoraTrack.user_id == user.id,
+            SoundoraTrack.status.in_(("completed", "processing")),
+        )
+        .order_by(SoundoraTrack.created_at.desc())
+        .limit(100)
+        .all()
+    )
+    items: list[SoundoraTrackItem] = []
+    for row in rows:
+        if row.status == "processing":
+            row = _refresh_soundora_track_from_suno(db, row)
+            if row.status == "failed":
+                db.delete(row)
+                db.commit()
+                continue
+        if row.status == "completed":
+            items.append(_track_to_item(row))
+        elif row.status == "processing":
+            items.append(_track_to_item(row))
+    total = _completed_soundora_count(db, user.id)
+    return SoundoraTrackListResponse(tracks=items, total_generated=total)
+
+
+@app.get(
+    "/api/soundora/tracks/{track_id}",
+    response_model=SoundoraTrackItem,
+    dependencies=[Depends(_require_auth_tables)],
+)
+def soundora_get_track(
+    track_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _require_verified_user(user)
+    try:
+        tid = uuid.UUID(track_id)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Track not found")
+    row = (
+        db.query(SoundoraTrack)
+        .filter(SoundoraTrack.id == tid, SoundoraTrack.user_id == user.id)
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Track not found")
+    if row.status == "processing":
+        row = _refresh_soundora_track_from_suno(db, row)
+    return _track_to_item(row)
+
+
+@app.post(
+    "/api/soundora/tracks/generate",
+    response_model=SoundoraTrackItem,
+    status_code=201,
+    dependencies=[Depends(_require_auth_tables)],
+)
+def soundora_generate_track(
+    payload: SoundoraGenerateRequest,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _require_verified_user(user)
+    if not _env_str("SUNO_API_KEY"):
+        raise HTTPException(status_code=503, detail="Soundora is not configured on the server.")
+
+    _purge_incomplete_soundora_tracks(db, user.id)
+    max_tracks = _soundora_max_tracks()
+    completed = _completed_soundora_count(db, user.id)
+    if completed >= max_tracks:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Demo limit reached ({max_tracks} songs). Download your tracks or contact support.",
+        )
+    if _processing_soundora_count(db, user.id) > 0:
+        raise HTTPException(
+            status_code=429,
+            detail="A song is still generating. Please wait for it to finish.",
+        )
+
+    prompt = payload.prompt.strip()
+    style = payload.style.strip()
+    full_prompt = prompt if not style else f"{prompt}. Style: {style}"
+
+    track = SoundoraTrack(
+        user_id=user.id,
+        prompt=prompt,
+        style=style,
+        title=(payload.title.strip()[:200] if payload.title else ""),
+        status="pending",
+    )
+    db.add(track)
+    try:
+        db.commit()
+    except OperationalError:
+        db.rollback()
+        raise HTTPException(status_code=503, detail="Database unavailable")
+    db.refresh(track)
+
+    suno_body = {
+        "prompt": full_prompt,
+        "customMode": False,
+        "instrumental": payload.instrumental,
+        "model": _env_str("SUNO_MODEL") or "V4_5ALL",
+        "callBackUrl": _soundora_callback_url(),
+    }
+    status, data = _suno_json_request(method="POST", path="generate", body=suno_body)
+    task_id = None
+    if isinstance(data, dict):
+        inner = data.get("data")
+        if isinstance(inner, dict):
+            task_id = inner.get("taskId") or inner.get("task_id")
+
+    if status >= 400 or not task_id:
+        raw = str(data.get("raw") or "") if isinstance(data, dict) else ""
+        if status == 403 and "1010" in raw:
+            err = "Suno API blocked this server (Cloudflare). Retry after redeploy."
+        else:
+            err = (
+                str(data.get("msg") or data.get("message") or f"Suno rejected the request (HTTP {status})")
+                if isinstance(data, dict)
+                else f"Suno rejected the request (HTTP {status})"
+            )
+        db.delete(track)
+        db.commit()
+        raise HTTPException(status_code=502, detail=err)
+
+    track.suno_task_id = str(task_id)
+    track.status = "processing"
+    db.add(track)
+    db.commit()
+    db.refresh(track)
+    return _track_to_item(track)
+
+
+@app.post("/api/soundora/webhook")
+async def soundora_webhook(request: Request):
+    """Optional Suno callback target (polling is used by default)."""
+    await request.body()
+    return {"ok": True}
 
 
 @app.api_route(
-    "/api/soundora/{path:path}",
+    "/api/soundora/upstream/{path:path}",
     methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
 )
-async def soundora_proxy(path: str, request: Request):
-    """Proxy Suno API calls so the browser never holds SUNO_API_KEY."""
+async def soundora_upstream_proxy(path: str, request: Request):
+    """Low-level Suno API proxy (legacy/debug). Prefer /api/soundora/tracks/*."""
     body = await request.body()
     status, resp_body, media_type = _suno_upstream_request(
         method=request.method,
@@ -534,42 +954,6 @@ app.mount("/assets", StaticFiles(directory=os.path.join(_STATIC_DIR, "assets")),
 app.mount("/css", StaticFiles(directory=os.path.join(_STATIC_DIR, "css")), name="css")
 app.mount("/js", StaticFiles(directory=os.path.join(_STATIC_DIR, "js")), name="js")
 app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
-
-
-def _ensure_auth_tables():
-    Base.metadata.create_all(bind=engine)
-    _migrate_auth_schema()
-
-
-def _migrate_auth_schema():
-    """
-    Lightweight schema migration (no Alembic).
-    create_all() won't add new columns to existing tables, so we patch forward here.
-    """
-    with engine.begin() as conn:
-        # Add email verification column if missing.
-        conn.execute(
-            text(
-                "ALTER TABLE users "
-                "ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE"
-            )
-        )
-
-def _ensure_tables_or_503():
-    try:
-        _ensure_auth_tables()
-    except OperationalError:
-        raise HTTPException(status_code=503, detail="Database unavailable")
-
-
-def _require_auth_tables() -> None:
-    """
-    Run before get_current_user on routes that also call _ensure_tables_or_503.
-    If we open a session and SELECT users first, then _migrate_auth_schema() runs
-    ALTER TABLE users on another connection, Postgres can block or time out
-    (statement_timeout) while the ORM still holds a transaction.
-    """
-    _ensure_tables_or_503()
 
 
 @app.on_event("startup")

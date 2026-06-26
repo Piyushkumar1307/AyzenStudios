@@ -44,3 +44,35 @@ class ContactRequest(BaseModel):
     message: str = Field(min_length=10, max_length=4000)
     subject: str = Field(default="Studio inquiry", max_length=200)
 
+
+class SoundoraGenerateRequest(BaseModel):
+    prompt: str = Field(min_length=3, max_length=500)
+    style: str = Field(default="", max_length=120)
+    title: str = Field(default="", max_length=120)
+    instrumental: bool = False
+
+
+class SoundoraTrackItem(BaseModel):
+    id: str
+    prompt: str
+    style: str
+    title: str
+    status: str
+    audio_url: str | None = None
+    image_url: str | None = None
+    error_message: str | None = None
+    created_at: str
+    completed_at: str | None = None
+
+
+class SoundoraTrackListResponse(BaseModel):
+    tracks: list[SoundoraTrackItem]
+    total_generated: int
+
+
+class SoundoraStatsResponse(BaseModel):
+    total_generated: int
+    completed: int
+    processing: int
+    max_tracks: int
+

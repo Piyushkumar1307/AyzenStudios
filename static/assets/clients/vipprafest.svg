@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" role="img" aria-label="Vipprafest">
+  <rect x="4" y="8" width="32" height="32" rx="6" fill="#E87722"/>
+  <path fill="#fff" d="M14 14h6l4 10 4-10h6l-10 22-10-22z"/>
+  <text x="46" y="22" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700" fill="currentColor">VIPPRAFEST</text>
+  <text x="46" y="36" font-family="Arial, Helvetica, sans-serif" font-size="9" fill="currentColor" opacity="0.65">Construction &amp; Contracting</text>
+</svg>
