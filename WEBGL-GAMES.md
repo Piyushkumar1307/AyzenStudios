@@ -163,13 +163,11 @@ Standalone WebGL app — **no phone controller**.
 |------|--------|
 | Landing page | `/soundora` |
 | Catalog slug | `soundora` |
-| Build folder | `static/webgl/Soundora/` |
+| Build folder | `static/webgl/AI-Musicapp/` |
 | Config | `static/js/webgl-games.js` → `comingSoon: true` until build is uploaded |
 
 **After Unity export:**
 
-1. Copy WebGL build into `static/webgl/Soundora/` (`index.html` + `Build/`).
-2. Set `comingSoon: false` for the `soundora` entry in `webgl-games.js`.
-3. Redeploy Netlify — the Soundora page auto-detects the build and enables **Launch Soundora**.
-
-Homepage **Explore our work** links to `/soundora`. The WebGL catalog shows Soundora with a **Coming soon** badge until the flag is cleared.
+1. Copy WebGL build into `static/webgl/AI-Musicapp/` (`index.html` + `Build/`).
+2. Ensure `comingSoon: false` for the `soundora` entry in `webgl-games.js`.
+3. Redeploy Netlify — launch works from `/soundora`, `/webgl`, and `/webgl-play?game=soundora`.

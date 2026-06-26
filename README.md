@@ -43,7 +43,7 @@ Unity builds run in the browser; the **phone is the controller** via separate Re
 | **Ayzen Fruit Ninja** | `fruit-ninja` | Landscape 1920×1080 | [fruit-ninja-phonecontroller.onrender.com](https://fruit-ninja-phonecontroller.onrender.com) |
 | **Soundora** | `soundora` | Landscape (TBD) | Standalone — no phone controller |
 
-Landing page: **`/soundora`**. Set `comingSoon: false` in `webgl-games.js` after uploading the build to `static/webgl/Soundora/`.
+Landing page: **`/soundora`**. Build lives in `static/webgl/AI-Musicapp/`.
 
 **Play flow**
 
