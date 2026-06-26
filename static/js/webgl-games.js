@@ -35,7 +35,7 @@ window.WEBGL_GAMES = [
     buildPath: "/static/webgl/AI-Musicapp/index.html",
     badge: "AI Music",
     appType: "standalone",
-    comingSoon: false,
+    comingSoon: true,
     orientation: "portrait",
     aspectRatio: "9 / 16",
     homeHref: "/soundora",
