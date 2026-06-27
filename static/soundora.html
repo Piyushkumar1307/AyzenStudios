@@ -11,7 +11,7 @@
 <script src="/js/spooky-api.js?v=5"></script>
 <title>Soundora — AI Music · Ayzen Studios</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/soundora.css?v=6">
+<link rel="stylesheet" href="/css/soundora.css?v=9">
 <link rel="stylesheet" href="/css/site-footer.css?v=1">
 </head>
 <body>
@@ -30,6 +30,7 @@
       <button type="button" class="nav-item active" data-view="home">🏠 Home</button>
       <button type="button" class="nav-item" data-view="create">✨ Create</button>
       <button type="button" class="nav-item" data-view="library">📚 Your library</button>
+      <button type="button" class="nav-item nav-item--packages" id="btnPackagesSidebar">🎁 Song package</button>
       <a class="nav-item" href="/">← Ayzen Studios</a>
     </nav>
     <div class="sidebar-stats">
@@ -58,6 +59,7 @@
           <p id="mainSub">Create original AI songs — demo limit: 3 completed tracks per account.</p>
         </div>
         <div class="header-actions">
+          <button type="button" class="btn btn-ghost" id="btnPackages">Song package</button>
           <button type="button" class="btn btn-ghost" id="btnRefresh">Refresh</button>
         </div>
       </header>
@@ -175,7 +177,67 @@
 
 <div class="toast hidden" id="toast" role="status"></div>
 
-<script src="/js/soundora-app.js?v=5"></script>
+<div class="package-modal hidden" id="packageModal" role="dialog" aria-modal="true" aria-labelledby="packageModalTitle">
+  <div class="package-modal__backdrop" id="packageModalBackdrop" aria-hidden="true"></div>
+  <div class="package-modal__panel">
+    <header class="package-modal__head">
+      <div>
+        <h2 id="packageModalTitle">Song packages</h2>
+        <p class="package-modal__sub">Bigger packs = lower cost per song. After payment, your account limit is updated manually.</p>
+      </div>
+      <button type="button" class="package-modal__close" id="packageModalClose" aria-label="Close">✕</button>
+    </header>
+    <div class="package-grid" id="packageGrid">
+      <article class="package-card" data-songs="10" data-price="950" data-rate="95">
+        <span class="package-card__songs">10 songs</span>
+        <strong class="package-card__price">₹950</strong>
+        <span class="package-card__per">₹95 / song</span>
+        <span class="package-card__save">Starter pack</span>
+        <a class="btn btn-accent package-card__btn" href="https://wa.me/919205726749?text=Hi%2C%20I%20want%20to%20buy%20Soundora%2010%20song%20package%20(%E2%82%B9950)" target="_blank" rel="noopener noreferrer" data-no-transition>Buy on WhatsApp</a>
+      </article>
+      <article class="package-card" data-songs="20" data-price="1760" data-rate="88">
+        <span class="package-card__songs">20 songs</span>
+        <strong class="package-card__price">₹1,760</strong>
+        <span class="package-card__per">₹88 / song</span>
+        <span class="package-card__save">Save ₹140 vs starter</span>
+        <a class="btn btn-accent package-card__btn" href="https://wa.me/919205726749?text=Hi%2C%20I%20want%20to%20buy%20Soundora%2020%20song%20package%20(%E2%82%B91760)" target="_blank" rel="noopener noreferrer" data-no-transition>Buy on WhatsApp</a>
+      </article>
+      <article class="package-card package-card--featured" data-songs="30" data-price="2490" data-rate="83">
+        <span class="package-card__badge">Popular</span>
+        <span class="package-card__songs">30 songs</span>
+        <strong class="package-card__price">₹2,490</strong>
+        <span class="package-card__per">₹83 / song</span>
+        <span class="package-card__save">Save ₹360 vs starter</span>
+        <a class="btn btn-accent package-card__btn" href="https://wa.me/919205726749?text=Hi%2C%20I%20want%20to%20buy%20Soundora%2030%20song%20package%20(%E2%82%B92490)" target="_blank" rel="noopener noreferrer" data-no-transition>Buy on WhatsApp</a>
+      </article>
+      <article class="package-card" data-songs="50" data-price="3900" data-rate="78">
+        <span class="package-card__songs">50 songs</span>
+        <strong class="package-card__price">₹3,900</strong>
+        <span class="package-card__per">₹78 / song</span>
+        <span class="package-card__save">Save ₹850 vs starter</span>
+        <a class="btn btn-accent package-card__btn" href="https://wa.me/919205726749?text=Hi%2C%20I%20want%20to%20buy%20Soundora%2050%20song%20package%20(%E2%82%B93900)" target="_blank" rel="noopener noreferrer" data-no-transition>Buy on WhatsApp</a>
+      </article>
+      <article class="package-card" data-songs="100" data-price="7200" data-rate="72">
+        <span class="package-card__songs">100 songs</span>
+        <strong class="package-card__price">₹7,200</strong>
+        <span class="package-card__per">₹72 / song</span>
+        <span class="package-card__save">Save ₹2,300 vs starter</span>
+        <a class="btn btn-accent package-card__btn" href="https://wa.me/919205726749?text=Hi%2C%20I%20want%20to%20buy%20Soundora%20100%20song%20package%20(%E2%82%B97200)" target="_blank" rel="noopener noreferrer" data-no-transition>Buy on WhatsApp</a>
+      </article>
+      <article class="package-card package-card--pro" data-songs="150" data-price="10000" data-rate="67">
+        <span class="package-card__badge">Best value</span>
+        <span class="package-card__songs">150 songs</span>
+        <strong class="package-card__price">₹10,000</strong>
+        <span class="package-card__per">₹67 / song</span>
+        <span class="package-card__save">Save ₹4,250 vs starter</span>
+        <a class="btn btn-accent package-card__btn" href="https://wa.me/919205726749?text=Hi%2C%20I%20want%20to%20buy%20Soundora%20150%20song%20package%20(%E2%82%B910000)" target="_blank" rel="noopener noreferrer" data-no-transition>Buy on WhatsApp</a>
+      </article>
+    </div>
+    <p class="package-modal__foot">Or email <a href="mailto:sonu788380@gmail.com">sonu788380@gmail.com</a> with your account email after payment.</p>
+  </div>
+</div>
+
+<script src="/js/soundora-app.js?v=7"></script>
 <div id="site-footer-root"></div>
 <script src="/js/site-footer.js?v=1" defer></script>
 <script src="/js/ayzen-motion.js?v=1" defer></script>

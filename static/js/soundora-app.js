@@ -484,6 +484,50 @@
     renderLimitCards();
   }
 
+  function openPackageModal(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    var modal = $("packageModal");
+    if (!modal) return;
+    modal.classList.add("is-open");
+    modal.classList.remove("hidden");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("package-modal-open");
+    var closeBtn = $("packageModalClose");
+    if (closeBtn) closeBtn.focus();
+  }
+
+  function closePackageModal() {
+    var modal = $("packageModal");
+    if (!modal) return;
+    modal.classList.remove("is-open");
+    modal.classList.add("hidden");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("package-modal-open");
+  }
+
+  function bindPackageModal() {
+    var modal = $("packageModal");
+    if (!modal) return;
+    if (bindPackageModal._bound) return;
+    bindPackageModal._bound = true;
+
+    document.addEventListener("click", function (e) {
+      var opener = e.target.closest("#btnPackages, #btnPackagesSidebar");
+      if (opener) openPackageModal(e);
+    });
+
+    var closeBtn = $("packageModalClose");
+    var backdrop = $("packageModalBackdrop");
+    if (closeBtn) closeBtn.addEventListener("click", closePackageModal);
+    if (backdrop) backdrop.addEventListener("click", closePackageModal);
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && modal.classList.contains("is-open")) closePackageModal();
+    });
+  }
+
   function togglePlayback() {
     if (!state.currentTrack) return;
     if (audio.paused) audio.play();
@@ -503,29 +547,30 @@
     audio.addEventListener("play", syncPlayButtons);
     audio.addEventListener("pause", syncPlayButtons);
 
-    $("btnPlayMain").addEventListener("click", togglePlayback);
+    $("btnPlayMain") && $("btnPlayMain").addEventListener("click", togglePlayback);
     var playMob = $("btnPlayMobile");
     if (playMob) playMob.addEventListener("click", togglePlayback);
-    $("progressBar").addEventListener("input", function (e) {
+    $("progressBar") && $("progressBar").addEventListener("input", function (e) {
       if (!isFinite(audio.duration)) return;
       audio.currentTime = (e.target.value / 100) * audio.duration;
     });
-    $("btnDownload").addEventListener("click", downloadCurrent);
+    $("btnDownload") && $("btnDownload").addEventListener("click", downloadCurrent);
   }
 
   async function init() {
+    bindPackageModal();
     bindStyleChips();
     bindNav();
     bindPlayer();
     setView("home");
 
-    $("btnGenerate").addEventListener("click", generateTrack);
-    $("btnLogin").addEventListener("click", loginRedirect);
+    $("btnGenerate") && $("btnGenerate").addEventListener("click", generateTrack);
+    $("btnLogin") && $("btnLogin").addEventListener("click", loginRedirect);
     function logout() {
       sessionStorage.removeItem(TOKEN_KEY);
       loginRedirect();
     }
-    $("btnLogout").addEventListener("click", logout);
+    $("btnLogout") && $("btnLogout").addEventListener("click", logout);
     var logoutMob = $("btnLogoutMobile");
     if (logoutMob) logoutMob.addEventListener("click", logout);
     async function refreshLibrary() {
@@ -533,7 +578,7 @@
       await loadStats();
       showToast("Library refreshed.");
     }
-    $("btnRefresh").addEventListener("click", refreshLibrary);
+    $("btnRefresh") && $("btnRefresh").addEventListener("click", refreshLibrary);
     var refreshMob = $("btnRefreshMobile");
     if (refreshMob) refreshMob.addEventListener("click", refreshLibrary);
 
@@ -548,6 +593,7 @@
     await Promise.all([loadStats(), loadTracks()]);
   }
 
+  bindPackageModal();
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
