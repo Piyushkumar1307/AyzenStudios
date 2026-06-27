@@ -505,6 +505,12 @@ def _migrate_auth_schema():
                 "ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE"
             )
         )
+        conn.execute(
+            text(
+                "ALTER TABLE users "
+                "ADD COLUMN IF NOT EXISTS soundora_max_tracks INTEGER"
+            )
+        )
 
 
 def _ensure_tables_or_503():
@@ -539,6 +545,14 @@ def _soundora_max_tracks() -> int:
         return max(1, min(int(raw), 500))
     except Exception:
         return 3
+
+
+def _user_soundora_max_tracks(user: User) -> int:
+    """Per-user override on users.soundora_max_tracks, else global SOUNDORA_MAX_TRACKS."""
+    override = getattr(user, "soundora_max_tracks", None)
+    if override is not None and override > 0:
+        return min(int(override), 500)
+    return _soundora_max_tracks()
 
 
 def _purge_incomplete_soundora_tracks(db: Session, user_id: uuid.UUID) -> int:
@@ -724,7 +738,7 @@ def soundora_stats(user: User = Depends(get_current_user), db: Session = Depends
         total_generated=completed,
         completed=completed,
         processing=processing,
-        max_tracks=_soundora_max_tracks(),
+        max_tracks=_user_soundora_max_tracks(user),
     )
 
 
@@ -789,6 +803,64 @@ def soundora_get_track(
     return _track_to_item(row)
 
 
+def _safe_audio_filename(title: str) -> str:
+    cleaned = "".join(c if c.isalnum() or c in " -_" else "" for c in (title or "").strip())
+    return (cleaned[:80].strip() or "soundora-track") + ".mp3"
+
+
+def _fetch_external_audio(url: str) -> tuple[bytes, str]:
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": SUNO_HTTP_USER_AGENT, "Accept": "*/*"},
+        method="GET",
+    )
+    with urllib.request.urlopen(req, timeout=120, context=_suno_ssl_context()) as resp:
+        body = resp.read()
+        media_type = resp.headers.get_content_type() or "audio/mpeg"
+        return body, media_type
+
+
+@app.get(
+    "/api/soundora/tracks/{track_id}/download",
+    dependencies=[Depends(_require_auth_tables)],
+)
+def soundora_download_track(
+    track_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Proxy audio with Content-Disposition so browsers save instead of opening the CDN URL."""
+    _require_verified_user(user)
+    try:
+        tid = uuid.UUID(track_id)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Track not found")
+    row = (
+        db.query(SoundoraTrack)
+        .filter(SoundoraTrack.id == tid, SoundoraTrack.user_id == user.id)
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Track not found")
+    if row.status != "completed" or not row.audio_url:
+        raise HTTPException(status_code=404, detail="Track not ready for download")
+    try:
+        audio_bytes, media_type = _fetch_external_audio(row.audio_url)
+    except urllib.error.HTTPError as e:
+        raise HTTPException(status_code=502, detail=f"Audio host returned HTTP {e.code}")
+    except Exception:
+        raise HTTPException(status_code=502, detail="Could not fetch audio file")
+    filename = _safe_audio_filename(_track_to_item(row).title)
+    return Response(
+        content=audio_bytes,
+        media_type=media_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "private, max-age=3600",
+        },
+    )
+
+
 @app.post(
     "/api/soundora/tracks/generate",
     response_model=SoundoraTrackItem,
@@ -805,7 +877,7 @@ def soundora_generate_track(
         raise HTTPException(status_code=503, detail="Soundora is not configured on the server.")
 
     _purge_incomplete_soundora_tracks(db, user.id)
-    max_tracks = _soundora_max_tracks()
+    max_tracks = _user_soundora_max_tracks(user)
     completed = _completed_soundora_count(db, user.id)
     if completed >= max_tracks:
         raise HTTPException(

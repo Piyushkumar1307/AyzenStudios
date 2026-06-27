@@ -11,7 +11,7 @@
 <script src="/js/spooky-api.js?v=5"></script>
 <title>Soundora — AI Music · Ayzen Studios</title>
 <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/soundora.css?v=2">
+<link rel="stylesheet" href="/css/soundora.css?v=5">
 <link rel="stylesheet" href="/css/site-footer.css?v=1">
 </head>
 <body>
@@ -82,10 +82,35 @@
           Instrumental only (no vocals)
         </label>
         <button type="button" class="btn btn-accent" id="btnGenerate">Generate song</button>
+        <article class="limit-contact-card limit-contact-card--inline hidden" id="limitContactCreate">
+          <h3>Demo limit reached</h3>
+          <p>Contact the owner to extend your limit.</p>
+          <ul class="limit-contact-list">
+            <li><span>Email</span><a href="mailto:sonu788380@gmail.com">sonu788380@gmail.com</a></li>
+            <li><span>Phone</span><a href="tel:+919205726749">+91 9205726749</a></li>
+          </ul>
+        </article>
       </section>
 
       <section id="panelLibrary">
         <h2 class="section-title">Recently created</h2>
+
+        <article class="limit-contact-card hidden" id="limitContactCard">
+          <div class="limit-contact-icon" aria-hidden="true">🎵</div>
+          <h3>Demo limit reached</h3>
+          <p>You've used all <strong id="limitContactMax">3</strong> free songs. To generate more, please contact the owner to extend your limit.</p>
+          <ul class="limit-contact-list">
+            <li>
+              <span>Email</span>
+              <a href="mailto:sonu788380@gmail.com">sonu788380@gmail.com</a>
+            </li>
+            <li>
+              <span>Phone</span>
+              <a href="tel:+919205726749">+91 9205726749</a>
+            </li>
+          </ul>
+        </article>
+
         <div class="empty-state" id="emptyLibrary">
           <p>No songs yet. Tap <strong>Create</strong> below and describe your first track.</p>
         </div>
@@ -150,8 +175,9 @@
 
 <div class="toast hidden" id="toast" role="status"></div>
 
-<script src="/js/soundora-app.js?v=2"></script>
+<script src="/js/soundora-app.js?v=5"></script>
 <div id="site-footer-root"></div>
 <script src="/js/site-footer.js?v=1" defer></script>
+<script src="/js/ayzen-motion.js?v=1" defer></script>
 </body>
 </html>

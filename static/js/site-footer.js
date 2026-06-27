@@ -16,8 +16,14 @@
         '<div class="site-footer__inner">' +
           '<div class="site-footer__top">' +
             '<div class="site-footer__brand">' +
-              '<a class="site-footer__logo" href="/">Ayzen Studios</a>' +
-              '<p class="site-footer__tagline">Independent game studio building Unity games, gesture web experiences, and practical AI tools.</p>' +
+              '<a class="brand-lockup site-footer__lockup" href="/" aria-label="Ayzen Studios home">' +
+                '<img class="brand-lockup__mark" src="/assets/brand/ayzen-logo.png" alt="" width="40" height="40">' +
+                "<span>" +
+                  '<span class="brand-lockup__word">Ayzen</span>' +
+                  '<span class="brand-lockup__sub">Studios</span>' +
+                "</span>" +
+              "</a>" +
+              '<p class="site-footer__tagline">Independent game &amp; AI studio building Unity games, gesture web experiences, and practical AI tools.</p>' +
             "</div>" +
             '<div class="site-footer__cols">' +
               '<div class="site-footer__col">' +

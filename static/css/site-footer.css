@@ -1,5 +1,4 @@
 /* Ayzen Studios — shared site footer (uses page CSS variables when present) */
-@import url("https://fonts.googleapis.com/css2?family=Creepster&display=swap");
 
 #site-footer-root {
   width: 100%;
@@ -38,19 +37,46 @@
   align-items: start;
 }
 
-.site-footer__logo {
-  font-family: "Creepster", "Segoe UI", cursive;
-  font-size: clamp(28px, 4vw, 36px);
-  letter-spacing: 0.04em;
-  color: var(--footer-accent);
-  text-decoration: none;
-  display: inline-block;
-  margin-bottom: 10px;
-  text-shadow: 0 0 32px color-mix(in srgb, var(--footer-accent) 35%, transparent);
+.site-footer__lockup {
+  margin-bottom: 14px;
 }
 
-.site-footer__logo:hover {
+.site-footer__lockup:hover {
   filter: brightness(1.08);
+}
+
+/* Fallback brand-lockup styles (in case ayzen-theme.css is absent) */
+.site-footer__lockup.brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+.site-footer__lockup .brand-lockup__mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  display: block;
+  flex-shrink: 0;
+  box-shadow: 0 6px 22px rgba(46, 155, 255, 0.30);
+}
+.site-footer__lockup .brand-lockup__word {
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--footer-text);
+  line-height: 1;
+}
+.site-footer__lockup .brand-lockup__sub {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: var(--footer-accent);
+  margin-top: 3px;
+  font-weight: 600;
 }
 
 .site-footer__tagline {

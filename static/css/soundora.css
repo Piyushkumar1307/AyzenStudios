@@ -354,6 +354,44 @@ button, input, textarea, select {
 .status-pill.completed { color: var(--accent); }
 .status-pill.failed { color: #f87171; }
 
+.track-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.track-download-btn {
+  margin-left: auto;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.track-download-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(29, 185, 84, 0.08);
+}
+
+.track-download-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
 .empty-state {
   text-align: center;
   padding: 48px 24px;
@@ -361,6 +399,124 @@ button, input, textarea, select {
   border: 1px dashed var(--border);
   border-radius: 16px;
   font-size: 14px;
+}
+
+.limit-contact-card {
+  background: linear-gradient(145deg, rgba(29, 185, 84, 0.08), rgba(167, 139, 250, 0.1));
+  border: 1px solid rgba(29, 185, 84, 0.35);
+  border-radius: 16px;
+  padding: 24px 22px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.limit-contact-card.hidden { display: none; }
+
+.limit-contact-card--inline {
+  margin-top: 20px;
+  margin-bottom: 0;
+  text-align: left;
+}
+
+.limit-contact-icon {
+  font-size: 36px;
+  margin-bottom: 10px;
+}
+
+.limit-contact-card h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.limit-contact-card p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  max-width: 42ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.limit-contact-card--inline p { margin-left: 0; margin-right: 0; }
+
+.limit-contact-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.limit-contact-card--inline .limit-contact-list { margin: 0; }
+
+.limit-contact-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.limit-contact-list span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.limit-contact-list a {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 14px;
+  word-break: break-all;
+}
+
+.track-card.is-processing {
+  border-color: rgba(251, 191, 36, 0.45);
+}
+
+.track-progress {
+  margin-top: 12px;
+}
+
+.track-progress-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fbbf24;
+  margin-bottom: 6px;
+}
+
+.track-progress-bar {
+  height: 6px;
+  border-radius: 99px;
+  background: var(--bg);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.track-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+  transition: width 0.8s ease;
+  min-width: 4%;
+}
+
+.track-card .status-pill.processing {
+  animation: pulseProcessing 1.6s ease-in-out infinite;
+}
+
+@keyframes pulseProcessing {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
 }
 
 /* —— Player —— */

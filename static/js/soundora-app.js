@@ -17,6 +17,9 @@
     configured: true,
     currentTrack: null,
     pollTimer: null,
+    progressTimer: null,
+    progressByTrack: {},
+    generationStartedAt: {},
     view: "home",
   };
 
@@ -115,6 +118,54 @@
     schedulePoll();
   }
 
+  function isAtLimit() {
+    if (!state.stats) return false;
+    return state.stats.completed >= (state.stats.max_tracks || 3);
+  }
+
+  function renderLimitCards() {
+    var atLimit = isAtLimit();
+    var libCard = $("limitContactCard");
+    var createCard = $("limitContactCreate");
+    var maxEl = $("limitContactMax");
+    if (maxEl && state.stats) maxEl.textContent = String(state.stats.max_tracks || 3);
+    if (libCard) libCard.classList.toggle("hidden", !atLimit);
+    if (createCard) createCard.classList.toggle("hidden", !atLimit);
+  }
+
+  function trackProgressPercent(t) {
+    if (t.status === "completed") return 100;
+    if (t.status !== "processing") return 0;
+    if (state.progressByTrack[t.id] != null) return state.progressByTrack[t.id];
+    return 8;
+  }
+
+  function markGenerationStarted(trackId) {
+    state.generationStartedAt[trackId] = Date.now();
+    state.progressByTrack[trackId] = 8;
+    startProgressTicker();
+  }
+
+  function startProgressTicker() {
+    clearInterval(state.progressTimer);
+    state.progressTimer = setInterval(function () {
+      var hasProcessing = false;
+      state.tracks.forEach(function (t) {
+        if (t.status === "processing") {
+          hasProcessing = true;
+          var started = state.generationStartedAt[t.id] || Date.now();
+          var elapsed = Date.now() - started;
+          var pct = Math.min(92, 8 + (elapsed / 240000) * 84);
+          state.progressByTrack[t.id] = pct;
+        } else if (t.status === "completed") {
+          state.progressByTrack[t.id] = 100;
+        }
+      });
+      if (hasProcessing) renderTracks();
+      else clearInterval(state.progressTimer);
+    }, 1000);
+  }
+
   function renderStats() {
     if (!state.stats) return;
     $("statTotal").textContent = String(state.stats.completed);
@@ -136,9 +187,10 @@
       var max = state.stats.max_tracks || 3;
       btn.disabled = atLimit || busy;
       btn.textContent = atLimit
-        ? "Demo limit reached (" + max + " songs)"
+        ? "Demo limit reached"
         : busy ? "Generating…" : "Generate song";
     }
+    renderLimitCards();
   }
 
   function syncPlayButtons() {
@@ -159,26 +211,46 @@
     if (!state.tracks.length) {
       grid.innerHTML = "";
       if (empty) empty.style.display = "block";
+      renderLimitCards();
       return;
     }
     if (empty) empty.style.display = "none";
+    renderLimitCards();
 
     grid.innerHTML = state.tracks.map(function (t) {
       var playing = state.currentTrack && state.currentTrack.id === t.id;
+      var isProcessing = t.status === "processing";
       var cover = t.image_url
         ? '<img src="' + escapeAttr(t.image_url) + '" alt="">'
-        : '<div class="placeholder">🎵</div>';
+        : '<div class="placeholder">' + (isProcessing ? "✨" : "🎵") + '</div>';
       var playBtn = t.status === "completed" && t.audio_url
         ? '<button type="button" class="play-fab" data-play="' + escapeAttr(t.id) + '">▶</button>'
         : "";
+      var downloadBtn = t.status === "completed" && t.audio_url
+        ? '<button type="button" class="track-download-btn" data-download="' + escapeAttr(t.id) + '" aria-label="Download ' + escapeAttr(trackTitle(t)) + '">' +
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+            '<path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/>' +
+            '</svg></button>'
+        : "";
+      var pct = Math.round(trackProgressPercent(t));
+      var progressHtml = isProcessing
+        ? '<div class="track-progress">' +
+            '<span class="track-progress-label">Generating your song… ' + pct + '%</span>' +
+            '<div class="track-progress-bar"><div class="track-progress-fill" style="width:' + pct + '%"></div></div>' +
+          '</div>'
+        : "";
       return (
-        '<article class="track-card' + (playing ? " is-playing" : "") + '" data-id="' + escapeAttr(t.id) + '">' +
+        '<article class="track-card' + (playing ? " is-playing" : "") + (isProcessing ? " is-processing" : "") + '" data-id="' + escapeAttr(t.id) + '">' +
           '<div class="track-cover">' + cover +
             '<div class="play-overlay">' + playBtn + '</div>' +
           '</div>' +
           '<h3>' + escapeHtml(trackTitle(t)) + '</h3>' +
           '<p>' + escapeHtml(t.style || t.prompt) + '</p>' +
-          '<span class="status-pill ' + escapeHtml(t.status) + '">' + escapeHtml(t.status) + '</span>' +
+          progressHtml +
+          '<div class="track-card-foot">' +
+            '<span class="status-pill ' + escapeHtml(t.status) + '">' + escapeHtml(t.status) + '</span>' +
+            downloadBtn +
+          '</div>' +
         '</article>'
       );
     }).join("");
@@ -187,6 +259,12 @@
       btn.addEventListener("click", function (e) {
         e.stopPropagation();
         playTrack(btn.getAttribute("data-play"));
+      });
+    });
+    grid.querySelectorAll("[data-download]").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        downloadTrack(btn.getAttribute("data-download"), btn);
       });
     });
     grid.querySelectorAll(".track-card").forEach(function (card) {
@@ -244,6 +322,7 @@
     var pending = state.tracks.some(function (t) {
       return t.status === "processing" || t.status === "pending";
     });
+    if (pending) startProgressTicker();
     if (!pending) return;
     state.pollTimer = setInterval(async function () {
       await loadTracks();
@@ -251,13 +330,23 @@
       var still = state.tracks.some(function (t) {
         return t.status === "processing" || t.status === "pending";
       });
-      if (!still) clearInterval(state.pollTimer);
+      if (!still) {
+        clearInterval(state.pollTimer);
+        clearInterval(state.progressTimer);
+        showToast("Your song is ready!");
+      }
     }, 8000);
   }
 
   async function generateTrack() {
     if (!state.configured) {
       showToast("Soundora is not configured on the server yet.", true);
+      return;
+    }
+    if (isAtLimit()) {
+      setView("library");
+      renderLimitCards();
+      showToast("Demo limit reached — contact the owner to extend.", true);
       return;
     }
     var prompt = ($("promptInput") || {}).value || "";
@@ -280,14 +369,24 @@
       });
       var data = await res.json().catch(function () { return {}; });
       if (!res.ok) {
+        if (res.status === 429) {
+          setView("library");
+          await loadStats();
+          renderLimitCards();
+        }
         throw new Error(data.detail || ("HTTP " + res.status));
       }
-      showToast("Track queued — this can take a few minutes.");
+      showToast("Generating your song — watch progress in your library.");
       $("promptInput").value = "";
       $("titleInput").value = "";
+      markGenerationStarted(data.id);
+      setView("library");
       await loadTracks();
       await loadStats();
-      if (data.status === "completed" && data.audio_url) playTrack(data.id);
+      if (data.status === "completed" && data.audio_url) {
+        state.progressByTrack[data.id] = 100;
+        playTrack(data.id);
+      }
     } catch (err) {
       showToast(String(err.message || err), true);
       await loadStats();
@@ -296,18 +395,50 @@
     }
   }
 
-  function downloadCurrent() {
-    var t = state.currentTrack;
+  async function downloadTrack(id, triggerBtn) {
+    var t = state.tracks.find(function (x) { return x.id === id; });
+    if ((!t || !t.audio_url) && state.currentTrack && state.currentTrack.id === id) {
+      t = state.currentTrack;
+    }
     if (!t || !t.audio_url) return;
-    var a = document.createElement("a");
-    a.href = t.audio_url;
-    a.download = (trackTitle(t).replace(/[^\w\s-]/g, "").trim() || "soundora-track") + ".mp3";
-    a.rel = "noopener";
-    a.target = "_blank";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    showToast("Download started — check your device downloads.");
+
+    var btn = triggerBtn || $("btnDownload");
+    if (btn) {
+      btn.disabled = true;
+    }
+    showToast("Preparing download…");
+
+    try {
+      var res = await apiFetch("/api/soundora/tracks/" + encodeURIComponent(id) + "/download");
+      if (!res.ok) {
+        var err = await res.json().catch(function () { return {}; });
+        throw new Error(err.detail || ("HTTP " + res.status));
+      }
+      var blob = await res.blob();
+      var fname = (trackTitle(t).replace(/[^\w\s-]/g, "").trim() || "soundora-track") + ".mp3";
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = fname;
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+      showToast("Download started — check your Downloads folder.");
+    } catch (err) {
+      showToast(String(err.message || err), true);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        if (btn.id === "btnDownload") btn.disabled = !state.currentTrack;
+      }
+    }
+  }
+
+  function downloadCurrent() {
+    if (!state.currentTrack) return;
+    downloadTrack(state.currentTrack.id, $("btnDownload"));
   }
 
   function bindStyleChips() {
@@ -350,6 +481,7 @@
         : "Create original AI songs — demo limit: 3 completed tracks per account.";
     var scroll = document.querySelector(".main-scroll");
     if (scroll) scroll.scrollTop = 0;
+    renderLimitCards();
   }
 
   function togglePlayback() {
