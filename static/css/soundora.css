@@ -63,11 +63,20 @@ button, input, textarea, select {
 }
 
 .sidebar-brand {
-  font-family: "Creepster", cursive;
-  font-size: 28px;
-  color: var(--purple);
+  font-family: "Space Grotesk", "Outfit", system-ui, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
   margin-bottom: 28px;
   padding: 0 8px;
+  text-decoration: none;
+  display: block;
+}
+
+.sidebar-brand:hover {
+  filter: brightness(1.1);
 }
 
 .sidebar-nav { display: flex; flex-direction: column; gap: 4px; margin-bottom: 24px; }
@@ -727,12 +736,16 @@ button, input, textarea, select {
   }
 
   .mobile-brand {
-    font-family: "Creepster", cursive;
-    font-size: 22px;
-    color: var(--purple);
+    font-family: "Space Grotesk", "Outfit", system-ui, sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
     min-height: 44px;
     display: flex;
     align-items: center;
+    text-decoration: none;
   }
 
   .mobile-header-actions {
