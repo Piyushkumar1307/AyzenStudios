@@ -438,6 +438,7 @@
   .services-scroll.is-reduced .services-scroll__stack {
     height: auto;
     min-height: 0;
+    overflow: visible;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -446,6 +447,8 @@
     position: relative;
     inset: auto;
     opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
     transform: none;
     filter: none;
     min-height: 280px;
@@ -569,12 +572,18 @@
   .card-scroll.is-reduced .card-scroll__inner { grid-template-columns: 1fr; }
   .card-scroll.is-reduced .card-scroll__stack {
     height: auto; min-height: 0;
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    overflow: visible;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
     gap: 20px; perspective: none;
   }
   .card-scroll.is-reduced .card-scroll-item {
-    position: relative; inset: auto; opacity: 1; transform: none; filter: none;
+    position: relative; inset: auto;
+    opacity: 1; visibility: visible; pointer-events: auto;
+    transform: none; filter: none;
   }
+  .card-scroll.is-reduced .card-scroll__dots,
+  .card-scroll.is-reduced .card-scroll__hint { display: none; }
   .card-scroll:not(.is-reduced) .card-scroll-item:hover {
     /* transform driven by scroll JS — only glow on hover */
     border-color: var(--accent);

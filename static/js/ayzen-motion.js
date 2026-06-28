@@ -234,6 +234,15 @@
 
     if (REDUCED || MOBILE) {
       wrap.classList.add("is-reduced");
+      cards.forEach(function (card) {
+        card.style.opacity = "";
+        card.style.visibility = "";
+        card.style.transform = "";
+        card.style.filter = "";
+        card.style.pointerEvents = "";
+        card.style.zIndex = "";
+        card.classList.remove("is-active");
+      });
       return;
     }
 
@@ -345,6 +354,15 @@
 
     if (REDUCED || MOBILE) {
       wrap.classList.add("is-reduced");
+      cards.forEach(function (card) {
+        card.style.opacity = "";
+        card.style.visibility = "";
+        card.style.transform = "";
+        card.style.filter = "";
+        card.style.pointerEvents = "";
+        card.style.zIndex = "";
+        card.classList.remove("is-active");
+      });
       return;
     }
 
