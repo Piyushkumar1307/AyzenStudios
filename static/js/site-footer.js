@@ -94,9 +94,22 @@
     document.body.appendChild(wrap.firstElementChild);
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", mount);
-  } else {
+  function loadMobileNav() {
+    if (document.querySelector('script[src*="mobile-nav.js"]')) return;
+    var s = document.createElement("script");
+    s.src = "/js/mobile-nav.js?v=1";
+    s.defer = true;
+    document.body.appendChild(s);
+  }
+
+  function boot() {
     mount();
+    loadMobileNav();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
   }
 })();

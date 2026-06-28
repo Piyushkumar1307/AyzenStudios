@@ -1,0 +1,369 @@
+/* ============================================================
+   Ayzen Studios — global mobile / responsive utilities
+   Loaded via ayzen-theme.css on marketing & account pages.
+   ============================================================ */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* —— Mobile nav toggle (hamburger) —— */
+.mobile-nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border, rgba(125, 165, 220, 0.16));
+  border-radius: 10px;
+  background: var(--bg-card, #0d1422);
+  color: var(--text, #eaf1fb);
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-nav-toggle__bars {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 18px;
+}
+
+.mobile-nav-toggle__bar {
+  display: block;
+  height: 2px;
+  width: 100%;
+  border-radius: 2px;
+  background: currentColor;
+  transition: transform 0.25s ease, opacity 0.2s ease;
+}
+
+.mobile-nav-toggle[aria-expanded="true"] .mobile-nav-toggle__bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.mobile-nav-toggle[aria-expanded="true"] .mobile-nav-toggle__bar:nth-child(2) {
+  opacity: 0;
+}
+
+.mobile-nav-toggle[aria-expanded="true"] .mobile-nav-toggle__bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.mobile-nav-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 38;
+  background: rgba(5, 7, 13, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.28s ease, visibility 0.28s ease;
+}
+
+.mobile-nav-backdrop.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+
+body.mobile-nav-open {
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  /* Site header (homepage) */
+  .site-header__inner {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+
+  .site-header .mobile-nav-toggle {
+    display: flex;
+    order: 2;
+    margin-left: auto;
+  }
+
+  .site-header .nav-main {
+    position: fixed;
+    top: calc(56px + env(safe-area-inset-top, 0px));
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
+    z-index: 45;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid var(--border, rgba(125, 165, 220, 0.16));
+    background: color-mix(in srgb, var(--bg-card, #0d1422) 94%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px) scale(0.98);
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+    pointer-events: none;
+    max-height: calc(100dvh - 72px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .site-header .nav-main.is-open {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .site-header .nav-main .nav-link {
+    display: flex !important;
+    align-items: center;
+    min-height: 44px;
+    padding: 12px 14px;
+    font-size: 15px;
+  }
+
+  .site-header .nav-main .theme-btn {
+    width: 100%;
+    min-height: 44px;
+    margin-top: 4px;
+  }
+
+  /* Generic .top + .nav (webgl, leaderboard, etc.) */
+  .top--mobile-nav {
+    position: relative;
+  }
+
+  .top--mobile-nav .mobile-nav-toggle {
+    display: flex;
+  }
+
+  .top--mobile-nav .nav {
+    position: fixed;
+    top: calc(56px + env(safe-area-inset-top, 0px));
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
+    z-index: 45;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+    margin: 0;
+    border-radius: 14px;
+    border: 1px solid var(--border, rgba(125, 165, 220, 0.16));
+    background: color-mix(in srgb, var(--bg-card, var(--card, #160d22)) 94%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+    pointer-events: none;
+  }
+
+  .top--mobile-nav .nav.is-open {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .top--mobile-nav .nav a {
+    margin-left: 0 !important;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 9px;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    overflow-x: clip;
+  }
+
+  /* Prevent iOS zoom on focus */
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em) !important;
+  }
+
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Account pages (login, profile) */
+  body:has(.wrap) {
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .wrap {
+    width: 100% !important;
+    max-width: none !important;
+    margin-top: 8px;
+    border-radius: 16px;
+  }
+
+  .wrap .head,
+  .wrap .body,
+  .card .head,
+  .card .body {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .wrap .title,
+  .card .title,
+  h1 {
+    font-size: clamp(22px, 6vw, 28px) !important;
+  }
+
+  .identity {
+    grid-template-columns: 72px 1fr !important;
+    gap: 14px !important;
+    padding: 14px !important;
+  }
+
+  .avatar {
+    width: 72px !important;
+    height: 72px !important;
+  }
+
+  .avatar-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  /* Leaderboard table scroll */
+  .card table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+
+  .cardHead,
+  .controls {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .selectWrap,
+  .selectWrap select {
+    width: 100% !important;
+  }
+
+  /* Legal / support docs */
+  .doc-shell {
+    padding: 18px max(16px, env(safe-area-inset-left)) calc(32px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-right)) !important;
+  }
+
+  .doc-top {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+
+  .subnav {
+    width: 100%;
+    gap: 8px 12px;
+  }
+
+  /* WebGL catalog */
+  .wrap {
+    padding-left: max(16px, env(safe-area-inset-left)) !important;
+    padding-right: max(16px, env(safe-area-inset-right)) !important;
+    padding-bottom: calc(40px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .wrap > .top,
+  .top {
+    margin-bottom: 20px;
+  }
+
+  .wrap .grid,
+  .grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .modal,
+  .modal.open {
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    align-items: flex-end;
+  }
+
+  .modal .panel {
+    max-height: min(92dvh, 640px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* WebGL / catalog cards — show play on touch devices */
+  .card .play-overlay {
+    opacity: 1 !important;
+    background: rgba(12, 6, 18, 0.28) !important;
+  }
+
+  .play-btn {
+    min-height: 44px;
+    padding: 12px 24px !important;
+  }
+
+  /* Game instructions page */
+  .gi-page__top {
+    padding: 12px max(16px, env(safe-area-inset-left)) 12px max(16px, env(safe-area-inset-right)) !important;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .gi-page__main {
+    padding: 8px max(16px, env(safe-area-inset-left)) calc(32px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-right)) !important;
+    min-height: auto !important;
+  }
+
+  /* Game HUD safe areas */
+  .hud {
+    padding-top: max(10px, env(safe-area-inset-top)) !important;
+    padding-left: max(12px, env(safe-area-inset-left)) !important;
+    padding-right: max(12px, env(safe-area-inset-right)) !important;
+  }
+
+  .hud-block .val {
+    font-size: 22px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-lockup__word {
+    font-size: 16px !important;
+    letter-spacing: 0.1em !important;
+  }
+
+  .brand-lockup__mark {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .site-footer__cols {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-nav-backdrop,
+  .site-header .nav-main,
+  .top--mobile-nav .nav {
+    transition: none !important;
+  }
+}

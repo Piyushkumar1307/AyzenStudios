@@ -11,6 +11,8 @@
 
   var REDUCED = window.matchMedia &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var MOBILE = window.matchMedia &&
+    window.matchMedia("(max-width: 768px)").matches;
   var LOGO = "/assets/brand/ayzen-logo.png";
 
   /* ---------- overlay ---------- */
@@ -189,7 +191,7 @@
     var n = cards.length;
     if (!n || !pin) return;
 
-    if (REDUCED) {
+    if (REDUCED || MOBILE) {
       wrap.classList.add("is-reduced");
       return;
     }
@@ -281,7 +283,7 @@
     var n = cards.length;
     if (!n || !pin) return;
 
-    if (REDUCED) {
+    if (REDUCED || MOBILE) {
       wrap.classList.add("is-reduced");
       return;
     }
