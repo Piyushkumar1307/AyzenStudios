@@ -181,6 +181,47 @@
     els.forEach(function (el) { io.observe(el); });
   }
 
+  /* ---------- scroll stack helpers (one card full at a time) ---------- */
+  function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+
+  function hideStackCard(card, i, transform) {
+    card.style.opacity = "0";
+    card.style.visibility = "hidden";
+    card.style.filter = "none";
+    card.style.pointerEvents = "none";
+    card.style.transform = transform || "scale(0.96) translateY(48px)";
+    card.style.zIndex = String(i);
+    card.classList.remove("is-active");
+  }
+
+  function clampNum(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  function crossfadeAmount(frac, hold) {
+    hold = hold == null ? 0.62 : hold;
+    if (frac <= hold) return 0;
+    return clamp01((frac - hold) / (1 - hold));
+  }
+
+  function scrollPhase(raw, n) {
+    var idx = Math.floor(raw);
+    if (idx >= n - 1) return { activeIdx: n - 1, frac: 0 };
+    if (idx < 0) return { activeIdx: 0, frac: 0 };
+    return { activeIdx: idx, frac: raw - idx };
+  }
+
+  function scrollStep(raw, n) {
+    var phase = scrollPhase(raw, n);
+    return { idx: phase.activeIdx, frac: phase.frac };
+  }
+
+  function dotIndex(raw, n) {
+    return clampNum(Math.floor(raw + 0.5), 0, n - 1);
+  }
+
+  function activeDotIndex(raw, n) {
+    return dotIndex(raw, n);
+  }
+
   /* ---------- services scroll stack ---------- */
   function initServicesStack() {
     var wrap = document.getElementById("servicesScroll");
@@ -204,37 +245,58 @@
 
     function measure() {
       pinHeight = pin.offsetHeight;
-      segmentPx = window.innerHeight * 0.52;
-      wrap.style.height = (n * segmentPx + pinHeight) + "px";
+      segmentPx = window.innerHeight * 0.68;
+      wrap.style.height = ((n - 1) * segmentPx + pinHeight) + "px";
     }
 
     function applyCard(card, i, raw) {
-      var cardRaw = raw - i;
-      if (cardRaw < 0) {
-        card.style.transform = "scale(0.86) translateY(90px)";
-        card.style.opacity = "0";
-        card.style.filter = "blur(8px)";
-        card.style.zIndex = String(i);
-        card.classList.remove("is-active");
-      } else if (cardRaw <= 1) {
-        var p = cardRaw;
-        var scale = 0.86 + p * 0.14;
-        var y = 90 * (1 - p);
-        card.style.transform = "scale(" + scale + ") translateY(" + y + "px)";
-        card.style.opacity = String(p);
-        card.style.filter = "blur(" + (8 * (1 - p)) + "px)";
-        card.style.zIndex = String(100 + i);
-        card.classList.toggle("is-active", p > 0.55);
+      var phase = scrollPhase(raw, n);
+      var activeIdx = phase.activeIdx;
+      var frac = phase.frac;
+      var t = crossfadeAmount(frac);
+
+      if (i < activeIdx) {
+        hideStackCard(card, i, "scale(1) translateY(-56px)");
+      } else if (i === activeIdx) {
+        if (activeIdx === n - 1) {
+          card.style.visibility = "visible";
+          card.style.pointerEvents = "";
+          card.style.opacity = "1";
+          card.style.filter = "none";
+          card.style.transform = "scale(1) translateY(0)";
+          card.style.zIndex = String(100 + i);
+          card.classList.add("is-active");
+        } else if (t <= 0) {
+          card.style.visibility = "visible";
+          card.style.pointerEvents = "";
+          card.style.opacity = "1";
+          card.style.filter = "none";
+          card.style.transform = "scale(1) translateY(0)";
+          card.style.zIndex = String(100 + i);
+          card.classList.add("is-active");
+        } else {
+          card.style.visibility = "visible";
+          card.style.pointerEvents = "none";
+          card.style.opacity = String(1 - t);
+          card.style.filter = "none";
+          card.style.transform = "scale(" + (1 - t * 0.04) + ") translateY(" + (-t * 52) + "px)";
+          card.style.zIndex = String(100 + i);
+          card.classList.remove("is-active");
+        }
+      } else if (i === activeIdx + 1) {
+        if (t <= 0) {
+          hideStackCard(card, i, "scale(0.94) translateY(64px)");
+        } else {
+          card.style.visibility = "visible";
+          card.style.filter = "none";
+          card.style.zIndex = String(101 + i);
+          card.style.opacity = String(t);
+          card.style.pointerEvents = t > 0.85 ? "" : "none";
+          card.style.transform = "scale(" + (0.94 + t * 0.06) + ") translateY(" + ((1 - t) * 64) + "px)";
+          card.classList.toggle("is-active", t >= 0.85);
+        }
       } else {
-        var behind = cardRaw - 1;
-        var scale = 1 - behind * 0.045;
-        var y = -behind * 34;
-        var op = clamp(1 - behind * 0.42, 0.08, 1);
-        card.style.transform = "scale(" + scale + ") translateY(" + y + "px)";
-        card.style.opacity = String(op);
-        card.style.filter = "blur(" + clamp(behind * 2.5, 0, 5) + "px)";
-        card.style.zIndex = String(i);
-        card.classList.remove("is-active");
+        hideStackCard(card, i, "scale(0.94) translateY(64px)");
       }
     }
 
@@ -243,11 +305,11 @@
       var scrollable = wrap.offsetHeight - pinHeight;
       var scrolled = clamp(-rect.top, 0, scrollable);
       var progress = scrollable <= 0 ? 0 : scrolled / scrollable;
-      var raw = progress * n;
+      var raw = progress * (n - 1);
 
       cards.forEach(function (card, i) { applyCard(card, i, raw); });
 
-      var activeIdx = clamp(Math.floor(raw), 0, n - 1);
+      var activeIdx = dotIndex(raw, n);
       dots.forEach(function (dot, i) {
         dot.classList.toggle("is-active", i === activeIdx);
       });
@@ -272,8 +334,6 @@
   }
 
   /* ---------- work / play scroll stacks (different effects) ---------- */
-  function clampNum(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-
   function initCardScroll(wrapId, effect) {
     var wrap = document.getElementById(wrapId);
     if (!wrap) return;
@@ -294,70 +354,89 @@
 
     function measure() {
       pinHeight = pin.offsetHeight;
-      segmentPx = window.innerHeight * 0.46;
-      wrap.style.height = (n * segmentPx + pinHeight) + "px";
+      segmentPx = window.innerHeight * 0.65;
+      wrap.style.height = ((n - 1) * segmentPx + pinHeight) + "px";
     }
 
     function applySlideAlt(card, i, raw) {
-      var cardRaw = raw - i;
-      var fromX = i % 2 === 0 ? -180 : 180;
-      var rotY = i % 2 === 0 ? -24 : 24;
-      if (cardRaw < 0) {
-        card.style.transform = "translateX(" + fromX + "px) rotateY(" + rotY + "deg) scale(0.8)";
-        card.style.opacity = "0";
-        card.style.filter = "blur(12px)";
-        card.style.zIndex = String(i);
-        card.classList.remove("is-active");
-      } else if (cardRaw <= 1) {
-        var p = cardRaw;
-        var x = fromX * (1 - p);
-        var ry = rotY * (1 - p);
-        var scale = 0.8 + p * 0.2;
-        card.style.transform = "translateX(" + x + "px) rotateY(" + ry + "deg) scale(" + scale + ")";
-        card.style.opacity = String(p);
-        card.style.filter = "blur(" + (12 * (1 - p)) + "px)";
+      var step = scrollStep(raw, n);
+      var idx = step.idx;
+      var t = crossfadeAmount(step.frac);
+      var fromX = i % 2 === 0 ? -140 : 140;
+
+      if (i < idx) {
+        hideStackCard(card, i, "translateX(" + (-fromX * 0.25) + "px) scale(0.96)");
+      } else if (i === idx) {
+        card.style.visibility = "visible";
+        card.style.filter = "none";
         card.style.zIndex = String(100 + i);
-        card.classList.toggle("is-active", p > 0.55);
+        if (idx === n - 1 || t <= 0) {
+          card.style.opacity = "1";
+          card.style.pointerEvents = "";
+          card.style.transform = "translateX(0) rotateY(0deg) scale(1)";
+          card.classList.add("is-active");
+        } else {
+          card.style.opacity = String(1 - t);
+          card.style.pointerEvents = "none";
+          card.style.transform = "translateX(" + (-t * fromX * 0.35) + "px) rotateY(" + (-t * (i % 2 === 0 ? -8 : 8)) + "deg) scale(" + (1 - t * 0.04) + ")";
+          card.classList.remove("is-active");
+        }
+      } else if (i === idx + 1) {
+        if (t <= 0) {
+          hideStackCard(card, i, "translateX(" + fromX + "px) scale(0.92)");
+        } else {
+          card.style.visibility = "visible";
+          card.style.filter = "none";
+          card.style.zIndex = String(101 + i);
+          card.style.opacity = String(t);
+          card.style.pointerEvents = t > 0.85 ? "" : "none";
+          card.style.transform = "translateX(" + (fromX * (1 - t)) + "px) rotateY(" + ((i % 2 === 0 ? -12 : 12) * (1 - t)) + "deg) scale(" + (0.92 + t * 0.08) + ")";
+          card.classList.toggle("is-active", t >= 0.85);
+        }
       } else {
-        var behind = cardRaw - 1;
-        var exitX = (i % 2 === 0 ? -1 : 1) * behind * 32;
-        card.style.transform = "translateX(" + exitX + "px) scale(" + (1 - behind * 0.05) + ") translateY(" + (-behind * 30) + "px)";
-        card.style.opacity = String(clampNum(1 - behind * 0.45, 0.1, 1));
-        card.style.filter = "blur(" + clampNum(behind * 2.5, 0, 5) + "px)";
-        card.style.zIndex = String(i);
-        card.classList.remove("is-active");
+        hideStackCard(card, i, "translateX(" + fromX + "px) scale(0.92)");
       }
     }
 
     function applyFan(card, i, raw) {
-      var cardRaw = raw - i;
+      var step = scrollStep(raw, n);
+      var idx = step.idx;
+      var t = crossfadeAmount(step.frac);
       var mid = (n - 1) / 2;
-      var fanRot = (i - mid) * 16;
-      var fanX = (i - mid) * 90;
-      if (cardRaw < 0) {
-        card.style.transform = "translateY(110px) scale(0.62) rotateZ(" + fanRot + "deg) rotateX(22deg)";
-        card.style.opacity = "0";
-        card.style.filter = "blur(10px)";
-        card.style.zIndex = String(i);
-        card.classList.remove("is-active");
-      } else if (cardRaw <= 1) {
-        var p = cardRaw;
-        var y = 110 * (1 - p);
-        var scale = 0.62 + p * 0.38;
-        var rx = 22 * (1 - p);
-        card.style.transform = "translateY(" + y + "px) scale(" + scale + ") rotateZ(" + (fanRot * p) + "deg) rotateX(" + rx + "deg)";
-        card.style.opacity = String(p);
-        card.style.filter = "blur(" + (10 * (1 - p)) + "px)";
+      var fanRot = (i - mid) * 14;
+      var fanX = (i - mid) * 72;
+
+      if (i < idx) {
+        hideStackCard(card, i, "translateY(-48px) scale(0.96) rotateZ(" + (fanRot * 0.5) + "deg)");
+      } else if (i === idx) {
+        card.style.visibility = "visible";
+        card.style.filter = "none";
         card.style.zIndex = String(100 + i);
-        card.classList.toggle("is-active", p > 0.55);
+        if (idx === n - 1 || t <= 0) {
+          card.style.opacity = "1";
+          card.style.pointerEvents = "";
+          card.style.transform = "translate(0, 0) scale(1) rotateZ(0deg)";
+          card.classList.add("is-active");
+        } else {
+          card.style.opacity = String(1 - t);
+          card.style.pointerEvents = "none";
+          card.style.transform = "translate(" + (t * fanX * 0.2) + "px, " + (-t * 48) + "px) scale(" + (1 - t * 0.04) + ") rotateZ(" + (t * fanRot * 0.3) + "deg)";
+          card.classList.remove("is-active");
+        }
+      } else if (i === idx + 1) {
+        if (t <= 0) {
+          hideStackCard(card, i, "translate(" + fanX + "px, 72px) scale(0.88) rotateZ(" + fanRot + "deg)");
+        } else {
+          card.style.visibility = "visible";
+          card.style.filter = "none";
+          card.style.zIndex = String(101 + i);
+          card.style.opacity = String(t);
+          card.style.pointerEvents = t > 0.85 ? "" : "none";
+          card.style.transform = "translate(" + (fanX * (1 - t)) + "px, " + ((1 - t) * 72) + "px) scale(" + (0.88 + t * 0.12) + ") rotateZ(" + (fanRot * t) + "deg)";
+          card.classList.toggle("is-active", t >= 0.85);
+        }
       } else {
-        var behind = cardRaw - 1;
-        var scale = 0.94 - behind * 0.05;
-        card.style.transform = "translate(" + fanX + "px, " + (-behind * 22) + "px) scale(" + scale + ") rotateZ(" + fanRot + "deg)";
-        card.style.opacity = String(clampNum(0.88 - behind * 0.38, 0.12, 1));
-        card.style.filter = "blur(" + clampNum(behind * 2, 0, 4) + "px)";
-        card.style.zIndex = String(i);
-        card.classList.remove("is-active");
+        hideStackCard(card, i, "translate(" + fanX + "px, 72px) scale(0.88) rotateZ(" + fanRot + "deg)");
       }
     }
 
@@ -366,16 +445,16 @@
       var scrollable = wrap.offsetHeight - pinHeight;
       var scrolled = clampNum(-rect.top, 0, scrollable);
       var progress = scrollable <= 0 ? 0 : scrolled / scrollable;
-      var raw = progress * n;
+      var raw = progress * (n - 1);
 
       cards.forEach(function (card, i) {
         if (effect === "slide-alt") applySlideAlt(card, i, raw);
         else applyFan(card, i, raw);
       });
 
-      var activeIdx = clampNum(Math.floor(raw), 0, n - 1);
+      var dotIdx = activeDotIndex(raw, n);
       dots.forEach(function (dot, i) {
-        dot.classList.toggle("is-active", i === activeIdx);
+        dot.classList.toggle("is-active", i === dotIdx);
       });
       ticking = false;
     }
