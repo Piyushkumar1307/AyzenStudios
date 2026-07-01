@@ -209,6 +209,7 @@ KAMEHAMEHA_HTML = os.path.join(BASE_DIR, "static", "kamehameha.html")
 SLINGSHOT_HTML = os.path.join(BASE_DIR, "static", "slingshot.html")
 WEBGL_HTML = os.path.join(BASE_DIR, "static", "webgl.html")
 WEBGL_PLAY_HTML = os.path.join(BASE_DIR, "static", "webgl-play.html")
+FACE_SWAP_HTML = os.path.join(BASE_DIR, "static", "face-swap.html")
 SOUNDORA_HTML = os.path.join(BASE_DIR, "static", "soundora.html")
 CONTROLLER_HTML = os.path.join(BASE_DIR, "static", "controller.html")
 SUPPORT_HTML = os.path.join(BASE_DIR, "static", "support.html")
@@ -370,6 +371,11 @@ def webgl_catalog_page():
 @app.get("/webgl-play")
 def webgl_play_page():
     return FileResponse(WEBGL_PLAY_HTML)
+
+
+@app.get("/face-swap")
+def face_swap_page():
+    return FileResponse(FACE_SWAP_HTML)
 
 
 @app.get("/soundora")

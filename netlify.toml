@@ -135,6 +135,11 @@
   status = 200
 
 [[redirects]]
+  from = "/face-swap"
+  to = "/face-swap.html"
+  status = 200
+
+[[redirects]]
   from = "/soundora"
   to = "/soundora.html"
   status = 200

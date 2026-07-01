@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#05070d">
+<meta name="description" content="Face Swap Studio by Ayzen Studios — browser-based AI face swap for live events and brand activations. Available on order only.">
+<script src="/static/favicon-set.js"></script>
+<script src="/js/runtime-config.js?v=3"></script>
+<script src="/js/spooky-api.js?v=3"></script>
+<title>Face Swap Studio — Ayzen Studios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/ayzen-theme.css?v=2">
+<link rel="stylesheet" href="/css/site-footer.css?v=1">
+<style>
+  .fs-page {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 96px 24px 64px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .fs-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 28px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .fs-back:hover { color: var(--accent); }
+  .fs-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.45);
+  }
+  .fs-card__media img,
+  .fs-card__media video {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: #000;
+  }
+  .fs-demo-label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .fs-card__body { padding: 32px 28px 36px; }
+  .fs-badge {
+    display: inline-block;
+    margin-bottom: 14px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  .fs-card h1 {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(28px, 5vw, 36px);
+    letter-spacing: -0.02em;
+    margin-bottom: 14px;
+    background: var(--steel);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  .fs-lead {
+    font-size: 17px;
+    line-height: 1.65;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .fs-note {
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+  .fs-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .fs-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 13px 20px;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  }
+  .fs-btn:hover { transform: translateY(-2px); }
+  .fs-btn--primary {
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    box-shadow: 0 8px 28px var(--glow);
+  }
+  .fs-btn--ghost {
+    color: var(--text);
+    background: transparent;
+    border-color: var(--border);
+  }
+  .fs-btn--ghost:hover { border-color: var(--accent); }
+  .fs-btn--inactive {
+    color: var(--muted);
+    background: color-mix(in srgb, var(--bg-card) 80%, var(--muted));
+    border-color: color-mix(in srgb, var(--border) 80%, transparent);
+    opacity: 0.55;
+    cursor: not-allowed;
+    pointer-events: none;
+    box-shadow: none;
+  }
+  .fs-btn--inactive:hover { transform: none; border-color: color-mix(in srgb, var(--border) 80%, transparent); }
+  @media (max-width: 560px) {
+    .fs-page { padding-top: 80px; }
+    .fs-card__body { padding: 24px 20px 28px; }
+    .fs-actions { flex-direction: column; }
+    .fs-btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<main class="fs-page">
+  <a class="fs-back" href="/">← Back to Ayzen Studios</a>
+
+  <article class="fs-card">
+    <div class="fs-card__media">
+      <span class="fs-demo-label" style="padding: 16px 28px 0;">Demo video</span>
+      <video controls playsinline preload="metadata" poster="/assets/games/face-swap.png" aria-label="Face Swap Studio demo video">
+        <source src="/assets/videos/face-swap-demo.mp4" type="video/mp4">
+      </video>
+    </div>
+    <div class="fs-card__body">
+      <span class="fs-badge">Available on order only</span>
+      <h1>Face Swap Studio</h1>
+      <p class="fs-lead">This service is available on order only.</p>
+      <p class="fs-note">
+        Face Swap Studio is a browser-based AI face-swap experience built for live events, brand activations,
+        and experiential marketing — custom templates, mobile-first, no app download required.
+      </p>
+      <div class="fs-actions">
+        <a class="fs-btn fs-btn--primary" href="/#contact">Request this service</a>
+        <a class="fs-btn fs-btn--inactive" href="https://facechange.in" aria-disabled="true" tabindex="-1" title="Available on order only">Faceswap</a>
+      </div>
+    </div>
+  </article>
+</main>
+
+<div id="site-footer-root"></div>
+<script src="/js/site-footer.js?v=3" defer></script>
+<script src="/js/ayzen-motion.js?v=1" defer></script>
+</body>
+</html>
