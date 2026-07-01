@@ -19,8 +19,8 @@
     --bg:#f4f0f8;--card:#fff;--text:#1a1028;--muted:#5c4d6e;
     --accent:#6d28d9;--border:rgba(109,40,217,.18);--glow:rgba(109,40,217,.12);
   }
-  body{font-family:"Outfit",system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
-  .wrap{max-width:1100px;margin:0 auto;padding:28px 24px 48px}
+  body{font-family:"Outfit",system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;display:flex;flex-direction:column}
+  .wrap{max-width:1100px;margin:0 auto;padding:28px 24px 48px;flex:1;width:100%}
   .top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:32px;flex-wrap:wrap}
   .logo{font-family:"Creepster",cursive;font-size:26px;color:var(--accent);text-decoration:none}
   .nav a{color:var(--muted);text-decoration:none;font-weight:600;font-size:14px;margin-left:18px}
@@ -67,6 +67,7 @@
 </style>
 <script>(function(){var s=localStorage.getItem("ayzen-studios-theme");document.documentElement.setAttribute("data-theme",s==="light"||s==="dark"?s:"dark")})();</script>
 <link rel="stylesheet" href="/css/ayzen-theme.css?v=2">
+<link rel="stylesheet" href="/css/site-footer.css?v=2">
 </head>
 <body>
 <div class="wrap">
