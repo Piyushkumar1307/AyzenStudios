@@ -959,6 +959,13 @@ button, input, textarea, select {
 }
 
 /* —— Song packages modal —— */
+/* Hidden for now — remove this block to re-enable */
+.nav-item--packages,
+#btnPackages,
+.package-modal {
+  display: none !important;
+}
+
 .package-modal {
   position: fixed;
   inset: 0;

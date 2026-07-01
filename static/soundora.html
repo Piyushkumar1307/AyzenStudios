@@ -11,7 +11,7 @@
 <script src="/js/spooky-api.js?v=5"></script>
 <title>Soundora — AI Music · Ayzen Studios</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/soundora.css?v=10">
+<link rel="stylesheet" href="/css/soundora.css?v=11">
 <link rel="stylesheet" href="/css/site-footer.css?v=1">
 </head>
 <body>
@@ -30,7 +30,7 @@
       <button type="button" class="nav-item active" data-view="home">🏠 Home</button>
       <button type="button" class="nav-item" data-view="create">✨ Create</button>
       <button type="button" class="nav-item" data-view="library">📚 Your library</button>
-      <button type="button" class="nav-item nav-item--packages" id="btnPackagesSidebar">🎁 Song package</button>
+      <button type="button" class="nav-item nav-item--packages hidden" id="btnPackagesSidebar" hidden>🎁 Song package</button>
       <a class="nav-item" href="/">← Ayzen Studios</a>
     </nav>
     <div class="sidebar-stats">
@@ -59,7 +59,7 @@
           <p id="mainSub">Create original AI songs — demo limit: 3 completed tracks per account.</p>
         </div>
         <div class="header-actions">
-          <button type="button" class="btn btn-ghost" id="btnPackages">Song package</button>
+          <button type="button" class="btn btn-ghost hidden" id="btnPackages" hidden>Song package</button>
           <button type="button" class="btn btn-ghost" id="btnRefresh">Refresh</button>
         </div>
       </header>
