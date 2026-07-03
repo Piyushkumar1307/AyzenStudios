@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="AYZEN Bot">
+  <defs>
+    <linearGradient id="steel" x1="8" y1="12" x2="72" y2="118" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="42%" stop-color="#cdd9e8"/>
+      <stop offset="100%" stop-color="#7f91a8"/>
+    </linearGradient>
+    <linearGradient id="plasma" x1="56" y1="10" x2="118" y2="112" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#eaf6ff"/>
+      <stop offset="45%" stop-color="#79e0ff"/>
+      <stop offset="100%" stop-color="#1f6dff"/>
+    </linearGradient>
+    <linearGradient id="core" x1="48" y1="54" x2="80" y2="86" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#9fe7ff"/>
+      <stop offset="100%" stop-color="#2e9bff"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="42%" r="55%">
+      <stop offset="0%" stop-color="#2e9bff" stop-opacity="0.35"/>
+      <stop offset="70%" stop-color="#2e9bff" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#2e9bff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.2" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- soft aura -->
+  <circle cx="64" cy="64" r="58" fill="url(#halo)"/>
+
+  <!-- antenna -->
+  <path d="M64 10v14" stroke="url(#plasma)" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="64" cy="8" r="5.5" fill="url(#core)" filter="url(#glow)"/>
+  <circle cx="64" cy="8" r="2.2" fill="#fff"/>
+
+  <!-- angular A / bot head -->
+  <path
+    d="M64 22
+       L104 108
+       H88.5
+       L80.2 86
+       H47.8
+       L39.5 108
+       H24
+       Z"
+    fill="url(#steel)"
+  />
+  <!-- glowing right facet of A -->
+  <path
+    d="M64 22
+       L104 108
+       H88.5
+       L72.5 64
+       Z"
+    fill="url(#plasma)"
+    opacity="0.92"
+  />
+
+  <!-- visor / eyes bar -->
+  <rect x="46" y="52" width="36" height="14" rx="7" fill="#061018" opacity="0.88"/>
+  <circle cx="55" cy="59" r="3.4" fill="#79e0ff" filter="url(#glow)"/>
+  <circle cx="73" cy="59" r="3.4" fill="#79e0ff" filter="url(#glow)"/>
+  <circle cx="55" cy="58.2" r="1.2" fill="#fff"/>
+  <circle cx="73" cy="58.2" r="1.2" fill="#fff"/>
+
+  <!-- crossbar as circuit node -->
+  <path d="M48 72h32" stroke="url(#plasma)" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="64" cy="72" r="4" fill="#eaf6ff" filter="url(#glow)"/>
+
+  <!-- chat spark -->
+  <path
+    d="M98 34c8.5 0 15.5 5.8 15.5 13 0 4.2-2.2 7.9-5.6 10.3L110 64l-7.2-4.1c-1.4.3-2.9.5-4.4.5-8.5 0-15.5-5.8-15.5-13s7-13 15.1-13z"
+    fill="url(#plasma)"
+    filter="url(#glow)"
+  />
+  <circle cx="94" cy="47" r="1.6" fill="#061018"/>
+  <circle cx="99.5" cy="47" r="1.6" fill="#061018"/>
+  <circle cx="105" cy="47" r="1.6" fill="#061018"/>
+</svg>

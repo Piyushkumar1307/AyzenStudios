@@ -102,9 +102,19 @@
     document.body.appendChild(s);
   }
 
+  function loadAyzenBot() {
+    if (document.body && document.body.hasAttribute("data-no-bot")) return;
+    if (document.querySelector('script[src*="ayzen-bot.js"]')) return;
+    var s = document.createElement("script");
+    s.src = "/js/ayzen-bot.js?v=2";
+    s.defer = true;
+    document.body.appendChild(s);
+  }
+
   function boot() {
     mount();
     loadMobileNav();
+    loadAyzenBot();
   }
 
   if (document.readyState === "loading") {
