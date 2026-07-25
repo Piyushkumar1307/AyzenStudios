@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#05070d">
+<meta name="description" content="Web AR by Ayzen Studios — scan a target image to play video in augmented reality. Perfect for events and brand activations.">
+<script src="/static/favicon-set.js"></script>
+<script src="/js/runtime-config.js?v=3"></script>
+<script src="/js/spooky-api.js?v=3"></script>
+<title>Web AR — Ayzen Studios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/ayzen-theme.css?v=2">
+<link rel="stylesheet" href="/css/site-footer.css?v=1">
+<style>
+  .wa-page {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 96px 24px 64px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .wa-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 28px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .wa-back:hover { color: var(--accent); }
+  .wa-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.45);
+  }
+  .wa-qr-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 36px 28px 28px;
+    background:
+      radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 55%),
+      var(--bg-card);
+    border-bottom: 1px solid var(--border);
+  }
+  .wa-target-frame {
+    width: min(100%, 320px);
+    padding: 14px;
+    border-radius: 18px;
+    background: #000;
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  }
+  .wa-target-frame img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+  }
+  .wa-scan-callout {
+    max-width: 38ch;
+    text-align: center;
+    font-size: 17px;
+    line-height: 1.55;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .wa-step-divider {
+    width: min(100%, 280px);
+    height: 1px;
+    margin: 4px 0;
+    background: var(--border);
+  }
+  .wa-qr-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .wa-qr-frame {
+    padding: 16px;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  }
+  .wa-qr-frame img {
+    display: block;
+    width: 220px;
+    height: 220px;
+  }
+  .wa-qr-hint {
+    max-width: 34ch;
+    text-align: center;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--text);
+  }
+  .wa-qr-link {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent-2);
+    text-decoration: none;
+    word-break: break-all;
+  }
+  .wa-qr-link:hover { text-decoration: underline; }
+  .wa-card__body { padding: 32px 28px 36px; }
+  .wa-badge {
+    display: inline-block;
+    margin-bottom: 14px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  .wa-card h1 {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(28px, 5vw, 36px);
+    letter-spacing: -0.02em;
+    margin-bottom: 14px;
+    background: var(--steel);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  .wa-lead {
+    font-size: 17px;
+    line-height: 1.65;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .wa-note {
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+  .wa-event {
+    margin-bottom: 28px;
+    padding: 18px 20px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+  }
+  .wa-event p {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  .wa-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .wa-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 13px 20px;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  }
+  .wa-btn:hover { transform: translateY(-2px); }
+  .wa-btn--primary {
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    box-shadow: 0 8px 28px var(--glow);
+  }
+  .wa-btn--ghost {
+    color: var(--text);
+    background: transparent;
+    border-color: var(--border);
+  }
+  .wa-btn--ghost:hover { border-color: var(--accent); }
+  @media (max-width: 560px) {
+    .wa-page { padding-top: 80px; }
+    .wa-card__body { padding: 24px 20px 28px; }
+    .wa-qr-wrap { padding: 28px 20px 22px; }
+    .wa-qr-frame img { width: 200px; height: 200px; }
+    .wa-actions { flex-direction: column; }
+    .wa-btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<main class="wa-page">
+  <a class="wa-back" href="/">← Back to Ayzen Studios</a>
+
+  <article class="wa-card">
+    <div class="wa-qr-wrap">
+      <span class="wa-qr-label">Open the scanner</span>
+      <div class="wa-qr-frame">
+        <img
+          src="https://api.qrserver.com/v1/create-qr-code/?size=320x320&amp;data=https%3A%2F%2Fwebar-jwly.onrender.com&amp;margin=8"
+          width="220"
+          height="220"
+          alt="QR code to open the Web AR demo"
+          loading="lazy">
+      </div>
+      <a class="wa-qr-link" href="https://webar-jwly.onrender.com" target="_blank" rel="noopener noreferrer" data-no-transition>https://webar-jwly.onrender.com</a>
+      <p class="wa-qr-hint">Scan this QR with your phone to open the Web AR experience.</p>
+
+      <div class="wa-step-divider" aria-hidden="true"></div>
+
+      <span class="wa-qr-label">AR target image</span>
+      <div class="wa-target-frame">
+        <img
+          src="/assets/games/webar-target.png"
+          alt="Ayzen Studios — scan this image to see the Web AR demo"
+          width="512"
+          height="512"
+          loading="lazy">
+      </div>
+      <p class="wa-scan-callout">Scan this image to see the demo</p>
+      <p class="wa-qr-hint">Once the scanner is open, point your phone camera at this Ayzen logo.</p>
+    </div>
+
+    <div class="wa-card__body">
+      <span class="wa-badge">Events &amp; activations</span>
+      <h1>Web AR</h1>
+      <p class="wa-lead">Bring posters, invites, and packaging to life with browser-based augmented reality — no app download required.</p>
+      <p class="wa-note">
+        Guests scan a QR code, open their camera, and watch your branded video appear on a printed target.
+        Ideal for launches, exhibitions, weddings, and experiential marketing.
+      </p>
+
+      <div class="wa-event">
+        <p><strong>Want to use this service for your upcoming events?</strong> We can customize the target artwork, video content, and landing experience for your brand.</p>
+      </div>
+
+      <div class="wa-actions">
+        <a class="wa-btn wa-btn--primary" href="https://wa.me/919205726749?text=Hi%2C%20I%20would%20like%20to%20use%20Web%20AR%20for%20my%20upcoming%20event." target="_blank" rel="noopener noreferrer" data-no-transition>Yes — request for my event</a>
+        <a class="wa-btn wa-btn--ghost" href="https://webar-jwly.onrender.com" target="_blank" rel="noopener noreferrer" data-no-transition>Open demo</a>
+      </div>
+    </div>
+  </article>
+</main>
+
+<div id="site-footer-root"></div>
+<script src="/js/site-footer.js?v=5" defer></script>
+<script src="/js/ayzen-motion.js?v=1" defer></script>
+</body>
+</html>
