@@ -145,6 +145,16 @@
   status = 200
 
 [[redirects]]
+  from = "/photobooth"
+  to = "/photobooth.html"
+  status = 200
+
+[[redirects]]
+  from = "/geo-registration"
+  to = "/geo-registration.html"
+  status = 200
+
+[[redirects]]
   from = "/soundora"
   to = "/soundora.html"
   status = 200

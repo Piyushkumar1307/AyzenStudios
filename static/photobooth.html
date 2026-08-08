@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#05070d">
+<meta name="description" content="PhotoBooth AI by Ayzen Studios — snap a selfie, describe your dream look, and watch AI transform you in seconds.">
+<script src="/static/favicon-set.js"></script>
+<script src="/js/runtime-config.js?v=3"></script>
+<script src="/js/spooky-api.js?v=3"></script>
+<title>PhotoBooth AI — Ayzen Studios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/ayzen-theme.css?v=2">
+<link rel="stylesheet" href="/css/site-footer.css?v=1">
+<style>
+  .pb-page {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 96px 24px 64px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .pb-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 28px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .pb-back:hover { color: var(--accent); }
+  .pb-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.45);
+  }
+  .pb-card__media img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+  }
+  .pb-qr-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    padding: 36px 28px 32px;
+    background:
+      radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 55%),
+      var(--bg-card);
+    border-bottom: 1px solid var(--border);
+  }
+  .pb-qr-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .pb-qr-frame {
+    padding: 16px;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  }
+  .pb-qr-frame img {
+    display: block;
+    width: 220px;
+    height: 220px;
+  }
+  .pb-qr-hint {
+    max-width: 36ch;
+    text-align: center;
+    font-size: 16px;
+    line-height: 1.55;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .pb-qr-sub {
+    max-width: 38ch;
+    text-align: center;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  .pb-qr-link {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent-2);
+    text-decoration: none;
+    word-break: break-all;
+  }
+  .pb-qr-link:hover { text-decoration: underline; }
+  .pb-card__body { padding: 32px 28px 36px; }
+  .pb-badge {
+    display: inline-block;
+    margin-bottom: 14px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  .pb-card h1 {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(28px, 5vw, 36px);
+    letter-spacing: -0.02em;
+    margin-bottom: 14px;
+    background: var(--steel);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  .pb-lead {
+    font-size: 17px;
+    line-height: 1.65;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .pb-note {
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+  .pb-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .pb-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 13px 20px;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  }
+  .pb-btn:hover { transform: translateY(-2px); }
+  .pb-btn--primary {
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    box-shadow: 0 8px 28px var(--glow);
+  }
+  .pb-btn--ghost {
+    color: var(--text);
+    background: transparent;
+    border-color: var(--border);
+  }
+  .pb-btn--ghost:hover { border-color: var(--accent); }
+  @media (max-width: 560px) {
+    .pb-page { padding-top: 80px; }
+    .pb-card__body { padding: 24px 20px 28px; }
+    .pb-qr-wrap { padding: 28px 20px 24px; }
+    .pb-qr-frame img { width: 200px; height: 200px; }
+    .pb-actions { flex-direction: column; }
+    .pb-btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<main class="pb-page">
+  <a class="pb-back" href="/">← Back to Ayzen Studios</a>
+
+  <article class="pb-card">
+    <div class="pb-card__media">
+      <img src="/assets/games/photobooth.png" alt="PhotoBooth AI — Ayzen Studios" width="800" height="450">
+    </div>
+    <div class="pb-qr-wrap">
+      <span class="pb-qr-label">Try the live demo</span>
+      <div class="pb-qr-frame">
+        <img
+          src="https://api.qrserver.com/v1/create-qr-code/?size=320x320&amp;data=https%3A%2F%2Fphotobooth-urbj.onrender.com&amp;margin=8"
+          width="220"
+          height="220"
+          alt="QR code to open PhotoBooth AI"
+          loading="lazy">
+      </div>
+      <p class="pb-qr-hint">Scan this QR to experience PhotoBooth AI</p>
+      <p class="pb-qr-sub">Snap a selfie, describe your dream look, and watch AI transform you in seconds.</p>
+      <a class="pb-qr-link" href="https://photobooth-urbj.onrender.com" target="_blank" rel="noopener noreferrer" data-no-transition>https://photobooth-urbj.onrender.com</a>
+    </div>
+
+    <div class="pb-card__body">
+      <span class="pb-badge">Events &amp; activations</span>
+      <h1>PhotoBooth AI</h1>
+      <p class="pb-lead">A browser-based AI photobooth for weddings, brand events, and activations — no app download required.</p>
+      <p class="pb-note">
+        Guests scan a QR code on their phone, take a selfie, enter a style prompt, and receive an AI-transformed portrait
+        they can share instantly. Perfect for memorable event moments and social buzz.
+      </p>
+      <div class="pb-actions">
+        <a class="pb-btn pb-btn--primary" href="https://wa.me/919205726749?text=Hi%2C%20I%20would%20like%20PhotoBooth%20AI%20for%20my%20upcoming%20event." target="_blank" rel="noopener noreferrer" data-no-transition>Request for my event</a>
+        <a class="pb-btn pb-btn--ghost" href="https://photobooth-urbj.onrender.com" target="_blank" rel="noopener noreferrer" data-no-transition>Open demo</a>
+      </div>
+    </div>
+  </article>
+</main>
+
+<div id="site-footer-root"></div>
+<script src="/js/site-footer.js?v=5" defer></script>
+<script src="/js/ayzen-motion.js?v=1" defer></script>
+</body>
+</html>

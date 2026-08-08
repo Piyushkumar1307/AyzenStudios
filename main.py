@@ -211,6 +211,8 @@ WEBGL_HTML = os.path.join(BASE_DIR, "static", "webgl.html")
 WEBGL_PLAY_HTML = os.path.join(BASE_DIR, "static", "webgl-play.html")
 FACE_SWAP_HTML = os.path.join(BASE_DIR, "static", "face-swap.html")
 WEBAR_HTML = os.path.join(BASE_DIR, "static", "webar.html")
+PHOTOBOOTH_HTML = os.path.join(BASE_DIR, "static", "photobooth.html")
+GEO_REGISTRATION_HTML = os.path.join(BASE_DIR, "static", "geo-registration.html")
 SOUNDORA_HTML = os.path.join(BASE_DIR, "static", "soundora.html")
 CONTROLLER_HTML = os.path.join(BASE_DIR, "static", "controller.html")
 SUPPORT_HTML = os.path.join(BASE_DIR, "static", "support.html")
@@ -382,6 +384,16 @@ def face_swap_page():
 @app.get("/webar")
 def webar_page():
     return FileResponse(WEBAR_HTML)
+
+
+@app.get("/photobooth")
+def photobooth_page():
+    return FileResponse(PHOTOBOOTH_HTML)
+
+
+@app.get("/geo-registration")
+def geo_registration_page():
+    return FileResponse(GEO_REGISTRATION_HTML)
 
 
 @app.get("/soundora")

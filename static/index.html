@@ -717,6 +717,7 @@
   }
 </style>
 <link rel="stylesheet" href="/css/ayzen-theme.css?v=2">
+<link rel="stylesheet" href="/css/apple-home.css?v=3">
 <link rel="stylesheet" href="/css/site-footer.css?v=2">
 <script>
   (function () {
@@ -727,7 +728,7 @@
   })();
 </script>
 </head>
-<body>
+<body class="apple-home">
 
 <div class="grid-bg" aria-hidden="true"></div>
 
@@ -741,9 +742,9 @@
       </span>
     </a>
     <nav class="nav-main">
+      <a class="nav-link" href="#work">Work</a>
       <a class="nav-link" href="#about">About</a>
       <a class="nav-link" href="#capabilities">Capabilities</a>
-      <a class="nav-link" href="#work">Work</a>
       <a class="nav-link" href="#playstore">Play Store</a>
       <a class="nav-link" href="#contact">Contact</a>
       <a class="nav-link nav-cta" href="/games">Play games</a>
@@ -770,8 +771,8 @@
       and practical AI tools — from playful prototypes to polished, shipped releases.
     </p>
     <div class="hero-actions">
-      <a class="btn btn-primary" href="/games">Explore our games →</a>
-      <a class="btn btn-ghost" href="#contact">Start a project</a>
+      <a class="btn btn-primary" href="#work">Explore our work</a>
+      <a class="btn btn-ghost" href="/games">Play games</a>
     </div>
     <div class="hero-stats">
       <div class="hero-stat"><strong data-count="10" data-suffix="+">0</strong><span>Titles shipped</span></div>
@@ -815,80 +816,151 @@
   </div>
 </div>
 
+<section id="work">
+  <div class="section-head" data-reveal>
+    <h2 class="section-title">Explore our work.</h2>
+    <p class="section-intro">Swipe through live products — tap any tile to try the demo.</p>
+  </div>
+  <div class="product-shelf-wrap" data-reveal>
+    <div class="product-shelf" id="workShelf" tabindex="0" aria-label="Product gallery — scroll horizontally">
+      <a class="product-tile" href="/games">
+        <div class="product-tile__media"><img src="/assets/games/gesture-catalog.png" alt="Gesture games" width="400" height="225" loading="lazy"></div>
+        <div class="product-tile__body">
+          <span class="product-tile__eyebrow">Games</span>
+          <h3>Gesture catalog</h3>
+          <p>Fruit Ninja–style arcade, runners, tic-tac-toe, traffic dodge, and slingshot physics — all in the browser.</p>
+          <div class="product-tile__links"><span>Browse games</span></div>
+        </div>
+      </a>
+      <a class="product-tile" href="/webgl">
+        <div class="product-tile__media"><img src="/assets/games/webgl-games.png" alt="WebGL games" width="400" height="225" loading="lazy"></div>
+        <div class="product-tile__body">
+          <span class="product-tile__eyebrow">WebGL</span>
+          <h3>Unity in the browser</h3>
+          <p>Beat Traffic, Ayzen Fruit Ninja, and more — your phone becomes the controller.</p>
+          <div class="product-tile__links"><span>Play WebGL</span></div>
+        </div>
+      </a>
+      <a class="product-tile" href="/face-swap">
+        <div class="product-tile__media"><img src="/assets/games/face-swap.png" alt="Face Swap" width="400" height="225" loading="lazy"><span class="product-tile__badge product-tile__badge--ai">AI</span></div>
+        <div class="product-tile__body">
+          <span class="product-tile__eyebrow">Events</span>
+          <h3>Face Swap Studio</h3>
+          <p>Browser-based AI face swap for live events and brand activations.</p>
+          <div class="product-tile__links"><span>Learn more</span></div>
+        </div>
+      </a>
+      <a class="product-tile" href="/soundora">
+        <div class="product-tile__media"><img src="/assets/games/soundora.svg" alt="Soundora" width="400" height="225" loading="lazy"><span class="product-tile__badge product-tile__badge--ai">AI Music</span></div>
+        <div class="product-tile__body">
+          <span class="product-tile__eyebrow">AI</span>
+          <h3>Soundora</h3>
+          <p>Describe a mood or story and get an original track you can play and download.</p>
+          <div class="product-tile__links"><span>Open Soundora</span></div>
+        </div>
+      </a>
+      <a class="product-tile" href="/webar">
+        <div class="product-tile__media"><img src="/assets/games/webar.png" alt="Web AR" width="400" height="225" loading="lazy"><span class="product-tile__badge">Web AR</span></div>
+        <div class="product-tile__body">
+          <span class="product-tile__eyebrow">AR</span>
+          <h3>Web AR</h3>
+          <p>Scan a target image to play branded video in augmented reality — no app required.</p>
+          <div class="product-tile__links"><span>Try demo</span></div>
+        </div>
+      </a>
+      <a class="product-tile" href="/photobooth">
+        <div class="product-tile__media"><img src="/assets/games/photobooth.png" alt="PhotoBooth AI" width="400" height="225" loading="lazy"><span class="product-tile__badge product-tile__badge--ai">AI Photo</span></div>
+        <div class="product-tile__body">
+          <span class="product-tile__eyebrow">Events</span>
+          <h3>PhotoBooth AI</h3>
+          <p>Snap a selfie, describe your dream look, and get an AI-transformed portrait in seconds.</p>
+          <div class="product-tile__links"><span>Try demo</span></div>
+        </div>
+      </a>
+      <a class="product-tile" href="/geo-registration">
+        <div class="product-tile__media"><img src="/assets/games/geo-registration.png" alt="Geo-Fenced Registration" width="400" height="225" loading="lazy"><span class="product-tile__badge">Geo Check-in</span></div>
+        <div class="product-tile__body">
+          <span class="product-tile__eyebrow">Events</span>
+          <h3>Geo-Fenced Registration</h3>
+          <p>Verified on-site check-in with 500m GPS geofencing and timestamped selfie capture.</p>
+          <div class="product-tile__links"><span>Try demo</span></div>
+        </div>
+      </a>
+    </div>
+    <div class="product-shelf-nav" aria-hidden="true">
+      <button type="button" class="shelf-btn" data-shelf-prev="workShelf" aria-label="Previous products">‹</button>
+      <button type="button" class="shelf-btn" data-shelf-next="workShelf" aria-label="Next products">›</button>
+    </div>
+    <p class="shelf-hint">Scroll sideways to see all products</p>
+  </div>
+</section>
+
 <section id="about">
   <div class="section-head" data-reveal>
-    <h2 class="section-title">What we do</h2>
-    <p class="section-intro">
-      A focused studio built around memorable interaction — Unity games, gesture web titles,
-      AI tools, live backends, and event-ready registration flows your guests actually enjoy using.
-    </p>
+    <h2 class="section-title">What we do.</h2>
+    <p class="section-intro">Swipe through our services — games, AI, events, and live ops under one studio.</p>
   </div>
-  <div class="services-scroll" id="servicesScroll">
-    <div class="services-scroll__pin">
-      <div class="services-scroll__inner">
-        <div class="services-scroll__stack" id="servicesStack">
-          <article class="service-stack-card" data-index="0">
-            <div class="service-stack-card__media"><img src="/assets/studio/unity-games.png" alt="2D and 3D game development" width="640" height="360"></div>
-            <div class="service-stack-card__body">
-              <span class="service-stack-card__num">01</span>
-              <h3>2D &amp; 3D Unity games</h3>
-              <p>Character-driven platformers, 3D environments, physics puzzles, and mobile-ready builds shipped from Unity.</p>
-            </div>
-          </article>
-          <article class="service-stack-card" data-index="1">
-            <div class="service-stack-card__media"><img src="/assets/studio/gesture-games.png" alt="Gesture-based games" width="640" height="360"></div>
-            <div class="service-stack-card__body">
-              <span class="service-stack-card__num">02</span>
-              <h3>Gesture-based games</h3>
-              <p>Web games powered by hand tracking — pinch, point, lean, and dual-hand mechanics with no controller required.</p>
-            </div>
-          </article>
-          <article class="service-stack-card" data-index="2">
-            <div class="service-stack-card__media"><img src="/assets/studio/ai-services.png" alt="AI services" width="640" height="360"></div>
-            <div class="service-stack-card__body">
-              <span class="service-stack-card__num">03</span>
-              <h3>AI services</h3>
-              <p>Face swap, image tools, music generation, and custom ML pipelines built into products or offered standalone.</p>
-            </div>
-          </article>
-          <article class="service-stack-card" data-index="3">
-            <div class="service-stack-card__media"><img src="/assets/studio/web-services.png" alt="Web and live ops" width="640" height="360"></div>
-            <div class="service-stack-card__body">
-              <span class="service-stack-card__num">04</span>
-              <h3>Web &amp; live ops</h3>
-              <p>FastAPI backends, auth, payments, leaderboards, and deployment so your game can grow after launch.</p>
-            </div>
-          </article>
-          <article class="service-stack-card" data-index="4">
-            <div class="service-stack-card__media"><img src="/assets/studio/smart-registration.png" alt="Smart Registration" width="640" height="360"></div>
-            <div class="service-stack-card__body">
-              <span class="service-stack-card__num">05</span>
-              <h3>Smart Registration</h3>
-              <p>QR-based guest check-in and Sunmi kiosk registration for events — fast queues, verified entries, live attendance.</p>
-              <a href="#contact">Discuss your event →</a>
-            </div>
-          </article>
-          <article class="service-stack-card" data-index="5">
-            <div class="service-stack-card__media"><img src="/assets/studio/kiosk-application.png" alt="Kiosk Application" width="640" height="360"></div>
-            <div class="service-stack-card__body">
-              <span class="service-stack-card__num">06</span>
-              <h3>Kiosk Application</h3>
-              <p>Kiosk experiences for events and venues — circular video displays, branded attract loops, and touch-first kiosk games.</p>
-              <a href="#contact">Plan a kiosk experience →</a>
-            </div>
-          </article>
+  <div class="product-shelf-wrap" data-reveal>
+    <div class="product-shelf" id="servicesShelf" tabindex="0" aria-label="Services gallery — scroll horizontally">
+      <a class="product-tile" href="/games">
+        <div class="product-tile__media"><img src="/assets/studio/unity-games.png" alt="2D and 3D Unity games" width="640" height="360" loading="lazy"></div>
+        <div class="product-tile__body">
+          <span class="product-tile__eyebrow">Game development</span>
+          <h3>2D &amp; 3D Unity games</h3>
+          <p>Character-driven platformers, 3D environments, physics puzzles, and mobile-ready builds shipped from Unity.</p>
+          <div class="product-tile__links"><span>Explore games</span></div>
         </div>
-        <div class="services-scroll__dots" aria-hidden="true">
-          <span class="services-scroll__dot is-active" data-dot="0"></span>
-          <span class="services-scroll__dot" data-dot="1"></span>
-          <span class="services-scroll__dot" data-dot="2"></span>
-          <span class="services-scroll__dot" data-dot="3"></span>
-          <span class="services-scroll__dot" data-dot="4"></span>
-          <span class="services-scroll__dot" data-dot="5"></span>
+      </a>
+      <a class="product-tile" href="/games">
+        <div class="product-tile__media"><img src="/assets/studio/gesture-games.png" alt="Gesture-based games" width="640" height="360" loading="lazy"></div>
+        <div class="product-tile__body">
+          <span class="product-tile__eyebrow">Interaction</span>
+          <h3>Gesture-based games</h3>
+          <p>Web games powered by hand tracking — pinch, point, lean, and dual-hand mechanics with no controller required.</p>
+          <div class="product-tile__links"><span>Try gesture games</span></div>
         </div>
-      </div>
-      <p class="services-scroll__hint">Scroll to explore services</p>
+      </a>
+      <a class="product-tile" href="#work">
+        <div class="product-tile__media"><img src="/assets/studio/ai-services.png" alt="AI services" width="640" height="360" loading="lazy"><span class="product-tile__badge product-tile__badge--ai">AI</span></div>
+        <div class="product-tile__body">
+          <span class="product-tile__eyebrow">Artificial intelligence</span>
+          <h3>AI services</h3>
+          <p>Face swap, image tools, music generation, and custom ML pipelines built into products or offered standalone.</p>
+          <div class="product-tile__links"><span>See AI products</span></div>
+        </div>
+      </a>
+      <article class="product-tile product-tile--static">
+        <div class="product-tile__media"><img src="/assets/studio/web-services.png" alt="Web and live ops" width="640" height="360" loading="lazy"></div>
+        <div class="product-tile__body">
+          <span class="product-tile__eyebrow">Infrastructure</span>
+          <h3>Web &amp; live ops</h3>
+          <p>FastAPI backends, auth, payments, leaderboards, and deployment so your game can grow after launch.</p>
+        </div>
+      </article>
+      <a class="product-tile" href="/geo-registration">
+        <div class="product-tile__media"><img src="/assets/studio/smart-registration.png" alt="Smart Registration" width="640" height="360" loading="lazy"></div>
+        <div class="product-tile__body">
+          <span class="product-tile__eyebrow">Events</span>
+          <h3>Smart Registration</h3>
+          <p>QR-based guest check-in and Sunmi kiosk registration — fast queues, verified entries, live attendance.</p>
+          <div class="product-tile__links"><span>View demo</span></div>
+        </div>
+      </a>
+      <a class="product-tile" href="#contact">
+        <div class="product-tile__media"><img src="/assets/studio/kiosk-application.png" alt="Kiosk Application" width="640" height="360" loading="lazy"></div>
+        <div class="product-tile__body">
+          <span class="product-tile__eyebrow">Venues</span>
+          <h3>Kiosk Application</h3>
+          <p>Circular video displays, branded attract loops, and touch-first kiosk games for events and venues.</p>
+          <div class="product-tile__links"><span>Plan a kiosk</span></div>
+        </div>
+      </a>
     </div>
+    <div class="product-shelf-nav" aria-hidden="true">
+      <button type="button" class="shelf-btn" data-shelf-prev="servicesShelf" aria-label="Previous services">‹</button>
+      <button type="button" class="shelf-btn" data-shelf-next="servicesShelf" aria-label="Next services">›</button>
+    </div>
+    <p class="shelf-hint">Scroll sideways to see all services</p>
   </div>
 
   <div id="clients" class="clients-strip" data-reveal>
@@ -958,126 +1030,39 @@
   </div>
 </section>
 
-<section id="work">
-  <div class="section-head" data-reveal>
-    <h2 class="section-title">Explore our work</h2>
-    <p class="section-intro">Products live on their own pages — the studio home stays focused on who we are.</p>
-  </div>
-  <div class="card-scroll card-scroll--work" id="workScroll">
-    <div class="card-scroll__pin">
-      <div class="card-scroll__inner">
-        <div class="card-scroll__stack">
-          <a class="work-card card-scroll-item" href="/games" data-index="0">
-            <div class="work-card-media"><img src="/assets/games/gesture-catalog.png" alt="Gesture games" width="400" height="225"></div>
-            <div class="work-card-body">
-              <h3>Gesture game catalog</h3>
-              <p>Fruit Ninja–style arcade, runners, tic-tac-toe, traffic dodge, slingshot physics, and FX demos — all in the browser.</p>
-              <span class="arrow">Browse games →</span>
-            </div>
-          </a>
-          <a class="work-card card-scroll-item" href="/webgl" data-index="1">
-            <div class="work-card-media"><img src="/assets/games/webgl-games.png" alt="WebGL games with phone controller" width="400" height="225"></div>
-            <div class="work-card-body">
-              <h3>WebGL games</h3>
-              <p>Beat Traffic, Ayzen Fruit Ninja, and more — Unity in the browser with your phone as the controller.</p>
-              <span class="arrow">Play WebGL games →</span>
-            </div>
-          </a>
-          <a class="work-card card-scroll-item" href="/face-swap" data-index="2">
-            <div class="work-card-media"><img src="/assets/games/face-swap.png" alt="Face Swap by Ayzen Studios" width="400" height="225"></div>
-            <div class="work-card-body">
-              <h3>Face Swap (AI)</h3>
-              <p>Browser-based AI face swap for events and brand activations — available on order only.</p>
-              <span class="arrow">Learn more →</span>
-            </div>
-          </a>
-          <a class="work-card card-scroll-item" href="/soundora" data-index="3">
-            <div class="work-card-media">
-              <img src="/assets/games/soundora.svg" alt="Soundora — AI song generator" width="400" height="225">
-              <span class="play-badge ai">AI Music</span>
-            </div>
-            <div class="work-card-body">
-              <h3>Soundora</h3>
-              <p>Our AI music service — describe a mood or story and get an original track you can play and download.</p>
-              <span class="arrow">Open Soundora →</span>
-            </div>
-          </a>
-          <a class="work-card card-scroll-item" href="/webar" data-index="4">
-            <div class="work-card-media">
-              <img src="/assets/games/webar.png" alt="Web AR — scan and play video" width="400" height="225">
-              <span class="play-badge">Web AR</span>
-            </div>
-            <div class="work-card-body">
-              <h3>Web AR</h3>
-              <p>Scan a target image with your phone to play branded video in augmented reality — built for events and activations.</p>
-              <span class="arrow">Try Web AR →</span>
-            </div>
-          </a>
-        </div>
-        <div class="card-scroll__dots" aria-hidden="true">
-          <span class="card-scroll__dot is-active" data-dot="0"></span>
-          <span class="card-scroll__dot" data-dot="1"></span>
-          <span class="card-scroll__dot" data-dot="2"></span>
-          <span class="card-scroll__dot" data-dot="3"></span>
-          <span class="card-scroll__dot" data-dot="4"></span>
-        </div>
-      </div>
-      <p class="card-scroll__hint">Scroll — cards slide in from alternating sides</p>
-    </div>
-  </div>
-</section>
-
 <section id="playstore">
   <div class="section-head" data-reveal>
-    <h2 class="section-title">Published on Google Play</h2>
-    <p class="section-intro">Our Android games — download them on the Play Store.</p>
+    <h2 class="section-title">On Google Play.</h2>
+    <p class="section-intro">Our Android games — download on the Play Store.</p>
   </div>
-  <div class="card-scroll card-scroll--play" id="playScroll">
-    <div class="card-scroll__pin">
-      <div class="card-scroll__inner">
-        <div class="card-scroll__stack">
-          <a class="work-card work-card--play card-scroll-item" href="https://play.google.com/store/apps/details?id=com.tretacompany.madarrows" target="_blank" rel="noopener noreferrer" data-no-transition data-index="0">
-            <div class="work-card-media">
-              <img src="/assets/games/mad-arrows.png" alt="Mad Arrows on Google Play" width="400" height="225">
-              <span class="play-badge">Google Play</span>
-            </div>
-            <div class="work-card-body">
-              <h3>Mad Arrows</h3>
-              <p>Tap the right arrows in order and guide your path to the exit — a neon maze puzzle where one wrong click can trap you.</p>
-              <span class="arrow">Get it on Google Play →</span>
-            </div>
-          </a>
-          <a class="work-card work-card--play card-scroll-item" href="https://play.google.com/store/apps/details?id=com.DefaultCompany.ZombieCrusher" target="_blank" rel="noopener noreferrer" data-no-transition data-index="1">
-            <div class="work-card-media">
-              <img src="/assets/games/zombie-crusher.png" alt="Zombie Crusher on Google Play" width="400" height="225">
-              <span class="play-badge">Google Play</span>
-            </div>
-            <div class="work-card-body">
-              <h3>Zombie Crusher</h3>
-              <p>Smash cartoon zombies with oversized hammers in this arcade-style party-hat mayhem — quick rounds, silly chaos.</p>
-              <span class="arrow">Get it on Google Play →</span>
-            </div>
-          </a>
-          <a class="work-card work-card--play card-scroll-item" href="https://play.google.com/store/apps/details?id=com.TretaCompany.TicTacToe" target="_blank" rel="noopener noreferrer" data-no-transition data-index="2">
-            <div class="work-card-media">
-              <img src="/assets/games/tic-tac-toe-playstore.png" alt="Tic Tac Toe on Google Play" width="400" height="225">
-              <span class="play-badge">Google Play</span>
-            </div>
-            <div class="work-card-body">
-              <h3>Tic Tac Toe</h3>
-              <p>Classic Xs and Os with a bright, nostalgic look — a polished mobile take on the board game everyone knows.</p>
-              <span class="arrow">Get it on Google Play →</span>
-            </div>
-          </a>
-        </div>
-        <div class="card-scroll__dots" aria-hidden="true">
-          <span class="card-scroll__dot is-active" data-dot="0"></span>
-          <span class="card-scroll__dot" data-dot="1"></span>
-          <span class="card-scroll__dot" data-dot="2"></span>
-        </div>
+  <div class="play-grid" data-reveal>
+    <a class="product-tile" href="https://play.google.com/store/apps/details?id=com.tretacompany.madarrows" target="_blank" rel="noopener noreferrer" data-no-transition>
+      <div class="product-tile__media"><img src="/assets/games/mad-arrows.png" alt="Mad Arrows" width="400" height="225" loading="lazy"><span class="product-tile__badge">Google Play</span></div>
+      <div class="product-tile__body">
+        <span class="product-tile__eyebrow">Puzzle</span>
+        <h3>Mad Arrows</h3>
+        <p>Tap arrows in order and guide your path to the exit — a neon maze where one wrong click can trap you.</p>
+        <div class="product-tile__links"><span>Download</span></div>
       </div>
-      <p class="card-scroll__hint">Scroll — cards fan out like a deck</p>
-    </div>
+    </a>
+    <a class="product-tile" href="https://play.google.com/store/apps/details?id=com.DefaultCompany.ZombieCrusher" target="_blank" rel="noopener noreferrer" data-no-transition>
+      <div class="product-tile__media"><img src="/assets/games/zombie-crusher.png" alt="Zombie Crusher" width="400" height="225" loading="lazy"><span class="product-tile__badge">Google Play</span></div>
+      <div class="product-tile__body">
+        <span class="product-tile__eyebrow">Arcade</span>
+        <h3>Zombie Crusher</h3>
+        <p>Smash cartoon zombies with oversized hammers — quick rounds of silly party-hat mayhem.</p>
+        <div class="product-tile__links"><span>Download</span></div>
+      </div>
+    </a>
+    <a class="product-tile" href="https://play.google.com/store/apps/details?id=com.TretaCompany.TicTacToe" target="_blank" rel="noopener noreferrer" data-no-transition>
+      <div class="product-tile__media"><img src="/assets/games/tic-tac-toe-playstore.png" alt="Tic Tac Toe" width="400" height="225" loading="lazy"><span class="product-tile__badge">Google Play</span></div>
+      <div class="product-tile__body">
+        <span class="product-tile__eyebrow">Classic</span>
+        <h3>Tic Tac Toe</h3>
+        <p>Classic Xs and Os with a bright, nostalgic look — a polished mobile take everyone knows.</p>
+        <div class="product-tile__links"><span>Download</span></div>
+      </div>
+    </a>
   </div>
 </section>
 
@@ -1133,7 +1118,7 @@
 
 <script src="/js/site-footer.js?v=5" defer></script>
 <script src="/js/mobile-nav.js?v=1" defer></script>
-<script src="/js/ayzen-motion.js?v=7" defer></script>
+<script src="/js/ayzen-motion.js?v=8" defer></script>
 <script>
 (function () {
   var root = document.documentElement;

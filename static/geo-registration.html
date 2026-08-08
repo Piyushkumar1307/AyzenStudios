@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#05070d">
+<meta name="description" content="Geo-Fenced Registration by Ayzen Studios — verified on-site event check-in with GPS geofencing and timestamped selfie capture.">
+<script src="/static/favicon-set.js"></script>
+<script src="/js/runtime-config.js?v=3"></script>
+<script src="/js/spooky-api.js?v=3"></script>
+<title>Geo-Fenced Registration — Ayzen Studios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/ayzen-theme.css?v=2">
+<link rel="stylesheet" href="/css/site-footer.css?v=1">
+<style>
+  .gr-page {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 96px 24px 64px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .gr-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 28px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .gr-back:hover { color: var(--accent); }
+  .gr-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.45);
+  }
+  .gr-card__media img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+  }
+  .gr-qr-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    padding: 36px 28px 32px;
+    background:
+      radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 55%),
+      var(--bg-card);
+    border-bottom: 1px solid var(--border);
+  }
+  .gr-qr-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .gr-qr-frame {
+    padding: 16px;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  }
+  .gr-qr-frame img {
+    display: block;
+    width: 220px;
+    height: 220px;
+  }
+  .gr-qr-hint {
+    max-width: 36ch;
+    text-align: center;
+    font-size: 16px;
+    line-height: 1.55;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .gr-qr-sub {
+    max-width: 40ch;
+    text-align: center;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  .gr-qr-link {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent-2);
+    text-decoration: none;
+    word-break: break-all;
+  }
+  .gr-qr-link:hover { text-decoration: underline; }
+  .gr-card__body { padding: 32px 28px 36px; }
+  .gr-badge {
+    display: inline-block;
+    margin-bottom: 14px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  .gr-card h1 {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(28px, 5vw, 36px);
+    letter-spacing: -0.02em;
+    margin-bottom: 14px;
+    background: var(--steel);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  .gr-lead {
+    font-size: 17px;
+    line-height: 1.65;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .gr-note {
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .gr-flow {
+    margin-bottom: 28px;
+    padding: 18px 20px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg-card) 60%, transparent);
+  }
+  .gr-flow h2 {
+    margin: 0 0 12px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .gr-flow ol {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+  .gr-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .gr-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 13px 20px;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  }
+  .gr-btn:hover { transform: translateY(-2px); }
+  .gr-btn--primary {
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    box-shadow: 0 8px 28px var(--glow);
+  }
+  .gr-btn--ghost {
+    color: var(--text);
+    background: transparent;
+    border-color: var(--border);
+  }
+  .gr-btn--ghost:hover { border-color: var(--accent); }
+  @media (max-width: 560px) {
+    .gr-page { padding-top: 80px; }
+    .gr-card__body { padding: 24px 20px 28px; }
+    .gr-qr-wrap { padding: 28px 20px 24px; }
+    .gr-qr-frame img { width: 200px; height: 200px; }
+    .gr-actions { flex-direction: column; }
+    .gr-btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<main class="gr-page">
+  <a class="gr-back" href="/">← Back to Ayzen Studios</a>
+
+  <article class="gr-card">
+    <div class="gr-card__media">
+      <img src="/assets/games/geo-registration.png" alt="Geo-Fenced Registration — Ayzen Studios" width="800" height="450">
+    </div>
+    <div class="gr-qr-wrap">
+      <span class="gr-qr-label">Try the live demo</span>
+      <div class="gr-qr-frame">
+        <img
+          src="https://api.qrserver.com/v1/create-qr-code/?size=320x320&amp;data=https%3A%2F%2Fgeolocation-based-registration.onrender.com&amp;margin=8"
+          width="220"
+          height="220"
+          alt="QR code to open Geo-Fenced Registration"
+          loading="lazy">
+      </div>
+      <p class="gr-qr-hint">Scan this QR to try Geo-Fenced Registration</p>
+      <p class="gr-qr-sub">Use a phone with GPS enabled — you must be within 500m of a selected location to capture your selfie.</p>
+      <a class="gr-qr-link" href="https://geolocation-based-registration.onrender.com" target="_blank" rel="noopener noreferrer" data-no-transition>https://geolocation-based-registration.onrender.com</a>
+    </div>
+
+    <div class="gr-card__body">
+      <span class="gr-badge">Events &amp; venues</span>
+      <h1>Geo-Fenced Registration</h1>
+      <p class="gr-lead">Verified on-site check-in for conferences, offices, and field events — registration that only works when guests are physically at the venue.</p>
+      <p class="gr-note">
+        Attendees enter their name and email, pick a predefined location, and the app validates their GPS position
+        against a 500m geofence before unlocking the camera. Each selfie is stamped with date, time, location name,
+        and coordinates — then saved with server-side re-validation so records stay trustworthy.
+      </p>
+
+      <div class="gr-flow">
+        <h2>How it works</h2>
+        <ol>
+          <li>Register with name &amp; email</li>
+          <li>Select a venue location</li>
+          <li>GPS checked — must be within 500m</li>
+          <li>Capture a selfie with timestamp &amp; location overlay</li>
+          <li>Upload &amp; save to the database</li>
+        </ol>
+      </div>
+
+      <div class="gr-actions">
+        <a class="gr-btn gr-btn--primary" href="https://wa.me/919205726749?text=Hi%2C%20I%20would%20like%20Geo-Fenced%20Registration%20for%20my%20upcoming%20event." target="_blank" rel="noopener noreferrer" data-no-transition>Request for my event</a>
+        <a class="gr-btn gr-btn--ghost" href="https://geolocation-based-registration.onrender.com" target="_blank" rel="noopener noreferrer" data-no-transition>Open demo</a>
+      </div>
+    </div>
+  </article>
+</main>
+
+<div id="site-footer-root"></div>
+<script src="/js/site-footer.js?v=5" defer></script>
+<script src="/js/ayzen-motion.js?v=1" defer></script>
+</body>
+</html>

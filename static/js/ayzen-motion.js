@@ -493,6 +493,21 @@
     });
   }
 
+  /* ---------- product shelf nav ---------- */
+  function initProductShelves() {
+    document.querySelectorAll("[data-shelf-prev], [data-shelf-next]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-shelf-prev") || btn.getAttribute("data-shelf-next");
+        var shelf = id && document.getElementById(id);
+        if (!shelf) return;
+        var tile = shelf.querySelector(".product-tile");
+        var step = tile ? tile.offsetWidth + 16 : 360;
+        var dir = btn.hasAttribute("data-shelf-prev") ? -1 : 1;
+        shelf.scrollBy({ left: dir * step, behavior: REDUCED ? "auto" : "smooth" });
+      });
+    });
+  }
+
   /* ---------- boot ---------- */
   function boot() {
     buildOverlay();
@@ -500,9 +515,10 @@
     initReveal();
     initWordRotate();
     initCount();
-    initServicesStack();
-    initCardScroll("workScroll", "slide-alt");
-    initCardScroll("playScroll", "fan");
+    initProductShelves();
+    if (document.getElementById("servicesScroll")) initServicesStack();
+    if (document.getElementById("workScroll")) initCardScroll("workScroll", "slide-alt");
+    if (document.getElementById("playScroll")) initCardScroll("playScroll", "fan");
   }
 
   if (document.readyState === "loading") {
