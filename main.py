@@ -1900,10 +1900,79 @@ def video():
         media_type="multipart/x-mixed-replace; boundary=frame",
     )
 
-# --- REST: health check ---
+# --- REST: health / keep-alive (for Render free-tier cron pings) ---
+_STARTED_AT = time.time()
+
+
 @app.get("/health")
+@app.get("/ping")
 def health():
-    return {"status": "ok", "camera": detector.cap is not None}
+    """
+    Lightweight liveness probe for uptime monitors / cron keep-alive.
+    Always returns 200 quickly — no DB or camera work.
+    Cron example (every 10–14 min): curl -fsS https://YOUR-SERVICE.onrender.com/health
+    """
+    camera_on = False
+    try:
+        camera_on = bool(getattr(detector, "cap", None) is not None)
+    except Exception:
+        camera_on = False
+    return {
+        "status": "ok",
+        "ok": True,
+        "service": "ayzen-studios",
+        "uptime_sec": round(time.time() - _STARTED_AT, 1),
+        "camera": camera_on,
+        "ts": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+@app.get("/api/keepalive")
+async def keepalive_fanout(request: Request):
+    """
+    Hit this from one cron job to wake multiple Render services.
+    Set KEEPALIVE_URLS to a comma-separated list of health URLs, e.g.:
+      KEEPALIVE_URLS=https://webar-jwly.onrender.com/,https://photobooth-urbj.onrender.com/,https://geolocation-based-registration.onrender.com/
+    If unset, only this service is reported as alive.
+    """
+    raw = (os.environ.get("KEEPALIVE_URLS") or "").strip()
+    urls = [u.strip() for u in raw.split(",") if u.strip()]
+    results = [
+        {
+            "url": str(request.base_url).rstrip("/") + "/health",
+            "ok": True,
+            "status": 200,
+            "self": True,
+        }
+    ]
+
+    async def _ping(url: str) -> dict:
+        try:
+            def _fetch() -> tuple[int, str]:
+                req = urllib.request.Request(
+                    url,
+                    method="GET",
+                    headers={"User-Agent": "Ayzen-Keepalive/1.0"},
+                )
+                with urllib.request.urlopen(req, timeout=20) as resp:
+                    return resp.getcode() or 200, (resp.read(256) or b"").decode("utf-8", "ignore")
+
+            code, _body = await asyncio.to_thread(_fetch)
+            return {"url": url, "ok": 200 <= code < 400, "status": code}
+        except Exception as e:
+            return {"url": url, "ok": False, "status": 0, "error": type(e).__name__}
+
+    if urls:
+        results.extend(await asyncio.gather(*[_ping(u) for u in urls]))
+
+    all_ok = all(r.get("ok") for r in results)
+    return {
+        "status": "ok" if all_ok else "partial",
+        "ok": all_ok,
+        "checked": len(results),
+        "results": results,
+        "ts": datetime.now(timezone.utc).isoformat(),
+    }
 
 # --- REST: single snapshot of current gesture ---
 @app.get("/gesture", response_model=HandState)
