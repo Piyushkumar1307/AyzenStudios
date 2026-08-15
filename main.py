@@ -433,6 +433,379 @@ def public_config():
         "api_base_url": api_base or None,
         "brand": "Ayzen Studios",
         "soundora_configured": bool(_env_str("SUNO_API_KEY")),
+        "bot_configured": bool(_env_str("OPENROUTER_API_KEY")),
+    }
+
+
+# --- AYZEN Bot (OpenRouter / Nemotron) ---
+from pydantic import BaseModel, Field
+
+
+class BotChatMessage(BaseModel):
+    role: str = Field(..., pattern="^(user|assistant)$")
+    content: str = Field(..., min_length=1, max_length=2000)
+
+
+class BotChatRequest(BaseModel):
+    message: str = Field(..., min_length=1, max_length=500)
+    history: list[BotChatMessage] = Field(default_factory=list, max_length=20)
+
+
+AYZEN_BOT_SYSTEM = """You are AYZEN Bot — a helpful live chat assistant on the Ayzen Studios website.
+
+Tone: warm, clear, conversational. Short paragraphs. Ask a follow-up when useful. At most 1–2 light emojis.
+
+Help with Ayzen products, demos, hiring/quotes (never invent fixed prices), games, and support basics.
+Never invent prices, fake clients, or claim you can run demos inside this chat.
+
+When mentioning a product, include its path:
+- Gesture games: /games
+- WebGL + phone controller: /webgl
+- Soundora (AI music; typos like "sounder" count): /soundora
+- Face Swap Studio: /face-swap
+- Web AR: /webar
+- PhotoBooth AI: /photobooth
+- Geo-Fenced Registration: /geo-registration
+Also: Play Store /#playstore, Leaderboard /leaderboard, Login /login, Support /support, Contact /#contact
+WhatsApp https://wa.me/919205726749 · Telegram https://t.me/ayzenstudios
+
+If asked what powers you: AYZEN Bot powered by NVIDIA Nemotron 3.5 Lightning.
+
+CRITICAL: Reply with ONLY the final chat message to the user. No JSON. No thinking, planning, drafts, analysis labels, or product-list dumps.
+"""
+
+
+def _openrouter_ssl_context() -> ssl.SSLContext:
+    try:
+        import certifi
+
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        return ssl.create_default_context()
+
+
+def _looks_like_reasoning(text: str) -> bool:
+    import re
+
+    return bool(
+        re.search(
+            r"(check rules|formulate response|final output|self-correction|thinking process|"
+            r"analyze user|identify role|draft response|constraints?:|numbered analysis|"
+            r"output generation|verification during thought|\*\*check rules|\*\*formulate|"
+            r"here's a thinking|chain[- ]of[- ]thought)",
+            text or "",
+            flags=re.I,
+        )
+    )
+
+
+def _is_placeholder_reply(text: str) -> bool:
+    import re
+
+    s = (text or "").strip()
+    if not s:
+        return True
+    if re.search(r"<\s*(your|user|chat|message|reply|text|response)[^>]*>", s, flags=re.I):
+        return True
+    if re.fullmatch(r"\.+|…+", s):
+        return True
+    return False
+
+
+def _is_truncated_reply(text: str) -> bool:
+    import re
+
+    s = (text or "").strip()
+    if len(s) < 12:
+        return True
+    # Cut off mid-phrase / mid-parenthesis / dangling connector
+    if re.search(r"\b(as|to|for|and|or|with|the|a|an|at|of|in)\s*$", s, flags=re.I):
+        return True
+    if s.endswith(("(", "[", "{", ",", ";", "—", "-", "/", "...", "…")):
+        return True
+    if s.count('"') % 2 == 1:
+        return True
+    # Too vague / incomplete for a product answer
+    if len(s) < 40 and s.endswith("?"):
+        return True
+    return False
+
+
+def _is_prompt_leak(text: str) -> bool:
+    import re
+
+    s = (text or "").strip()
+    if not s:
+        return False
+    if re.search(
+        r"(products\s*\(include path|output format \(mandatory\)|ayzen_bot_system|"
+        r"return only (a )?json|known paths:|tone:\s*warm|when mentioning a product)",
+        s,
+        flags=re.I,
+    ):
+        return True
+    # Bullet dump of internal product map
+    if s.count("→ /") >= 1 and not re.search(r"[.!?]", s):
+        return True
+    if s.count("→ /") >= 2 or s.count("-> /") >= 2:
+        return True
+    if re.match(r"^products\b", s, flags=re.I):
+        return True
+    return False
+
+
+def _reply_unusable(text: str) -> bool:
+    return (
+        not (text or "").strip()
+        or _looks_like_reasoning(text)
+        or _is_placeholder_reply(text)
+        or _is_truncated_reply(text)
+        or _is_prompt_leak(text)
+        or len((text or "").strip()) > 700
+    )
+
+
+def _missing_expected_product(user_msg: str, reply: str) -> bool:
+    """True when the user asked about a known product but the reply never names it."""
+    um = (user_msg or "").lower()
+    rl = (reply or "").lower()
+    expectations: list[tuple[tuple[str, ...], tuple[str, ...]]] = [
+        (("sounder", "soundora"), ("soundora", "/soundora")),
+        (("photobooth", "photo booth"), ("photobooth", "/photobooth", "photo booth")),
+        (("web ar", "webar"), ("web ar", "webar", "/webar", "augmented")),
+        (("face swap",), ("face swap", "/face-swap")),
+        (("geo", "geofenc"), ("geo", "/geo-registration", "geofenc")),
+        (("gesture", "games"), ("gesture", "/games", "game")),
+    ]
+    for triggers, must_any in expectations:
+        if any(t in um for t in triggers):
+            if not any(m in rl for m in must_any):
+                return True
+    return False
+
+
+def _extract_json_reply(text: str) -> str | None:
+    import re
+
+    s = (text or "").strip()
+    if not s:
+        return None
+    # fenced json
+    fence = re.search(r"```(?:json)?\s*(\{[\s\S]*?\})\s*```", s, flags=re.I)
+    if fence:
+        s = fence.group(1)
+    # first {...} object
+    m = re.search(r"\{[\s\S]*\}", s)
+    if not m:
+        return None
+    try:
+        data = json.loads(m.group(0))
+    except Exception:
+        # try last reply-looking string field
+        rm = re.search(r'"reply"\s*:\s*"((?:\\.|[^"\\])*)"', s)
+        if rm:
+            try:
+                return json.loads('"' + rm.group(1) + '"')
+            except Exception:
+                return rm.group(1).encode("utf-8").decode("unicode_escape")
+        return None
+    reply = data.get("reply") if isinstance(data, dict) else None
+    if isinstance(reply, str) and reply.strip():
+        return reply.strip()
+    return None
+
+
+def _strip_model_thinking(text: str) -> str:
+    """Keep only the user-facing chat reply from noisy Nemotron outputs."""
+    import re
+
+    s = (text or "").strip()
+    if not s:
+        return s
+
+    # Preferred: JSON {"reply":"..."} when present
+    extracted = _extract_json_reply(s)
+    if extracted and not _reply_unusable(extracted):
+        return extracted
+
+    s = re.sub(r"<think>[\s\S]*?</think>", "", s, flags=re.I).strip()
+    s = re.sub(r"<thinking>[\s\S]*?</thinking>", "", s, flags=re.I).strip()
+
+    # Quoted final messages (common in leaked CoT)
+    quotes = re.findall(r'"([^"\n]{25,400})"', s)
+    for q in reversed(quotes):
+        q = q.strip()
+        if _looks_like_reasoning(q):
+            continue
+        if re.search(r"soundora|/soundora|photobooth|web ar|ayzen|gesture|whatsapp", q, flags=re.I):
+            return q
+        if not re.search(r"^\d+\.|check rules|formulate|draft", q, flags=re.I):
+            # prefer last quote that looks like a chat reply
+            if "?" in q or "!" in q or q.endswith("."):
+                return q
+    if quotes:
+        last = quotes[-1].strip()
+        if last and not _looks_like_reasoning(last):
+            return last
+
+    for pat in (
+        r"(?:Final\s+(?:decision|answer|output)|Output)\s*:\s*[\"']?(.+?)[\"']?\s*$",
+        r'Draft(?:\s+Response)?\s*:\s*"([^"]+)"',
+        r"Draft(?:\s+Response)?\s*:\s*(.+)$",
+    ):
+        m = re.search(pat, s, flags=re.I | re.S)
+        if m:
+            out = m.group(1).strip().strip('"').strip()
+            if len(out) > 15 and not _looks_like_reasoning(out):
+                return out
+
+    # Drop meta / planning lines, keep conversational leftovers
+    keep: list[str] = []
+    for line in s.splitlines():
+        if re.match(
+            r"^\s*(\d+\.|[-*•]|✅|->|→)\s*",
+            line,
+        ) and re.search(
+            r"check|rule|formul|draft|analy|identif|determin|constraint|strategy|output|verification|assume|proceed|self-correction",
+            line,
+            flags=re.I,
+        ):
+            continue
+        if _looks_like_reasoning(line) and len(line) < 220:
+            continue
+        if re.match(r"^\s*(wait,|actually,|let'?s |re-reading|self-correction)", line, flags=re.I):
+            continue
+        keep.append(line)
+    cleaned = "\n".join(keep).strip()
+    if cleaned and not _looks_like_reasoning(cleaned):
+        return cleaned.strip().strip('"')
+
+    # Last non-meta paragraph
+    parts = [p.strip() for p in re.split(r"\n{2,}", s) if p.strip()]
+    for part in reversed(parts):
+        if _looks_like_reasoning(part):
+            continue
+        if len(part) > 20:
+            return part.strip().strip('"')
+
+    if extracted:
+        return extracted
+    return s.strip().strip('"')
+
+
+def _openrouter_chat(messages: list[dict], *, use_json_format: bool = False) -> str:
+    key = _env_str("OPENROUTER_API_KEY")
+    if not key:
+        raise HTTPException(
+            status_code=503,
+            detail="Chat bot is not configured. Set OPENROUTER_API_KEY and redeploy.",
+        )
+    model = _env_str("OPENROUTER_MODEL") or "nvidia/nemotron-3.5-lightning:free"
+    body_obj: dict = {
+        "model": model,
+        "messages": messages,
+        "temperature": 0.5,
+        "max_tokens": 900,
+        "reasoning": {"exclude": True},
+    }
+    if use_json_format:
+        body_obj["response_format"] = {"type": "json_object"}
+    payload = json.dumps(body_obj).encode("utf-8")
+    req = urllib.request.Request(
+        "https://openrouter.ai/api/v1/chat/completions",
+        data=payload,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://ayzenstudios.com",
+            "X-Title": "Ayzen Studios Bot",
+            "User-Agent": "AyzenStudios-Bot/1.0",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=45, context=_openrouter_ssl_context()) as resp:
+            raw = resp.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", "replace") if e.fp else ""
+        if use_json_format and e.code in (400, 404, 422):
+            logger.warning("OpenRouter JSON mode rejected (%s); retrying plain. %s", e.code, body[:200])
+            return _openrouter_chat(messages, use_json_format=False)
+        logger.warning("OpenRouter HTTP %s: %s", e.code, body[:400])
+        raise HTTPException(
+            status_code=502,
+            detail="The assistant is temporarily unavailable. Try again or WhatsApp us.",
+        ) from e
+    except Exception as e:
+        logger.warning("OpenRouter error: %s: %s", type(e).__name__, e)
+        raise HTTPException(
+            status_code=502,
+            detail="Could not reach the assistant. Try again shortly.",
+        ) from e
+
+    try:
+        data = json.loads(raw)
+        msg = ((data.get("choices") or [{}])[0].get("message") or {})
+        content = (msg.get("content") or "").strip()
+    except Exception as e:
+        raise HTTPException(status_code=502, detail="Invalid assistant response.") from e
+    if not content:
+        raise HTTPException(status_code=502, detail="Empty assistant response.")
+    return _strip_model_thinking(content)
+
+
+@app.post("/api/bot/chat")
+async def bot_chat(body: BotChatRequest):
+    """AYZEN Bot chat via OpenRouter (Nemotron). Key stays server-side."""
+    user_msg = (body.message or "").strip()
+    if not user_msg:
+        raise HTTPException(status_code=400, detail="Message is required.")
+
+    messages: list[dict] = [{"role": "system", "content": AYZEN_BOT_SYSTEM}]
+    for m in body.history[-12:]:
+        role = (m.role or "").strip()
+        content = (m.content or "").strip()
+        if role in ("user", "assistant") and content:
+            if role == "assistant" and _reply_unusable(content):
+                continue
+            messages.append({"role": role, "content": content[:1500]})
+    messages.append({"role": "user", "content": user_msg})
+
+    reply = await asyncio.to_thread(_openrouter_chat, messages)
+    reply = (reply or "").strip()
+    if _reply_unusable(reply) or _missing_expected_product(user_msg, reply):
+        extracted = _extract_json_reply(reply)
+        if (
+            extracted
+            and not _reply_unusable(extracted)
+            and not _missing_expected_product(user_msg, extracted)
+        ):
+            reply = extracted.strip()
+        else:
+            reply = (_strip_model_thinking(reply) or "").strip()
+    if _reply_unusable(reply) or _missing_expected_product(user_msg, reply):
+        plain_messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are AYZEN Bot. Write 1–3 complete chat sentences that answer the user. "
+                    "Name the product and include its path. No JSON/thinking/drafts. "
+                    "Soundora=/soundora (sounder typo ok), PhotoBooth=/photobooth, "
+                    "Web AR=/webar, games=/games, Face Swap=/face-swap, geo=/geo-registration."
+                ),
+            },
+            {"role": "user", "content": user_msg},
+        ]
+        reply = await asyncio.to_thread(_openrouter_chat, plain_messages)
+        reply = (_strip_model_thinking(reply) or "").strip()
+    if _reply_unusable(reply) or _missing_expected_product(user_msg, reply):
+        raise HTTPException(
+            status_code=502,
+            detail="The assistant returned an unusable reply. Please try again.",
+        )
+    return {
+        "reply": reply,
+        "model": _env_str("OPENROUTER_MODEL") or "nvidia/nemotron-3.5-lightning:free",
     }
 
 
