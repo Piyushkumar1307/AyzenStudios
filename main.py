@@ -213,6 +213,7 @@ FACE_SWAP_HTML = os.path.join(BASE_DIR, "static", "face-swap.html")
 WEBAR_HTML = os.path.join(BASE_DIR, "static", "webar.html")
 PHOTOBOOTH_HTML = os.path.join(BASE_DIR, "static", "photobooth.html")
 GEO_REGISTRATION_HTML = os.path.join(BASE_DIR, "static", "geo-registration.html")
+QUIZ_MASTER_HTML = os.path.join(BASE_DIR, "static", "quiz-master.html")
 SOUNDORA_HTML = os.path.join(BASE_DIR, "static", "soundora.html")
 CONTROLLER_HTML = os.path.join(BASE_DIR, "static", "controller.html")
 SUPPORT_HTML = os.path.join(BASE_DIR, "static", "support.html")
@@ -396,6 +397,12 @@ def geo_registration_page():
     return FileResponse(GEO_REGISTRATION_HTML)
 
 
+@app.get("/quiz-master")
+@app.get("/kbc-quiz")
+def quiz_master_page():
+    return FileResponse(QUIZ_MASTER_HTML)
+
+
 @app.get("/soundora")
 def soundora_page():
     return FileResponse(SOUNDORA_HTML)
@@ -466,6 +473,7 @@ When mentioning a product, include its path:
 - Web AR: /webar
 - PhotoBooth AI: /photobooth
 - Geo-Fenced Registration: /geo-registration
+- Quiz Master (KBC-style quiz): /quiz-master
 Also: Play Store /#playstore, Leaderboard /leaderboard, Login /login, Support /support, Contact /#contact
 WhatsApp https://wa.me/919205726749 · Telegram https://t.me/ayzenstudios
 
@@ -566,6 +574,7 @@ def _missing_expected_product(user_msg: str, reply: str) -> bool:
         (("web ar", "webar"), ("web ar", "webar", "/webar", "augmented")),
         (("face swap",), ("face swap", "/face-swap")),
         (("geo", "geofenc"), ("geo", "/geo-registration", "geofenc")),
+        (("quiz", "kbc", "crorepati"), ("quiz", "/quiz-master", "kbc")),
         (("gesture", "games"), ("gesture", "/games", "game")),
     ]
     for triggers, must_any in expectations:
@@ -837,7 +846,8 @@ async def bot_chat(body: BotChatRequest):
                     "You are AYZEN Bot. Write 1–3 complete chat sentences that answer the user. "
                     "Name the product and include its path. No JSON/thinking/drafts. "
                     "Soundora=/soundora (sounder typo ok), PhotoBooth=/photobooth, "
-                    "Web AR=/webar, games=/games, Face Swap=/face-swap, geo=/geo-registration."
+                    "Web AR=/webar, games=/games, Face Swap=/face-swap, geo=/geo-registration, "
+                    "Quiz Master=/quiz-master (KBC quiz)."
                 ),
             },
             {"role": "user", "content": user_msg},
@@ -2351,7 +2361,7 @@ async def keepalive_fanout(request: Request):
     """
     Hit this from one cron job to wake multiple Render services.
     Set KEEPALIVE_URLS to a comma-separated list of health URLs, e.g.:
-      KEEPALIVE_URLS=https://webar-jwly.onrender.com/,https://photobooth-urbj.onrender.com/,https://geolocation-based-registration.onrender.com/
+      KEEPALIVE_URLS=https://webar-jwly.onrender.com/,https://photobooth-urbj.onrender.com/,https://geolocation-based-registration.onrender.com/,https://kbc-quiz-8ocm.onrender.com/
     If unset, only this service is reported as alive.
     """
     raw = (os.environ.get("KEEPALIVE_URLS") or "").strip()

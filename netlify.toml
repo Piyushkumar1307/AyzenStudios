@@ -155,6 +155,16 @@
   status = 200
 
 [[redirects]]
+  from = "/quiz-master"
+  to = "/quiz-master.html"
+  status = 200
+
+[[redirects]]
+  from = "/kbc-quiz"
+  to = "/quiz-master.html"
+  status = 200
+
+[[redirects]]
   from = "/soundora"
   to = "/soundora.html"
   status = 200
