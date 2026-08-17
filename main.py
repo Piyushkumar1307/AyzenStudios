@@ -433,11 +433,11 @@ def public_config():
         "api_base_url": api_base or None,
         "brand": "Ayzen Studios",
         "soundora_configured": bool(_env_str("SUNO_API_KEY")),
-        "bot_configured": bool(_env_str("OPENROUTER_API_KEY")),
+        "bot_configured": bool(_env_str("NVIDIA_API_KEY") or _env_str("OPENROUTER_API_KEY")),
     }
 
 
-# --- AYZEN Bot (OpenRouter / Nemotron) ---
+# --- AYZEN Bot (NVIDIA NIM / Nemotron 3.5 Lightning) ---
 from pydantic import BaseModel, Field
 
 
@@ -473,15 +473,6 @@ If asked what powers you: AYZEN Bot powered by NVIDIA Nemotron 3.5 Lightning.
 
 CRITICAL: Reply with ONLY the final chat message to the user. No JSON. No thinking, planning, drafts, analysis labels, or product-list dumps.
 """
-
-
-def _openrouter_ssl_context() -> ssl.SSLContext:
-    try:
-        import certifi
-
-        return ssl.create_default_context(cafile=certifi.where())
-    except Exception:
-        return ssl.create_default_context()
 
 
 def _looks_like_reasoning(text: str) -> bool:
@@ -693,62 +684,117 @@ def _strip_model_thinking(text: str) -> str:
     return s.strip().strip('"')
 
 
-def _openrouter_chat(messages: list[dict], *, use_json_format: bool = False) -> str:
-    key = _env_str("OPENROUTER_API_KEY")
-    if not key:
-        raise HTTPException(
-            status_code=503,
-            detail="Chat bot is not configured. Set OPENROUTER_API_KEY and redeploy.",
+NVIDIA_BOT_MODEL = "nvidia/nemotron-3.5-lightning-30b-a3b"
+NVIDIA_BOT_BASE_URL = "https://integrate.api.nvidia.com/v1"
+OPENROUTER_BOT_MODEL = "nvidia/nemotron-3.5-lightning:free"
+OPENROUTER_BOT_BASE_URL = "https://openrouter.ai/api/v1"
+_bot_openai_client = None
+_bot_openai_client_sig = None
+
+
+def _bot_llm_config() -> tuple[str, str, str, str]:
+    """Return (provider, api_key, base_url, model). OpenRouter keys may be pasted as NVIDIA_API_KEY."""
+    nvidia = _env_str("NVIDIA_API_KEY")
+    openrouter = _env_str("OPENROUTER_API_KEY")
+    if nvidia and nvidia.startswith("sk-or-"):
+        openrouter = nvidia
+        nvidia = ""
+    if nvidia:
+        return (
+            "nvidia",
+            nvidia,
+            NVIDIA_BOT_BASE_URL,
+            _env_str("NVIDIA_MODEL") or NVIDIA_BOT_MODEL,
         )
-    model = _env_str("OPENROUTER_MODEL") or "nvidia/nemotron-3.5-lightning:free"
-    body_obj: dict = {
-        "model": model,
-        "messages": messages,
-        "temperature": 0.5,
-        "max_tokens": 900,
-        "reasoning": {"exclude": True},
-    }
-    if use_json_format:
-        body_obj["response_format"] = {"type": "json_object"}
-    payload = json.dumps(body_obj).encode("utf-8")
-    req = urllib.request.Request(
-        "https://openrouter.ai/api/v1/chat/completions",
-        data=payload,
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {key}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://ayzenstudios.com",
-            "X-Title": "Ayzen Studios Bot",
-            "User-Agent": "AyzenStudios-Bot/1.0",
-        },
+    if openrouter:
+        return (
+            "openrouter",
+            openrouter,
+            OPENROUTER_BOT_BASE_URL,
+            _env_str("OPENROUTER_MODEL") or OPENROUTER_BOT_MODEL,
+        )
+    raise HTTPException(
+        status_code=503,
+        detail="Chat bot is not configured. Set NVIDIA_API_KEY or OPENROUTER_API_KEY and redeploy.",
     )
+
+
+def _bot_model_name() -> str:
     try:
-        with urllib.request.urlopen(req, timeout=45, context=_openrouter_ssl_context()) as resp:
-            raw = resp.read().decode("utf-8", "replace")
-    except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8", "replace") if e.fp else ""
-        if use_json_format and e.code in (400, 404, 422):
-            logger.warning("OpenRouter JSON mode rejected (%s); retrying plain. %s", e.code, body[:200])
-            return _openrouter_chat(messages, use_json_format=False)
-        logger.warning("OpenRouter HTTP %s: %s", e.code, body[:400])
+        return _bot_llm_config()[3]
+    except HTTPException:
+        return NVIDIA_BOT_MODEL
+
+
+def _bot_client():
+    """OpenAI-compatible client for NVIDIA NIM or OpenRouter. Key stays server-side."""
+    global _bot_openai_client, _bot_openai_client_sig
+    provider, key, base_url, _model = _bot_llm_config()
+    sig = (provider, key, base_url)
+    if _bot_openai_client is None or _bot_openai_client_sig != sig:
+        import httpx
+        from openai import OpenAI
+
+        verify: bool | str = True
+        try:
+            import certifi
+
+            verify = certifi.where()
+        except Exception:
+            pass
+        timeout = httpx.Timeout(60.0)
+        headers = {}
+        if provider == "openrouter":
+            headers = {
+                "HTTP-Referer": "https://ayzenstudios.com",
+                "X-Title": "Ayzen Studios Bot",
+            }
+        _bot_openai_client = OpenAI(
+            base_url=base_url,
+            api_key=key,
+            timeout=60.0,
+            default_headers=headers or None,
+            http_client=httpx.Client(verify=verify, timeout=timeout),
+        )
+        _bot_openai_client_sig = sig
+    return _bot_openai_client
+
+
+def _nvidia_chat(messages: list[dict]) -> str:
+    """Stream Nemotron; keep only visible content (drop reasoning_content)."""
+    provider, _key, _base, model = _bot_llm_config()
+    client = _bot_client()
+    extra_body: dict = {}
+    if provider == "nvidia":
+        extra_body = {"chat_template_kwargs": {"enable_thinking": False}}
+    elif provider == "openrouter":
+        extra_body = {"reasoning": {"exclude": True}}
+    try:
+        completion = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=0.6,
+            top_p=0.95,
+            max_tokens=1024,
+            extra_body=extra_body or None,
+            stream=True,
+        )
+        parts: list[str] = []
+        for chunk in completion:
+            if not chunk.choices:
+                continue
+            delta = chunk.choices[0].delta
+            if getattr(delta, "content", None):
+                parts.append(delta.content)
+        content = "".join(parts).strip()
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning("Bot LLM error (%s): %s: %s", provider, type(e).__name__, e)
         raise HTTPException(
             status_code=502,
             detail="The assistant is temporarily unavailable. Try again or WhatsApp us.",
         ) from e
-    except Exception as e:
-        logger.warning("OpenRouter error: %s: %s", type(e).__name__, e)
-        raise HTTPException(
-            status_code=502,
-            detail="Could not reach the assistant. Try again shortly.",
-        ) from e
-
-    try:
-        data = json.loads(raw)
-        msg = ((data.get("choices") or [{}])[0].get("message") or {})
-        content = (msg.get("content") or "").strip()
-    except Exception as e:
-        raise HTTPException(status_code=502, detail="Invalid assistant response.") from e
     if not content:
         raise HTTPException(status_code=502, detail="Empty assistant response.")
     return _strip_model_thinking(content)
@@ -756,7 +802,7 @@ def _openrouter_chat(messages: list[dict], *, use_json_format: bool = False) -> 
 
 @app.post("/api/bot/chat")
 async def bot_chat(body: BotChatRequest):
-    """AYZEN Bot chat via OpenRouter (Nemotron). Key stays server-side."""
+    """AYZEN Bot chat via NVIDIA Nemotron. Key stays server-side."""
     user_msg = (body.message or "").strip()
     if not user_msg:
         raise HTTPException(status_code=400, detail="Message is required.")
@@ -771,7 +817,7 @@ async def bot_chat(body: BotChatRequest):
             messages.append({"role": role, "content": content[:1500]})
     messages.append({"role": "user", "content": user_msg})
 
-    reply = await asyncio.to_thread(_openrouter_chat, messages)
+    reply = await asyncio.to_thread(_nvidia_chat, messages)
     reply = (reply or "").strip()
     if _reply_unusable(reply) or _missing_expected_product(user_msg, reply):
         extracted = _extract_json_reply(reply)
@@ -796,7 +842,7 @@ async def bot_chat(body: BotChatRequest):
             },
             {"role": "user", "content": user_msg},
         ]
-        reply = await asyncio.to_thread(_openrouter_chat, plain_messages)
+        reply = await asyncio.to_thread(_nvidia_chat, plain_messages)
         reply = (_strip_model_thinking(reply) or "").strip()
     if _reply_unusable(reply) or _missing_expected_product(user_msg, reply):
         raise HTTPException(
@@ -805,7 +851,7 @@ async def bot_chat(body: BotChatRequest):
         )
     return {
         "reply": reply,
-        "model": _env_str("OPENROUTER_MODEL") or "nvidia/nemotron-3.5-lightning:free",
+        "model": _bot_model_name(),
     }
 
 

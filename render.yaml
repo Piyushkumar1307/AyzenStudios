@@ -53,7 +53,11 @@ services:
       # Soundora AI music — Suno API key (proxy at /api/soundora/*)
       - key: SUNO_API_KEY
         sync: false
-      # AYZEN Bot — OpenRouter key for Nemotron 3.5 Lightning (/api/bot/chat)
+      # AYZEN Bot — NVIDIA NIM (preferred) or OpenRouter for Nemotron (/api/bot/chat)
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: NVIDIA_MODEL
+        value: nvidia/nemotron-3.5-lightning-30b-a3b
       - key: OPENROUTER_API_KEY
         sync: false
       - key: OPENROUTER_MODEL
