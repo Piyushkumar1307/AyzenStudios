@@ -12,19 +12,22 @@
   }
 
   function apiBase() {
-    // Local uvicorn: always same-origin (ignore runtime-config Render URL).
     if (isLocalDevHost()) return "";
 
-    var b = global.SPOOKY_API_BASE;
-    if (typeof b === "string" && b.trim()) return b.trim().replace(/\/$/, "");
-
-    // Netlify static host: hit Render API (not Netlify /api 404).
     if (typeof global.location !== "undefined") {
-      var host = global.location.hostname || "";
+      var host = (global.location.hostname || "").toLowerCase();
+      // Netlify static → Render API (split deploy).
       if (host.endsWith(".netlify.app")) {
         return DEFAULT_RENDER_API.replace(/\/$/, "");
       }
+      // Render unified deploy: FastAPI serves static on the same host.
+      if (host.endsWith(".onrender.com")) {
+        return "";
+      }
     }
+
+    var b = global.SPOOKY_API_BASE;
+    if (typeof b === "string" && b.trim()) return b.trim().replace(/\/$/, "");
     return "";
   }
 

@@ -183,6 +183,7 @@ def _cors_middleware_kwargs() -> dict:
     if os.environ.get("CORS_ALLOW_NETLIFY", "1").strip().lower() in ("1", "true", "yes"):
         kwargs["allow_origin_regex"] = (
             r"https://[a-zA-Z0-9][a-zA-Z0-9-]*\.netlify\.app"
+            r"|https://[a-zA-Z0-9][a-zA-Z0-9-]*\.onrender\.com"
             r"|http://(localhost|127\.0\.0\.1)(:\d+)?"
         )
     return kwargs
