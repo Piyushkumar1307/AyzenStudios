@@ -1041,7 +1041,7 @@ def _processing_soundora_count(db: Session, user_id: uuid.UUID) -> int:
 
 
 def _soundora_callback_url() -> str:
-    base = _env_str("PUBLIC_API_BASE") or _env_str("SPOOKY_API_BASE") or "https://piyush-store.onrender.com"
+    base = _env_str("PUBLIC_API_BASE") or _env_str("SPOOKY_API_BASE") or "https://ayzenstudios.onrender.com"
     return base.rstrip("/") + "/api/soundora/webhook"
 
 

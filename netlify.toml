@@ -7,6 +7,7 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  SPOOKY_API_BASE = "https://ayzenstudios.onrender.com"
 
 # HTML uses /static/... paths; publish root is static/, so map to files at /
 [[redirects]]

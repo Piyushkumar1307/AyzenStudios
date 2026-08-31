@@ -3,7 +3,7 @@
  * Load /js/runtime-config.js first to set window.SPOOKY_API_BASE.
  */
 (function (global) {
-  var DEFAULT_RENDER_API = "https://piyush-store.onrender.com";
+  var DEFAULT_RENDER_API = "https://ayzenstudios.onrender.com";
 
   function isLocalDevHost() {
     if (typeof global.location === "undefined") return false;
@@ -13,6 +13,12 @@
 
   function apiBase() {
     if (isLocalDevHost()) return "";
+
+    // Netlify build bakes SPOOKY_API_BASE via scripts/netlify-build.js — prefer that.
+    var configured = global.SPOOKY_API_BASE;
+    if (typeof configured === "string" && configured.trim()) {
+      return configured.trim().replace(/\/$/, "");
+    }
 
     if (typeof global.location !== "undefined") {
       var host = (global.location.hostname || "").toLowerCase();
@@ -26,8 +32,6 @@
       }
     }
 
-    var b = global.SPOOKY_API_BASE;
-    if (typeof b === "string" && b.trim()) return b.trim().replace(/\/$/, "");
     return "";
   }
 

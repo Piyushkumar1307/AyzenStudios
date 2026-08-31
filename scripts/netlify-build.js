@@ -6,7 +6,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const base = (process.env.SPOOKY_API_BASE || "https://piyush-store.onrender.com")
+const base = (process.env.SPOOKY_API_BASE || "https://ayzenstudios.onrender.com")
   .trim()
   .replace(/\/$/, "");
 const out = path.join(__dirname, "..", "static", "js", "runtime-config.js");
