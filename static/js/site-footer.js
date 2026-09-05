@@ -2,6 +2,7 @@
   "use strict";
 
   var YEAR = new Date().getFullYear();
+  var GSTIN = "10IEEPK5143E1ZY";
   var contact = (typeof window !== "undefined" && window.AYZEN_CONTACT) || {
     telegram: "https://t.me/ayzenstudios",
     telegramHandle: "Telegram",
@@ -66,6 +67,7 @@
           "</div>" +
           '<div class="site-footer__bottom">' +
             "<p>© " + YEAR + " Ayzen Studios. All rights reserved.</p>" +
+            '<p class="site-footer__gst">GSTIN: ' + GSTIN + '</p>' +
             '<p class="site-footer__made">Crafted with care in India</p>' +
           "</div>" +
         "</div>" +
