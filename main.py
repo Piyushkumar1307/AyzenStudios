@@ -431,6 +431,53 @@ def privacy_page():
     return FileResponse(PRIVACY_HTML)
 
 
+SITE_BASE_URL = "https://ayzenstudios.com"
+SITEMAP_XML = """<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">
+  <url><loc>{base}/</loc><lastmod>2026-09-05</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>{base}/games</loc><lastmod>2026-09-05</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>{base}/game</loc><lastmod>2026-09-05</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>{base}/puzzle</loc><lastmod>2026-09-05</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>{base}/runner</loc><lastmod>2026-09-05</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>{base}/tictactoe</loc><lastmod>2026-09-05</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>{base}/traffic</loc><lastmod>2026-09-05</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>{base}/temple-run</loc><lastmod>2026-09-05</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>{base}/slingshot</loc><lastmod>2026-09-05</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>{base}/holo</loc><lastmod>2026-09-05</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>{base}/kamehameha</loc><lastmod>2026-09-05</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>{base}/webgl</loc><lastmod>2026-09-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>{base}/soundora</loc><lastmod>2026-09-05</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>{base}/face-swap</loc><lastmod>2026-09-05</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>{base}/webar</loc><lastmod>2026-09-05</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>{base}/photobooth</loc><lastmod>2026-09-05</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>{base}/geo-registration</loc><lastmod>2026-09-05</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>{base}/quiz-master</loc><lastmod>2026-09-05</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>{base}/support</loc><lastmod>2026-09-05</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>{base}/terms</loc><lastmod>2026-09-05</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>{base}/refunds</loc><lastmod>2026-09-05</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>{base}/privacy</loc><lastmod>2026-09-05</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
+</urlset>
+""".format(base=SITE_BASE_URL)
+
+
+@app.get("/sitemap.xml")
+def sitemap_xml():
+    return Response(content=SITEMAP_XML, media_type="application/xml")
+
+
+@app.get("/robots.txt")
+def robots_txt():
+    return Response(
+        content=(
+            "User-agent: *\n"
+            "Allow: /\n"
+            "Disallow: /api/\n"
+            f"Sitemap: {SITE_BASE_URL}/sitemap.xml\n"
+        ),
+        media_type="text/plain",
+    )
+
+
 @app.get("/api/public-config")
 def public_config():
     """Public config for the static frontend (no secrets)."""
