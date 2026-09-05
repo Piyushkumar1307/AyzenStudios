@@ -7,8 +7,10 @@
     telegram: "https://t.me/ayzenstudios",
     telegramHandle: "Telegram",
     whatsapp: "https://wa.me/919205726749",
-    linkedin: "https://www.linkedin.com/in/piyush-kumar-42a745172/",
+    linkedin: "https://www.linkedin.com/company/144852354/",
     linkedinLabel: "LinkedIn",
+    instagram: "https://www.instagram.com/ayzen_studios/",
+    instagramLabel: "Instagram",
   };
 
   function footerMarkup() {
@@ -61,6 +63,7 @@
                   '<li><a href="' + contact.whatsapp + '" target="_blank" rel="noopener noreferrer">WhatsApp</a></li>' +
                   '<li><a href="' + contact.telegram + '" target="_blank" rel="noopener noreferrer">' + contact.telegramHandle + '</a></li>' +
                   '<li><a href="' + contact.linkedin + '" target="_blank" rel="noopener noreferrer">' + contact.linkedinLabel + '</a></li>' +
+                  '<li><a href="' + contact.instagram + '" target="_blank" rel="noopener noreferrer">' + contact.instagramLabel + '</a></li>' +
                 "</ul>" +
               "</div>" +
             "</div>" +
