@@ -28,10 +28,17 @@ def _database_url() -> str:
     if url.startswith("postgres://"):
         url = "postgresql://" + url[len("postgres://") :]
     # This project ships psycopg2-binary. Some providers/export tools label the
-    # same PostgreSQL connection as postgresql+psycopg://, which asks SQLAlchemy
+    # same PostgreSQL URL as postgresql+psycopg:// or similar, which asks SQLAlchemy
     # to import the separate psycopg (v3) package and crashes at startup.
-    if url.startswith("postgresql+psycopg://"):
-        url = "postgresql+psycopg2://" + url[len("postgresql+psycopg://") :]
+    for prefix in (
+        "postgresql+psycopg://",
+        "postgresql+psycopg2://",
+        "postgres+psycopg://",
+        "postgres+psycopg2://",
+    ):
+        if url.startswith(prefix):
+            url = "postgresql+psycopg2://" + url[len(prefix) :]
+            break
     return url
 
 
