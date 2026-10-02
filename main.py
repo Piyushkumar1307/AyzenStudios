@@ -198,6 +198,7 @@ app.add_middleware(CORSMiddleware, **_cors_middleware_kwargs())
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_HTML = os.path.join(BASE_DIR, "static", "index.html")
+WORK_HTML = os.path.join(BASE_DIR, "static", "work.html")
 GAMES_HTML = os.path.join(BASE_DIR, "static", "games.html")
 GAME_INSTRUCTIONS_HTML = os.path.join(BASE_DIR, "static", "game-instructions.html")
 GAME_HTML = os.path.join(BASE_DIR, "static", "game.html")
@@ -297,6 +298,12 @@ def index():
 def index_alt():
     """Same page as `/` — some people expect `/index` in the URL bar."""
     return FileResponse(INDEX_HTML)
+
+
+@app.get("/work")
+def work_page():
+    """Dedicated portfolio and live-experience showcase."""
+    return FileResponse(WORK_HTML)
 
 
 @app.get("/games")

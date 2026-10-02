@@ -62,6 +62,66 @@ body.apple-home {
   transform: translateX(-50%);
 }
 
+/* Homepage entry point for the dedicated work showcase. */
+.apple-home .work-launchpad {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: clamp(28px, 5vw, 48px);
+  border: 1px solid color-mix(in srgb, var(--apple-link) 32%, var(--apple-border));
+  border-radius: var(--apple-radius);
+  background:
+    radial-gradient(circle at 88% 12%, color-mix(in srgb, var(--apple-link) 20%, transparent), transparent 34%),
+    var(--apple-bg-elevated);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .22);
+}
+.apple-home .work-launchpad__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  color: var(--apple-link);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.apple-home .work-launchpad__eyebrow span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #35c759;
+  box-shadow: 0 0 0 4px rgba(53, 199, 89, .14);
+}
+.apple-home .work-launchpad h3 {
+  margin: 0 0 8px;
+  color: var(--apple-text);
+  font-size: clamp(26px, 3vw, 36px);
+  font-weight: 600;
+  letter-spacing: -.035em;
+}
+.apple-home .work-launchpad p:not(.work-launchpad__eyebrow) {
+  max-width: 57ch;
+  margin: 0;
+  color: var(--apple-muted);
+  font-size: 16px;
+  line-height: 1.5;
+}
+.apple-home .work-launchpad__cta {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  padding: 14px 20px;
+  border-radius: 999px;
+  color: #fff;
+  text-decoration: none;
+}
+
 /* Each scroll panel must be opaque: the pinned hero is a backdrop, never text behind content. */
 .apple-home #about,
 .apple-home #clients,
@@ -314,6 +374,16 @@ body.apple-home {
   font-size: 17px;
   color: var(--apple-link);
 }
+
+/* Keep the work showcase CTA readable after the shared button reset above. */
+.apple-home .work-launchpad .work-launchpad__cta,
+.apple-home .work-launchpad .work-launchpad__cta:visited,
+.apple-home .work-launchpad .work-launchpad__cta:hover,
+.apple-home .work-launchpad .work-launchpad__cta:focus-visible {
+  color: #fff !important;
+  text-decoration: none;
+}
+.apple-home .work-launchpad .work-launchpad__cta span { color: inherit; }
 
 .apple-home .hero-stats {
   justify-content: center;
@@ -841,6 +911,8 @@ body.apple-home {
   .apple-home .product-shelf-wrap { margin: 0 calc(-1 * var(--site-gutter)); padding: 0 var(--site-gutter); }
   .apple-home .product-tile { flex-basis: min(300px, 86vw); }
   .apple-home .hero-stats { gap: 24px; }
+  .apple-home .work-launchpad { align-items: flex-start; flex-direction: column; gap: 22px; }
+  .apple-home .work-launchpad__cta { width: 100%; justify-content: center; }
 }
 
 /* ---------- Event registration showcase ---------- */
