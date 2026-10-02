@@ -206,7 +206,7 @@
     .gr-btn { width: 100%; }
   }
 </style>
-<link rel="stylesheet" href="/css/product-page.css?v=2">
+<link rel="stylesheet" href="/css/product-page.css?v=3">
 </head>
 <body>
 <header class="product-page-header">
@@ -247,15 +247,41 @@
         and coordinates — then saved with server-side re-validation so records stay trustworthy.
       </p>
 
-      <div class="gr-flow">
-        <h2>Registration modes</h2>
-        <ol>
-          <li><strong>Tablet Scanner Registration</strong> for front-desk or reception counters.</li>
-          <li><strong>Handheld Scanner</strong> for quick on-floor check-ins and roaming staff.</li>
-          <li><strong>Sunmi Registration</strong> for kiosk and smart-device counter setups.</li>
-          <li><strong>Geo-Fenced Check-in</strong> for verified on-site attendance with GPS validation.</li>
-        </ol>
-      </div>
+      <section class="reg-modes" aria-labelledby="registration-modes-title">
+        <div class="reg-modes__head">
+          <div>
+            <span class="reg-modes__eyebrow">Built for every entry point</span>
+            <h2 id="registration-modes-title">Registration modes</h2>
+          </div>
+          <p>Choose the check-in flow that fits the venue, team, and guest journey.</p>
+        </div>
+        <div class="reg-modes__grid">
+          <article class="reg-mode-card" data-reveal>
+            <div class="reg-mode-card__top"><span class="reg-mode-card__icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect x="12" y="5" width="24" height="38" rx="4"/><path d="M20 35h8"/></svg></span><span>01</span></div>
+            <h3>Tablet Scanner</h3>
+            <p>Polished, fast front-desk registration for reception counters and VIP arrivals.</p>
+            <span class="reg-mode-card__tag">Welcome desk</span>
+          </article>
+          <article class="reg-mode-card" data-reveal data-reveal-delay="1">
+            <div class="reg-mode-card__top"><span class="reg-mode-card__icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect x="14" y="5" width="20" height="38" rx="5" transform="rotate(12 24 24)"/><path d="m18 18 12 3M17 27l12 3"/></svg></span><span>02</span></div>
+            <h3>Handheld Scanner</h3>
+            <p>Mobile QR validation for roaming teams, high-traffic queues, and multi-entry venues.</p>
+            <span class="reg-mode-card__tag">On the move</span>
+          </article>
+          <article class="reg-mode-card" data-reveal data-reveal-delay="2">
+            <div class="reg-mode-card__top"><span class="reg-mode-card__icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect x="14" y="11" width="20" height="30" rx="5"/><path d="M18 11V7h12v4M20 20h8"/></svg></span><span>03</span></div>
+            <h3>Sunmi Registration</h3>
+            <p>Purpose-built check-in for Sunmi counters, kiosks, and smart-device setups.</p>
+            <span class="reg-mode-card__tag">Kiosk ready</span>
+          </article>
+          <article class="reg-mode-card" data-reveal data-reveal-delay="3">
+            <div class="reg-mode-card__top"><span class="reg-mode-card__icon" aria-hidden="true"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="13"/><circle cx="24" cy="24" r="4"/><path d="M24 5v8M24 35v8M5 24h8M35 24h8"/></svg></span><span>04</span></div>
+            <h3>Geo-Fenced Check-in</h3>
+            <p>Verified on-site attendance using GPS validation for field events and locations.</p>
+            <span class="reg-mode-card__tag">Verified arrival</span>
+          </article>
+        </div>
+      </section>
 
       <div class="gr-flow">
         <h2>How it works</h2>

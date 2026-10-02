@@ -12,7 +12,7 @@ services:
     envVars:
       # Python 3.12+; mediapipe not required on Render (SKIP_SERVER_CAMERA=1, browser hand tracking).
       - key: PYTHON_VERSION
-        value: 3.12.8
+        value: 3.12.11
       - key: SKIP_SERVER_CAMERA
         value: "1"
       # --- Set these in Render Dashboard → Environment (sync: false = you enter secrets) ---

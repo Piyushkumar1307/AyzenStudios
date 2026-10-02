@@ -508,6 +508,46 @@
     });
   }
 
+  /* ---------- desktop card spotlight / tilt ---------- */
+  function initCardSpotlight() {
+    if (REDUCED || !window.matchMedia ||
+      !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    document.querySelectorAll(".apple-home .product-tile").forEach(function (card) {
+      var frame = null;
+      var point = null;
+
+      function paint() {
+        frame = null;
+        if (!point) return;
+        var rect = card.getBoundingClientRect();
+        var x = Math.max(0, Math.min(1, (point.x - rect.left) / rect.width));
+        var y = Math.max(0, Math.min(1, (point.y - rect.top) / rect.height));
+        card.style.setProperty("--tile-light-x", (x * 100).toFixed(1) + "%");
+        card.style.setProperty("--tile-light-y", (y * 100).toFixed(1) + "%");
+        card.style.setProperty("--tile-rotate-x", ((0.5 - y) * 4).toFixed(2) + "deg");
+        card.style.setProperty("--tile-rotate-y", ((x - 0.5) * 4).toFixed(2) + "deg");
+      }
+
+      card.addEventListener("pointerenter", function (event) {
+        point = { x: event.clientX, y: event.clientY };
+        card.classList.add("is-tilting");
+      });
+      card.addEventListener("pointermove", function (event) {
+        point = { x: event.clientX, y: event.clientY };
+        if (!frame) frame = requestAnimationFrame(paint);
+      });
+      card.addEventListener("pointerleave", function () {
+        point = null;
+        if (frame) { cancelAnimationFrame(frame); frame = null; }
+        card.classList.remove("is-tilting");
+        card.style.removeProperty("--tile-light-x");
+        card.style.removeProperty("--tile-light-y");
+        card.style.removeProperty("--tile-rotate-x");
+        card.style.removeProperty("--tile-rotate-y");
+      });
+    });
+  }
+
   /* ---------- boot ---------- */
   function boot() {
     buildOverlay();
@@ -516,6 +556,7 @@
     initWordRotate();
     initCount();
     initProductShelves();
+    initCardSpotlight();
     if (document.getElementById("servicesScroll")) initServicesStack();
     if (document.getElementById("workScroll")) initCardScroll("workScroll", "slide-alt");
     if (document.getElementById("playScroll")) initCardScroll("playScroll", "fan");

@@ -756,3 +756,79 @@ body.apple-home {
   .apple-home .registration-showcase__footer { margin-top: 20px; line-height: 1.7; }
   .apple-home .registration-showcase__footer strong { width: 100%; margin-left: 0; }
 }
+
+/* ---------- Motion layer ---------- */
+.apple-home main { overflow: clip; }
+.apple-home .site-header { transition: background .3s ease, border-color .3s ease; }
+.apple-home .brand-lockup__mark { animation: markBreathe 5s ease-in-out infinite; }
+.apple-home .hero h1 { animation: heroTitleIn .9s cubic-bezier(.22, 1, .36, 1) both; }
+.apple-home .hero-lead { animation: heroTitleIn .9s .1s cubic-bezier(.22, 1, .36, 1) both; }
+.apple-home .hero-actions { animation: heroTitleIn .9s .18s cubic-bezier(.22, 1, .36, 1) both; }
+.apple-home .hero-stat { transition: transform .28s cubic-bezier(.22, 1, .36, 1), color .28s ease; }
+.apple-home .hero-stat:hover { transform: translateY(-4px); }
+.apple-home .product-tile {
+  position: relative;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.apple-home .product-tile::after {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(240px circle at var(--tile-light-x, 50%) var(--tile-light-y, 0%), rgba(148, 204, 255, .18), transparent 62%);
+  transition: opacity .3s ease;
+}
+.apple-home .product-tile:hover::after, .apple-home .product-tile.is-tilting::after { opacity: 1; }
+.apple-home .product-tile.is-tilting {
+  transform: perspective(900px) rotateX(var(--tile-rotate-x, 0deg)) rotateY(var(--tile-rotate-y, 0deg)) translateY(-6px);
+  transition: transform .12s linear, box-shadow .25s ease;
+  box-shadow: 0 24px 54px rgba(0, 0, 0, .42);
+}
+.apple-home .product-tile__media img { transition: transform .65s cubic-bezier(.22, 1, .36, 1), filter .35s ease; }
+.apple-home .product-tile:hover .product-tile__media img { filter: saturate(1.08) contrast(1.03); }
+.apple-home .shelf-btn { transition: transform .2s ease, background .2s ease, border-color .2s ease; }
+.apple-home .shelf-btn:hover { transform: translateY(-2px) scale(1.07); border-color: color-mix(in srgb, var(--apple-link) 55%, var(--apple-border)); }
+.apple-home .cap {
+  transition: padding-left .35s cubic-bezier(.22, 1, .36, 1), background .35s ease;
+}
+.apple-home .cap:hover { padding-left: 12px; background: linear-gradient(90deg, color-mix(in srgb, var(--apple-link) 9%, transparent), transparent 60%); }
+.apple-home .cap__num { transition: transform .35s cubic-bezier(.22, 1, .36, 1); }
+.apple-home .cap:hover .cap__num { transform: scale(1.18); }
+.apple-home .contact-aside { animation: softPulse 5s ease-in-out infinite; }
+.apple-home .btn-primary, .apple-home .nav-cta, .apple-home .contact-form .btn-primary { position: relative; overflow: hidden; }
+.apple-home .btn-primary::before, .apple-home .nav-cta::before, .apple-home .contact-form .btn-primary::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 -120%;
+  width: 70%;
+  transform: skewX(-22deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .32), transparent);
+  transition: left .6s ease;
+}
+.apple-home .btn-primary:hover::before, .apple-home .nav-cta:hover::before, .apple-home .contact-form .btn-primary:hover::before { left: 150%; }
+
+@keyframes markBreathe {
+  0%, 100% { box-shadow: 0 6px 22px rgba(46, 155, 255, .3); transform: translateY(0); }
+  50% { box-shadow: 0 10px 32px rgba(46, 155, 255, .55); transform: translateY(-2px); }
+}
+@keyframes heroTitleIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes softPulse {
+  0%, 100% { box-shadow: 0 20px 42px rgba(0, 0, 0, .14); }
+  50% { box-shadow: 0 25px 58px color-mix(in srgb, var(--apple-link) 20%, transparent); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .apple-home *, .apple-home *::before, .apple-home *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+  .apple-home .cap:hover, .apple-home .hero-stat:hover { transform: none; padding-left: inherit; }
+}
