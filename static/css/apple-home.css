@@ -35,8 +35,60 @@ body.apple-home {
 .apple-home .grid-bg { display: none; }
 
 .apple-home #work {
-  padding-top: 40px;
-  padding-bottom: 56px;
+  z-index: 3;
+  margin-top: 0;
+  padding-top: clamp(72px, 10vw, 150px);
+  padding-bottom: 72px;
+  border-top: 1px solid color-mix(in srgb, var(--apple-link) 32%, var(--apple-border));
+  border-radius: clamp(28px, 4vw, 56px) clamp(28px, 4vw, 56px) 0 0;
+  background:
+    radial-gradient(75% 55% at 50% 0%, color-mix(in srgb, var(--apple-link) 11%, transparent), transparent 66%),
+    var(--apple-bg);
+  box-shadow: 0 -24px 70px rgba(0, 0, 0, .32);
+}
+.apple-home #work::before {
+  content: "Explore the work";
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  color: var(--apple-link);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+}
+
+/* Each scroll panel must be opaque: the pinned hero is a backdrop, never text behind content. */
+.apple-home #about,
+.apple-home #capabilities,
+.apple-home #playstore,
+.apple-home #contact {
+  z-index: 4;
+  border-top: 1px solid var(--apple-border);
+  border-radius: clamp(28px, 4vw, 56px) clamp(28px, 4vw, 56px) 0 0;
+  box-shadow: 0 -20px 64px rgba(0, 0, 0, .28);
+}
+.apple-home #about {
+  background:
+    radial-gradient(70% 70% at 94% 8%, rgba(41, 83, 143, .19), transparent 60%),
+    linear-gradient(150deg, #111216 0%, #090b10 46%, #06070b 100%);
+}
+.apple-home #capabilities {
+  z-index: 5;
+  background:
+    radial-gradient(64% 72% at 6% 2%, rgba(62, 111, 181, .17), transparent 62%),
+    linear-gradient(150deg, #0e1119 0%, #090b12 54%, #050609 100%);
+}
+.apple-home #playstore {
+  z-index: 6;
+  background: linear-gradient(150deg, #10131b, #080a0f 55%, #050609);
+}
+.apple-home #contact {
+  z-index: 7;
+  background:
+    radial-gradient(60% 70% at 90% 12%, rgba(42, 104, 197, .18), transparent 62%),
+    linear-gradient(150deg, #111722 0%, #0a0e16 56%, #07090e 100%) !important;
 }
 
 /* ---------- header ---------- */
@@ -103,9 +155,17 @@ body.apple-home {
   grid-template-columns: 1fr;
   text-align: center;
   justify-items: center;
-  min-height: auto;
+  position: sticky;
+  top: 0;
+  min-height: 100svh;
   padding: 100px var(--site-gutter) 72px;
   gap: 0;
+  z-index: 0;
+  opacity: var(--hero-scroll-opacity, 1);
+  transform: scale(var(--hero-scroll-scale, 1));
+  filter: blur(var(--hero-scroll-blur, 0px));
+  transform-origin: 50% 30%;
+  transition: opacity .08s linear, transform .08s linear, filter .08s linear;
 }
 
 .apple-home .hero-visual { display: none; }
@@ -758,7 +818,7 @@ body.apple-home {
 }
 
 /* ---------- Motion layer ---------- */
-.apple-home main { overflow: clip; }
+.apple-home main { overflow: visible; }
 .apple-home .site-header { transition: background .3s ease, border-color .3s ease; }
 .apple-home .brand-lockup__mark { animation: markBreathe 5s ease-in-out infinite; }
 .apple-home .hero h1 { animation: heroTitleIn .9s cubic-bezier(.22, 1, .36, 1) both; }
@@ -831,4 +891,157 @@ body.apple-home {
     transition-duration: .01ms !important;
   }
   .apple-home .cap:hover, .apple-home .hero-stat:hover { transform: none; padding-left: inherit; }
+}
+
+/* ---------- Scroll-driven depth scene ---------- */
+.apple-home .hero-depth {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.apple-home [data-parallax] {
+  --parallax-y: 0px;
+  will-change: transform;
+}
+.apple-home .hero-depth__grid {
+  position: absolute;
+  width: min(66vw, 940px);
+  height: min(66vw, 940px);
+  top: -35%;
+  right: -15%;
+  opacity: .42;
+  background-image:
+    linear-gradient(rgba(88, 167, 255, .16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(88, 167, 255, .16) 1px, transparent 1px);
+  background-size: 48px 48px;
+  border: 1px solid rgba(107, 187, 255, .2);
+  border-radius: 50%;
+  mask-image: radial-gradient(circle, #000 30%, transparent 71%);
+  -webkit-mask-image: radial-gradient(circle, #000 30%, transparent 71%);
+  transform: translate3d(0, var(--parallax-y), 0) rotate(14deg);
+}
+.apple-home .hero-depth__orb {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  filter: blur(2px);
+}
+.apple-home .hero-depth__orb--one {
+  width: clamp(210px, 28vw, 520px);
+  aspect-ratio: 1;
+  top: 15%;
+  right: -8%;
+  background: radial-gradient(circle at 34% 30%, rgba(160, 215, 255, .58), rgba(48, 139, 255, .18) 35%, transparent 69%);
+  box-shadow: inset -30px -34px 75px rgba(3, 12, 34, .35), 0 0 100px rgba(46, 155, 255, .18);
+  transform: translate3d(0, var(--parallax-y), 0);
+}
+.apple-home .hero-depth__orb--two {
+  width: clamp(130px, 15vw, 280px);
+  aspect-ratio: 1;
+  bottom: 7%;
+  left: 4%;
+  opacity: .74;
+  background: radial-gradient(circle at 33% 28%, rgba(214, 229, 255, .72), rgba(93, 99, 234, .35) 32%, transparent 70%);
+  box-shadow: inset -15px -18px 38px rgba(3, 12, 34, .5), 0 0 68px rgba(108, 103, 233, .16);
+  transform: translate3d(0, var(--parallax-y), 0);
+}
+.apple-home .hero-depth__ring {
+  position: absolute;
+  width: min(50vw, 720px);
+  aspect-ratio: 1;
+  right: -18%;
+  bottom: -40%;
+  border: 1px solid rgba(116, 202, 255, .35);
+  border-radius: 50%;
+  box-shadow: 0 0 0 32px rgba(57, 133, 255, .035), 0 0 0 64px rgba(57, 133, 255, .02);
+  transform: translate3d(0, var(--parallax-y), 0) rotate(-18deg);
+}
+.apple-home .hero-depth__caption {
+  position: absolute;
+  right: clamp(22px, 5vw, 88px);
+  bottom: 13%;
+  color: rgba(197, 224, 255, .56);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .24em;
+  writing-mode: vertical-rl;
+  transform: translate3d(0, var(--parallax-y), 0);
+}
+
+@media (max-width: 760px) {
+  .apple-home .hero-depth__grid { width: 125vw; height: 125vw; top: -16%; right: -45%; opacity: .28; }
+  .apple-home .hero-depth__orb--one { width: 260px; right: -28%; top: 19%; opacity: .65; }
+  .apple-home .hero-depth__orb--two { width: 135px; bottom: 6%; left: -11%; }
+  .apple-home .hero-depth__caption, .apple-home .hero-depth__ring { display: none; }
+}
+
+@media (max-width: 640px) {
+  .apple-home .hero { min-height: 88svh; }
+  .apple-home #work { padding-top: 74px; border-radius: 28px 28px 0 0; }
+  .apple-home #work::before { top: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .apple-home .hero { position: relative; min-height: auto; opacity: 1; transform: none; filter: none; }
+  .apple-home #work { box-shadow: none; }
+  .apple-home [data-parallax] { transform: none !important; }
+}
+
+/* ---------- Layered scroll deck ----------
+   Each major section is a solid card in a scroll stack, not a transparent page band. */
+.apple-home #work,
+.apple-home #about,
+.apple-home #capabilities,
+.apple-home #playstore,
+.apple-home #contact {
+  position: relative;
+  scroll-margin-top: 84px;
+}
+.apple-home #about,
+.apple-home #capabilities,
+.apple-home #playstore,
+.apple-home #contact { margin-top: -18px; }
+.apple-home #about::after,
+.apple-home #capabilities::after,
+.apple-home #contact::after {
+  content: "";
+  position: absolute;
+  top: 13px;
+  left: 50%;
+  width: 42px;
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--apple-link) 55%, transparent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--apple-link) 45%, transparent);
+  transform: translateX(-50%);
+}
+
+@media (min-width: 900px) and (min-height: 800px) {
+  .apple-home #work,
+  .apple-home #about,
+  .apple-home #capabilities,
+  .apple-home #playstore,
+  .apple-home #contact {
+    position: sticky;
+    top: 0;
+    min-height: 100svh;
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 899px), (max-height: 799px) {
+  .apple-home #about,
+  .apple-home #capabilities,
+  .apple-home #playstore,
+  .apple-home #contact { margin-top: -10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .apple-home #work,
+  .apple-home #about,
+  .apple-home #capabilities,
+  .apple-home #playstore,
+  .apple-home #contact { position: relative; min-height: auto; }
 }

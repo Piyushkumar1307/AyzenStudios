@@ -34,5 +34,29 @@
     head.appendChild(touch);
   }
 
+  // Add the shared UI enhancement layer after each page has declared its own
+  // styles, so it can consistently enhance every normal site route.
+  function installUiLayer() {
+    if (document.getElementById("ayzen-ui-motion-css")) return;
+    var head = document.head;
+    if (!head) return;
+    var css = document.createElement("link");
+    css.id = "ayzen-ui-motion-css";
+    css.rel = "stylesheet";
+    css.href = "/css/ui-motion.css?v=3";
+    head.appendChild(css);
+
+    var script = document.createElement("script");
+    script.id = "ayzen-ui-motion-js";
+    script.src = "/js/ui-motion.js?v=3";
+    script.async = false;
+    head.appendChild(script);
+  }
+
   apply();
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", installUiLayer, { once: true });
+  } else {
+    installUiLayer();
+  }
 })();
