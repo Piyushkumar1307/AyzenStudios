@@ -29,7 +29,17 @@ html::-webkit-scrollbar-thumb { border: 3px solid transparent; border-radius: 99
   position: relative;
   isolation: isolate;
 }
-.apple-home main > section > :not(.ui-section-orb) { position: relative; z-index: 1; }
+/* Keep content above the ambient orb, without changing the positioning of
+   the homepage hero's full-bleed background layers. The previous generic
+   selector converted those absolute layers into normal grid items in Safari,
+   which produced a blank strip on the deployed homepage. */
+.apple-home main > section > :not(.ui-section-orb):not(.hero-bg-wrap):not(.hero-bg-overlay):not(.hero-depth) {
+  position: relative;
+  z-index: 1;
+}
+.apple-home .hero > .hero-bg-wrap { position: absolute; z-index: 0; }
+.apple-home .hero > .hero-bg-overlay { position: absolute; z-index: 1; }
+.apple-home .hero > .hero-depth { position: absolute; z-index: 1; }
 .ui-section-orb {
   position: absolute;
   z-index: 0;

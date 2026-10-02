@@ -52,7 +52,7 @@
     var css = document.createElement("link");
     css.id = "ayzen-ui-motion-css";
     css.rel = "stylesheet";
-    css.href = "/css/ui-motion.css?v=3";
+    css.href = "/css/ui-motion.css?v=4";
     head.appendChild(css);
 
     var script = document.createElement("script");
