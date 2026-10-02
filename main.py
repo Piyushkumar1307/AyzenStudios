@@ -179,10 +179,14 @@ def _cors_middleware_kwargs() -> dict:
         kwargs["allow_origins"] = ["*"]
         return kwargs
     kwargs["allow_origins"] = origins
-    # Any Netlify preview/production subdomain (e.g. ayzen-studios vs piyush-store).
+    # Allow the production Ayzen Studios domains plus common deployment hosts.
+    # This prevents browser login requests from being blocked when the site is served
+    # from the custom domain rather than a Netlify preview URL.
     if os.environ.get("CORS_ALLOW_NETLIFY", "1").strip().lower() in ("1", "true", "yes"):
         kwargs["allow_origin_regex"] = (
-            r"https://[a-zA-Z0-9][a-zA-Z0-9-]*\.netlify\.app"
+            r"https://(?:www\.)?ayzenstudios\.com"
+            r"|https://(?:www\.)?ayzenstudios\.onrender\.com"
+            r"|https://[a-zA-Z0-9][a-zA-Z0-9-]*\.netlify\.app"
             r"|https://[a-zA-Z0-9][a-zA-Z0-9-]*\.onrender\.com"
             r"|http://(localhost|127\.0\.0\.1)(:\d+)?"
         )
