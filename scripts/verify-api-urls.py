@@ -10,8 +10,11 @@ for name in sorted(os.listdir(STATIC)):
         continue
     path = os.path.join(STATIC, name)
     t = open(path, encoding="utf-8").read()
-    if "runtime-config.js" not in t:
-        issues.append(f"{name}: missing spooky scripts")
+    uses_api_url = "apiUrl(" in t
+    if uses_api_url and ("runtime-config.js" not in t or "spooky-api.js" not in t):
+        issues.append(f"{name}: missing API URL scripts")
+    if uses_api_url and re.search(r'<script\b(?=[^>]*\bdefer\b)(?=[^>]*src=["\'][^"\']*(?:runtime-config|spooky-api)\.js)[^>]*>', t):
+        issues.append(f"{name}: API URL scripts must load before inline API calls")
     for m in re.finditer(r'(?:await\s+)?fetch\s*\(\s*["`](/api/)', t):
         before = t[max(0, m.start() - 12) : m.start()]
         if "apiUrl" not in before:
