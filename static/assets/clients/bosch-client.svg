@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Bosch">
+  <rect width="160" height="160" fill="#fff"/>
+  <circle cx="80" cy="63" r="35" fill="none" stroke="#66717c" stroke-width="5"/>
+  <path d="M59 40v46m42-46v46M59 48h42v30H59zM68 55v16h24V55z" fill="none" stroke="#66717c" stroke-width="5" stroke-linejoin="round"/>
+  <text x="80" y="132" text-anchor="middle" fill="#ed1c24" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">BOSCH</text>
+</svg>

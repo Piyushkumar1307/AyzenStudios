@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="I AM GAME">
+  <rect width="160" height="160" fill="#fff"/>
+  <path d="M80 24 119 84H92L80 64 68 84H41z" fill="#1b1b20"/>
+  <path d="m80 45 13 21H67z" fill="#ef242f"/>
+  <text x="80" y="112" text-anchor="middle" fill="#1b1b20" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="800">I AM</text>
+  <text x="80" y="139" text-anchor="middle" fill="#1b1b20" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="800">GAME</text>
+</svg>

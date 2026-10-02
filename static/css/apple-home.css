@@ -12,6 +12,9 @@
   --apple-max: 980px;
   --apple-wide: 100%;
   --site-gutter: clamp(18px, 4vw, 72px);
+  /* The fixed navigation is 64px tall.  Deck panels use this value so their
+     first line is never hidden beneath the header while they are pinned. */
+  --site-header-height: 64px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Outfit", system-ui, sans-serif;
   letter-spacing: -0.01em;
 }
@@ -61,6 +64,7 @@ body.apple-home {
 
 /* Each scroll panel must be opaque: the pinned hero is a backdrop, never text behind content. */
 .apple-home #about,
+.apple-home #clients,
 .apple-home #capabilities,
 .apple-home #playstore,
 .apple-home #contact {
@@ -74,21 +78,65 @@ body.apple-home {
     radial-gradient(70% 70% at 94% 8%, rgba(41, 83, 143, .19), transparent 60%),
     linear-gradient(150deg, #111216 0%, #090b10 46%, #06070b 100%);
 }
-.apple-home #capabilities {
+.apple-home #clients {
   z-index: 5;
+  background:
+    radial-gradient(64% 72% at 10% 8%, rgba(30, 110, 205, .18), transparent 64%),
+    radial-gradient(48% 64% at 92% 88%, rgba(92, 69, 181, .14), transparent 66%),
+    linear-gradient(150deg, #101522 0%, #090d16 52%, #06080e 100%);
+}
+.apple-home #capabilities {
+  z-index: 6;
   background:
     radial-gradient(64% 72% at 6% 2%, rgba(62, 111, 181, .17), transparent 62%),
     linear-gradient(150deg, #0e1119 0%, #090b12 54%, #050609 100%);
 }
 .apple-home #playstore {
-  z-index: 6;
+  z-index: 7;
   background: linear-gradient(150deg, #10131b, #080a0f 55%, #050609);
 }
 .apple-home #contact {
-  z-index: 7;
+  z-index: 8;
   background:
     radial-gradient(60% 70% at 90% 12%, rgba(42, 104, 197, .18), transparent 62%),
     linear-gradient(150deg, #111722 0%, #0a0e16 56%, #07090e 100%) !important;
+}
+
+/* These panels have their own dark gradients, so they need explicit light
+   surfaces instead of relying only on the shared --apple-* palette. */
+[data-theme="light"] body.apple-home #work {
+  background:
+    radial-gradient(75% 55% at 50% 0%, rgba(10, 102, 204, .16), transparent 66%),
+    #f8fbff;
+  box-shadow: 0 -24px 70px rgba(35, 83, 140, .14);
+}
+[data-theme="light"] body.apple-home #about {
+  background:
+    radial-gradient(70% 70% at 94% 8%, rgba(48, 128, 218, .17), transparent 60%),
+    linear-gradient(150deg, #fbfdff 0%, #f0f6fc 48%, #e7f0f9 100%);
+  box-shadow: 0 -20px 64px rgba(35, 83, 140, .14);
+}
+[data-theme="light"] body.apple-home #clients {
+  background:
+    radial-gradient(64% 72% at 10% 8%, rgba(36, 129, 225, .16), transparent 64%),
+    radial-gradient(48% 64% at 92% 88%, rgba(100, 84, 202, .10), transparent 66%),
+    linear-gradient(150deg, #fbfdff 0%, #f0f6fc 52%, #e6eff9 100%);
+  box-shadow: 0 -20px 64px rgba(35, 83, 140, .14);
+}
+[data-theme="light"] body.apple-home #capabilities {
+  background:
+    radial-gradient(64% 72% at 6% 2%, rgba(46, 126, 216, .16), transparent 62%),
+    linear-gradient(150deg, #f9fcff 0%, #eef5fb 54%, #e5eef8 100%);
+  box-shadow: 0 -20px 64px rgba(35, 83, 140, .14);
+}
+[data-theme="light"] body.apple-home #playstore {
+  background: linear-gradient(150deg, #f9fcff, #eef5fb 55%, #e5eef8);
+}
+[data-theme="light"] body.apple-home #contact {
+  background:
+    radial-gradient(60% 70% at 90% 12%, rgba(39, 121, 215, .15), transparent 62%),
+    linear-gradient(150deg, #fbfdff 0%, #eff6fc 56%, #e6eef8 100%) !important;
+  box-shadow: 0 -20px 64px rgba(35, 83, 140, .16);
 }
 
 /* ---------- header ---------- */
@@ -361,6 +409,141 @@ body.apple-home {
 
 .apple-home .clients-strip-names li {
   color: var(--apple-text);
+}
+
+/* ---------- Client circle gallery ---------- */
+.apple-home #clients .section-head {
+  max-width: 720px;
+  margin-bottom: clamp(30px, 5vw, 54px);
+}
+
+.apple-home .client-section__eyebrow {
+  margin: 0 0 10px;
+  color: var(--apple-link);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.apple-home .client-logo-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(14px, 2.4vw, 32px);
+  width: min(100%, 1240px);
+  margin: 0 auto;
+  padding: 4px 0 0;
+  list-style: none;
+}
+
+.apple-home .client-logo-card {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  color: var(--apple-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  line-height: 1.2;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.apple-home .client-logo-card__frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(104px, 12vw, 164px);
+  aspect-ratio: 1;
+  padding: 6px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--apple-link) 34%, var(--apple-border));
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .025));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .18),
+    0 14px 32px rgba(0, 0, 0, .28),
+    0 0 0 7px color-mix(in srgb, var(--apple-bg) 72%, transparent);
+  animation: client-logo-float 7s ease-in-out infinite;
+  transition: transform .35s ease, border-color .35s ease, box-shadow .35s ease;
+}
+
+.apple-home .client-logo-card:nth-child(2) .client-logo-card__frame { animation-delay: -1.4s; }
+.apple-home .client-logo-card:nth-child(3) .client-logo-card__frame { animation-delay: -2.8s; }
+.apple-home .client-logo-card:nth-child(4) .client-logo-card__frame { animation-delay: -4.2s; }
+.apple-home .client-logo-card:nth-child(5) .client-logo-card__frame { animation-delay: -5.6s; }
+
+.apple-home .client-logo-card__frame::after {
+  content: "";
+  position: absolute;
+  inset: -42%;
+  background: linear-gradient(115deg, transparent 42%, rgba(255, 255, 255, .35) 50%, transparent 58%);
+  transform: translateX(-58%) rotate(18deg);
+  transition: transform .65s ease;
+  pointer-events: none;
+}
+
+.apple-home .client-logo-card__frame img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  transform: scale(1.02);
+  transition: transform .45s cubic-bezier(.2, .8, .2, 1), filter .35s ease;
+}
+
+.apple-home .client-logo-card:hover .client-logo-card__frame,
+.apple-home .client-logo-card:focus-within .client-logo-card__frame {
+  z-index: 1;
+  border-color: color-mix(in srgb, var(--apple-link) 75%, white 25%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .28),
+    0 20px 42px rgba(0, 0, 0, .36),
+    0 0 0 8px color-mix(in srgb, var(--apple-link) 14%, transparent);
+  animation-play-state: paused;
+  transform: translateY(-5px) scale(1.045);
+}
+
+.apple-home .client-logo-card:hover .client-logo-card__frame::after,
+.apple-home .client-logo-card:focus-within .client-logo-card__frame::after {
+  transform: translateX(58%) rotate(18deg);
+}
+
+.apple-home .client-logo-card:hover .client-logo-card__frame img,
+.apple-home .client-logo-card:focus-within .client-logo-card__frame img {
+  transform: scale(1.1);
+}
+
+@keyframes client-logo-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+[data-theme="light"] .apple-home .client-logo-card__frame {
+  background: linear-gradient(145deg, rgba(255, 255, 255, .94), rgba(232, 241, 251, .75));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .9),
+    0 14px 32px rgba(31, 82, 137, .16),
+    0 0 0 7px color-mix(in srgb, var(--apple-bg) 74%, transparent);
+}
+
+@media (max-width: 760px) {
+  .apple-home .client-logo-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 26px 16px;
+  }
+}
+
+@media (max-width: 440px) {
+  .apple-home .client-logo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .apple-home .client-logo-card:last-child { grid-column: 1 / -1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .apple-home .client-logo-card__frame { animation: none; }
 }
 
 /* hide old scroll stacks */
@@ -901,6 +1084,35 @@ body.apple-home {
   overflow: hidden;
   pointer-events: none;
 }
+.apple-home .hero-depth::before,
+.apple-home .hero-depth::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+.apple-home .hero-depth::before {
+  width: min(72vw, 1120px);
+  aspect-ratio: 1;
+  top: -46%;
+  left: -16%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 58% 55%, rgba(78, 171, 255, .24), transparent 28%),
+    radial-gradient(circle at 42% 42%, rgba(118, 97, 255, .16), transparent 56%);
+  filter: blur(10px);
+  opacity: .8;
+  animation: heroAuroraDrift 18s ease-in-out infinite alternate;
+}
+.apple-home .hero-depth::after {
+  width: min(44vw, 700px);
+  height: min(44vw, 700px);
+  right: 8%;
+  top: 12%;
+  border: 1px solid rgba(110, 190, 255, .16);
+  border-radius: 45% 55% 58% 42%;
+  box-shadow: inset 0 0 80px rgba(48, 137, 255, .08), 0 0 86px rgba(64, 137, 255, .08);
+  animation: heroHaloTurn 22s linear infinite;
+}
 .apple-home [data-parallax] {
   --parallax-y: 0px;
   will-change: transform;
@@ -970,6 +1182,56 @@ body.apple-home {
   transform: translate3d(0, var(--parallax-y), 0);
 }
 
+@keyframes heroAuroraDrift {
+  0% { transform: translate3d(-5%, -3%, 0) scale(.94); opacity: .48; }
+  52% { transform: translate3d(11%, 8%, 0) scale(1.08); opacity: .9; }
+  100% { transform: translate3d(3%, 16%, 0) scale(1); opacity: .6; }
+}
+@keyframes heroHaloTurn {
+  from { transform: rotate(0deg) scale(.94); border-radius: 45% 55% 58% 42%; }
+  50% { transform: rotate(180deg) scale(1.07); border-radius: 58% 42% 45% 55%; }
+  to { transform: rotate(360deg) scale(.94); border-radius: 45% 55% 58% 42%; }
+}
+
+/* Each section receives an ambient orb from ui-motion.js. Its child layers
+   continue moving even while the section itself is pinned in the card deck. */
+.apple-home .ui-section-orb {
+  --orb-highlight: rgba(86, 177, 255, .28);
+  overflow: visible;
+}
+.apple-home .ui-section-orb::before,
+.apple-home .ui-section-orb::after {
+  content: "";
+  position: absolute;
+  inset: 12%;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.apple-home .ui-section-orb::before {
+  background: radial-gradient(circle at 32% 28%, var(--orb-highlight), transparent 54%);
+  filter: blur(4px);
+  animation: sectionGlowBreathe 8s ease-in-out infinite;
+}
+.apple-home .ui-section-orb::after {
+  inset: 23%;
+  border: 1px solid color-mix(in srgb, var(--orb-highlight) 62%, transparent);
+  background: conic-gradient(from 0deg, transparent 0 62%, var(--orb-highlight) 77%, transparent 92%);
+  opacity: .72;
+  animation: sectionSignalOrbit 13s linear infinite;
+}
+.apple-home .ui-section-orb--1 { --orb-highlight: rgba(129, 112, 255, .27); }
+.apple-home .ui-section-orb--2 { --orb-highlight: rgba(87, 220, 237, .23); }
+
+@keyframes sectionGlowBreathe {
+  0%, 100% { transform: scale(.78) translate3d(-9%, -7%, 0); opacity: .3; }
+  50% { transform: scale(1.16) translate3d(10%, 8%, 0); opacity: 1; }
+}
+@keyframes sectionSignalOrbit {
+  from { transform: rotate(0deg) scale(.86); }
+  50% { transform: rotate(180deg) scale(1.12); }
+  to { transform: rotate(360deg) scale(.86); }
+}
+
 @media (max-width: 760px) {
   .apple-home .hero-depth__grid { width: 125vw; height: 125vw; top: -16%; right: -45%; opacity: .28; }
   .apple-home .hero-depth__orb--one { width: 260px; right: -28%; top: 19%; opacity: .65; }
@@ -987,12 +1249,19 @@ body.apple-home {
   .apple-home .hero { position: relative; min-height: auto; opacity: 1; transform: none; filter: none; }
   .apple-home #work { box-shadow: none; }
   .apple-home [data-parallax] { transform: none !important; }
+  .apple-home .hero-depth::before,
+  .apple-home .hero-depth::after,
+  .apple-home .ui-section-orb::before,
+  .apple-home .ui-section-orb::after { animation: none; }
 }
 
 /* ---------- Layered scroll deck ----------
-   Each major section is a solid card in a scroll stack, not a transparent page band. */
+   Compact panels can sit in a stacked deck. Long-form panels deliberately
+   remain in the document flow: pinning them would let the next panel cover
+   unread content before it has passed through the viewport. */
 .apple-home #work,
 .apple-home #about,
+.apple-home #clients,
 .apple-home #capabilities,
 .apple-home #playstore,
 .apple-home #contact {
@@ -1000,10 +1269,12 @@ body.apple-home {
   scroll-margin-top: 84px;
 }
 .apple-home #about,
+.apple-home #clients,
 .apple-home #capabilities,
 .apple-home #playstore,
 .apple-home #contact { margin-top: -18px; }
 .apple-home #about::after,
+.apple-home #clients::after,
 .apple-home #capabilities::after,
 .apple-home #contact::after {
   content: "";
@@ -1021,18 +1292,44 @@ body.apple-home {
 @media (min-width: 900px) and (min-height: 800px) {
   .apple-home #work,
   .apple-home #about,
+  .apple-home #clients,
   .apple-home #capabilities,
   .apple-home #playstore,
   .apple-home #contact {
     position: sticky;
-    top: 0;
-    min-height: 100svh;
+    top: var(--site-header-height);
+    min-height: calc(100svh - var(--site-header-height));
+    margin-top: 0;
+  }
+
+  /* Keep all five capabilities inside the pinned card, so Contact can rise
+     over a complete panel instead of interrupting a long scrolling list. */
+  .apple-home #capabilities {
+    padding-top: 28px;
+    padding-bottom: 24px;
+  }
+  .apple-home #capabilities .section-head { margin-bottom: 16px; }
+  .apple-home #capabilities .section-title { font-size: clamp(30px, 3.2vw, 40px); }
+  .apple-home #capabilities .section-intro { font-size: clamp(16px, 1.5vw, 19px); }
+  .apple-home #capabilities .caps { margin-top: 0; }
+  .apple-home #capabilities .cap { padding: clamp(11px, 1.5vh, 16px) 6px; }
+  .apple-home #capabilities .cap__title {
+    margin-bottom: 6px;
+    font-size: clamp(22px, 2.2vw, 28px);
+  }
+  .apple-home #capabilities .cap__tags { gap: 6px; }
+  .apple-home #capabilities .cap__tags span { padding: 5px 11px; font-size: 12px; }
+
+  /* The next card is free to travel from the bottom of the screen to this
+     header offset, visibly stacking over the fully-read Capabilities card. */
+  .apple-home #contact {
     margin-top: 0;
   }
 }
 
 @media (max-width: 899px), (max-height: 799px) {
   .apple-home #about,
+  .apple-home #clients,
   .apple-home #capabilities,
   .apple-home #playstore,
   .apple-home #contact { margin-top: -10px; }
@@ -1041,6 +1338,7 @@ body.apple-home {
 @media (prefers-reduced-motion: reduce) {
   .apple-home #work,
   .apple-home #about,
+  .apple-home #clients,
   .apple-home #capabilities,
   .apple-home #playstore,
   .apple-home #contact { position: relative; min-height: auto; }

@@ -16,6 +16,15 @@
     '<path d="M48 78c14-6 26-18 40-40-8 22-20 36-34 44z" fill="#bfe6ff" opacity="0.9"/></g></svg>';
   var href = "data:image/svg+xml," + encodeURIComponent(svg);
 
+  function applyStoredTheme() {
+    try {
+      var saved = localStorage.getItem("ayzen-studios-theme");
+      document.documentElement.setAttribute("data-theme", saved === "light" || saved === "dark" ? saved : "dark");
+    } catch (_) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+  }
+
   function apply() {
     var head = document.head;
     if (!head) return;
@@ -53,10 +62,32 @@
     head.appendChild(script);
   }
 
+  function installThemeLayer() {
+    if (document.getElementById("ayzen-theme-toggle-css")) return;
+    var head = document.head;
+    if (!head) return;
+    var css = document.createElement("link");
+    css.id = "ayzen-theme-toggle-css";
+    css.rel = "stylesheet";
+    css.href = "/css/theme-toggle.css?v=1";
+    head.appendChild(css);
+
+    var script = document.createElement("script");
+    script.id = "ayzen-theme-toggle-js";
+    script.src = "/js/theme-toggle.js?v=1";
+    script.async = false;
+    head.appendChild(script);
+  }
+
+  applyStoredTheme();
   apply();
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", installUiLayer, { once: true });
+    document.addEventListener("DOMContentLoaded", function () {
+      installThemeLayer();
+      installUiLayer();
+    }, { once: true });
   } else {
+    installThemeLayer();
     installUiLayer();
   }
 })();

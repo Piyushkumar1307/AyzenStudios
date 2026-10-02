@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Fyers">
+  <defs><radialGradient id="g" cx="50%" cy="50%" r="66%"><stop stop-color="#0d2f5a"/><stop offset=".55" stop-color="#05080d"/><stop offset="1" stop-color="#030407"/></radialGradient></defs>
+  <rect width="160" height="160" fill="url(#g)"/>
+  <!-- Fyers' compact horizontal lock-up: an angular F mark followed by the wordmark. -->
+  <path d="M26 45h39L54 57H45v10h18L52 79H45v29l-13 12V79H20L9 67h23V57H19z" fill="#fff"/>
+  <text x="76" y="91" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="700" letter-spacing="-.7">FYERS</text>
+</svg>

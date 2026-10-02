@@ -1,0 +1,131 @@
+/* Shared day mode. Loaded after each page's local stylesheet so older pages
+   with their own dark palette also participate in the site-wide theme. */
+
+html[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f3f7fc !important;
+  --bg-2: #e9f0f8 !important;
+  --bg-card: #ffffff !important;
+  --card: #ffffff !important;
+  --panel: rgba(255, 255, 255, .88) !important;
+  --panel2: rgba(242, 247, 253, .92) !important;
+  --stage-bg: #e8f0f9 !important;
+  --sidebar: #f7faff !important;
+  --bg-elevated: #eef4fb !important;
+  --bg-highlight: #e7f0fa !important;
+  --text: #102037 !important;
+  --muted: #50637c !important;
+  --accent: #0a6fe8 !important;
+  --accent-2: #1687ed !important;
+  --accent-strong: #0758bf !important;
+  --accent-dim: #0870c9 !important;
+  --accent-glow: rgba(10, 111, 232, .18) !important;
+  --glow: rgba(10, 111, 232, .16) !important;
+  --border: rgba(23, 73, 132, .18) !important;
+  --product-panel: #ffffff !important;
+  --product-panel-2: #edf4fc !important;
+  --steel: linear-gradient(180deg, #132c4a 0%, #365a80 58%, #6283aa 100%) !important;
+  --steel-blue: linear-gradient(135deg, #0758bf 0%, #1687ed 60%, #77c7ff 100%) !important;
+}
+
+html[data-theme="dark"] { color-scheme: dark; }
+
+html[data-theme="light"] body {
+  background-color: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+/* Older account and policy screens use bespoke dark surfaces rather than the
+   shared palette. These overrides give them the same clean day surface. */
+html[data-theme="light"] body::before { opacity: .42; }
+html[data-theme="light"] :where(.wrap, .card, .doc-card, .contact-card, .panel, .head, .tabs, .tab, .identity, .avatar, .selectWrap select, select, input, textarea) {
+  background: var(--panel, var(--bg-card)) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+html[data-theme="light"] :where(.doc-card p, .doc-card li, .email-line a, .id-meta .email, .room-pill, .hint, .foot) {
+  color: var(--muted) !important;
+}
+html[data-theme="light"] :where(.back, .nav a, .subnav .here, .inline, .brand, .room, .room-pill strong) {
+  color: var(--accent) !important;
+}
+html[data-theme="light"] :where(.wrap .title, .card .title, .doc-card h1, .wrap > h1, .panel h1) {
+  background: linear-gradient(135deg, #17345a 0%, var(--accent) 58%, #62b5f4 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+}
+html[data-theme="light"] :where(.product-page-header, .site-header, .bar) {
+  background: color-mix(in srgb, var(--bg-card) 88%, transparent) !important;
+  border-color: var(--border) !important;
+}
+html[data-theme="light"] :where(.product-page-nav a, .site-header a, .bar a, .bar button) {
+  color: var(--muted);
+}
+html[data-theme="light"] :where(.product-page-nav__cta, .btn-primary, .btn-wide, .filterbtn.active) { color: #fff !important; }
+
+/* The two embedded play surfaces intentionally remain dark so game/video
+   contrast stays correct; their surrounding controls still respond to day mode. */
+html[data-theme="light"] #frameWrap,
+html[data-theme="light"] #gameFrame { background: #07111f !important; }
+html[data-theme="light"] .loading {
+  background: var(--bg-card) !important;
+  color: var(--text) !important;
+}
+html[data-theme="light"] body:has(.stick-wrap) .btn:not(.btn-wide),
+html[data-theme="light"] body:has(.stick-wrap) .stick-wrap {
+  background: var(--bg-card) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+html[data-theme="light"] .main {
+  background: linear-gradient(180deg, #e5f0fc 0%, var(--bg) 280px) !important;
+}
+html[data-theme="light"] .reg-modes {
+  background:
+    radial-gradient(circle at 92% 8%, rgba(10, 111, 232, .14), transparent 30%),
+    linear-gradient(145deg, rgba(235, 244, 253, .95), rgba(255, 255, 255, .9)) !important;
+}
+
+/* Homepage surfaces contain explicit dark gradients and need a day palette of
+   their own, independent of the general --bg variables above. */
+html[data-theme="light"] body.apple-home #work {
+  background: radial-gradient(75% 55% at 50% 0%, rgba(10, 111, 232, .14), transparent 66%), #f7faff;
+}
+html[data-theme="light"] body.apple-home #about {
+  background: radial-gradient(70% 70% at 94% 8%, rgba(61, 144, 232, .16), transparent 60%), linear-gradient(150deg, #f9fbff, #eff5fb 52%, #e8f0f8);
+}
+html[data-theme="light"] body.apple-home #capabilities {
+  background: radial-gradient(64% 72% at 6% 2%, rgba(44, 126, 218, .15), transparent 62%), linear-gradient(150deg, #f7faff, #edf4fb 54%, #e7eff8);
+}
+html[data-theme="light"] body.apple-home #playstore {
+  background: linear-gradient(150deg, #f8fbff, #edf4fb 55%, #e5eef8);
+}
+html[data-theme="light"] body.apple-home #contact {
+  background: radial-gradient(60% 70% at 90% 12%, rgba(39, 122, 218, .14), transparent 62%), linear-gradient(150deg, #f8fbff, #edf4fb 56%, #e6eef8) !important;
+}
+
+/* A consistent control is added automatically on routes that do not already
+   provide a theme button. */
+.ayz-theme-toggle {
+  width: 38px;
+  height: 38px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--border, rgba(125, 165, 220, .22));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-card, #0d1422) 86%, transparent);
+  color: var(--text, #eaf1fb);
+  font: 16px/1 system-ui, sans-serif;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .12);
+  transition: transform .2s ease, background .2s ease, border-color .2s ease;
+}
+.ayz-theme-toggle:hover { transform: translateY(-2px) rotate(10deg); border-color: var(--accent, #2e9bff); }
+.ayz-theme-toggle--floating { position: fixed; z-index: 10010; top: max(14px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ayz-theme-toggle { transition: none; }
+}

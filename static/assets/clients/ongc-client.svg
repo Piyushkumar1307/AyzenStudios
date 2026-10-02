@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="ONGC">
+  <rect width="160" height="160" fill="#a91f25"/>
+  <path d="M80 38v75M50 96h60M80 47c-13 15-23 34-23 49h18l5-49zm0 0c13 15 23 34 23 49H85l-5-49zM61 104l-10 18m48-18 10 18M64 123h32M80 113v19" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M52 41c8-7 18-11 28-11s20 4 28 11" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+  <text x="80" y="145" text-anchor="middle" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">ONGC</text>
+</svg>
