@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#05070d">
+  <meta name="description" content="Palmora by Ayzen Studios — an immersive AI-powered palm reading experience with a visual report.">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <title>Palmora — Ayzen Studios</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=Outfit:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/ayzen-theme.css?v=2">
+  <link rel="stylesheet" href="/css/site-footer.css?v=1">
+  <link rel="stylesheet" href="/css/product-page.css?v=3">
+  <style>
+    .pb-qr-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .pb-qr-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .pb-qr-frame {
+      padding: 14px;
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
+    }
+    .pb-qr-frame img { display: block; width: 220px; height: 220px; }
+    .pb-qr-hint, .pb-qr-sub { margin: 0; }
+    .pb-qr-hint { font-weight: 600; }
+    .pb-qr-sub { font-size: 15px; line-height: 1.6; }
+    .pb-qr-link {
+      color: var(--accent-2);
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .pb-qr-link:hover { text-decoration: underline; }
+    .pb-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+    .pb-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid transparent;
+      color: var(--text);
+      font: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform .2s, border-color .2s;
+    }
+    .pb-btn:hover { transform: translateY(-2px); }
+    .pb-btn--primary { color: #fff; }
+    .pb-btn--ghost { border-color: var(--border); }
+    .pb-btn--ghost:hover { border-color: var(--accent); }
+  </style>
+</head>
+<body>
+  <header class="product-page-header">
+    <div class="product-page-header__inner">
+      <a class="product-page-brand" href="/"><img src="/assets/brand/ayzen-logo.png" alt="">Ayzen Studios</a>
+      <nav class="product-page-nav" aria-label="Product navigation"><a href="/work">Work</a><a href="/#capabilities">Capabilities</a><a class="product-page-nav__cta" href="/#contact">Start a project</a></nav>
+    </div>
+  </header>
+
+  <main class="pb-page">
+    <a class="pb-back" href="/work">← Back to our work</a>
+    <article class="pb-card">
+      <div class="pb-card__media">
+        <img src="/assets/games/palmora.jpg" alt="Palmora palm reading result interface" width="1200" height="750">
+      </div>
+      <div class="pb-qr-wrap">
+        <span class="pb-qr-label">Try the live demo</span>
+        <div class="pb-qr-frame">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=320x320&amp;data=https%3A%2F%2Fpalmora-occb.onrender.com&amp;margin=8" width="220" height="220" alt="QR code to open Palmora" loading="lazy">
+        </div>
+        <p class="pb-qr-hint">Scan this QR to explore Palmora</p>
+        <p class="pb-qr-sub">Discover an immersive palm-reading experience with a detailed visual report, personalized scores, and line-by-line interpretations.</p>
+        <a class="pb-qr-link" href="https://palmora-occb.onrender.com" target="_blank" rel="noopener noreferrer" data-no-transition>https://palmora-occb.onrender.com</a>
+      </div>
+      <div class="pb-card__body">
+        <span class="pb-badge">AI experience</span>
+        <h1>Palmora</h1>
+        <p class="pb-lead">An immersive AI-powered palm reading that transforms a hand into a personalized visual report.</p>
+        <p class="pb-note">Explore life, heart, head, fate, and sun lines alongside personality traits, energy scores, and future insights. Palmora can be adapted for event activations, brand experiences, and interactive kiosks.</p>
+        <div class="pb-actions">
+          <a class="pb-btn pb-btn--primary" href="https://wa.me/919205726749?text=Hi%2C%20I%20would%20like%20Palmora%20for%20my%20upcoming%20event." target="_blank" rel="noopener noreferrer" data-no-transition>Request for my event</a>
+          <a class="pb-btn pb-btn--ghost" href="https://palmora-occb.onrender.com" target="_blank" rel="noopener noreferrer" data-no-transition>Open demo</a>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <div id="site-footer-root"></div>
+  <script src="/static/favicon-set.js?v=2"></script>
+  <script src="/js/site-footer.js?v=8" defer></script>
+  <script src="/js/ayzen-motion.js?v=1" defer></script>
+</body>
+</html>

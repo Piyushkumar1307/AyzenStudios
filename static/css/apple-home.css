@@ -95,6 +95,22 @@ body.apple-home {
   gap: 18px;
 }
 
+.apple-home .featured-products__action {
+  display: flex;
+  justify-content: center;
+  margin-top: 34px;
+}
+
+.apple-home .featured-products__action .btn-primary,
+.apple-home .featured-products__action .btn-primary:visited,
+.apple-home .featured-products__action .btn-primary:hover,
+.apple-home .featured-products__action .btn-primary:focus-visible {
+  color: #fff;
+  text-decoration: none;
+}
+
+.apple-home .featured-products__action .btn-primary span { color: inherit; }
+
 .apple-home .featured-product {
   --product-accent: #69c9ff;
   position: relative;

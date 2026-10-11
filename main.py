@@ -220,6 +220,7 @@ WEBAR_HTML = os.path.join(BASE_DIR, "static", "webar.html")
 PHOTOBOOTH_HTML = os.path.join(BASE_DIR, "static", "photobooth.html")
 GEO_REGISTRATION_HTML = os.path.join(BASE_DIR, "static", "geo-registration.html")
 QUIZ_MASTER_HTML = os.path.join(BASE_DIR, "static", "quiz-master.html")
+PALMORA_HTML = os.path.join(BASE_DIR, "static", "palmora.html")
 SOUNDORA_HTML = os.path.join(BASE_DIR, "static", "soundora.html")
 CONTROLLER_HTML = os.path.join(BASE_DIR, "static", "controller.html")
 SUPPORT_HTML = os.path.join(BASE_DIR, "static", "support.html")
@@ -415,6 +416,12 @@ def quiz_master_page():
     return FileResponse(QUIZ_MASTER_HTML)
 
 
+@app.get("/palmora")
+def palmora_page():
+    """Palmora detail page with the live-demo QR code and event enquiry actions."""
+    return FileResponse(PALMORA_HTML)
+
+
 @app.get("/soundora")
 def soundora_page():
     return FileResponse(SOUNDORA_HTML)
@@ -463,6 +470,7 @@ SITEMAP_XML = """<?xml version=\"1.0\" encoding=\"UTF-8\"?>
   <url><loc>{base}/photobooth</loc><lastmod>2026-09-05</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>{base}/geo-registration</loc><lastmod>2026-09-05</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>{base}/quiz-master</loc><lastmod>2026-09-05</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>{base}/palmora</loc><lastmod>2026-10-11</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>{base}/support</loc><lastmod>2026-09-05</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>{base}/terms</loc><lastmod>2026-09-05</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
   <url><loc>{base}/refunds</loc><lastmod>2026-09-05</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
